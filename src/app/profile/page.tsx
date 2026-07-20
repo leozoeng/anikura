@@ -2,7 +2,11 @@ import { redirect } from "next/navigation";
 import { ProfileView } from "@/components/profile/profile-view";
 import { getSessionUser } from "@/lib/auth";
 import type { AnimeListEntry } from "@/lib/anime-list";
-import type { PublicProfile } from "@/lib/profile";
+import {
+  DEFAULT_ACCENT_HEX,
+  PROFILE_SELECT,
+  type PublicProfile,
+} from "@/lib/profile";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -24,9 +28,7 @@ export default async function ProfilePage() {
   const [{ data: profile }, { data: list }] = await Promise.all([
     supabase
       .from("profiles")
-      .select(
-        "id, email, nickname, bio, avatar_url, banner_url, created_at, role",
-      )
+      .select(PROFILE_SELECT)
       .eq("id", user.id)
       .maybeSingle(),
     supabase
@@ -44,6 +46,8 @@ export default async function ProfilePage() {
     avatar_url: null,
     banner_url: null,
     created_at: user.created_at,
+    accent_hex: DEFAULT_ACCENT_HEX,
+    accent_ambient: true,
   };
 
   return (

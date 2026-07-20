@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { ProfileView } from "@/components/profile/profile-view";
 import type { AnimeListEntry } from "@/lib/anime-list";
-import type { PublicProfile } from "@/lib/profile";
+import { PROFILE_SELECT, type PublicProfile } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { getSessionUser } from "@/lib/auth";
@@ -32,9 +32,7 @@ export default async function PublicProfilePage({ params }: Props) {
   const [{ data: profile }, { data: list }, me] = await Promise.all([
     supabase
       .from("profiles")
-      .select(
-        "id, email, nickname, bio, avatar_url, banner_url, created_at, role",
-      )
+      .select(PROFILE_SELECT)
       .eq("id", id)
       .maybeSingle(),
     supabase
