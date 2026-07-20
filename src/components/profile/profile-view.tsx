@@ -24,7 +24,7 @@ type Props = {
   isOwner: boolean;
 };
 
-type ProfileTab = "board" | "activity" | "wishlist";
+type ProfileTab = "board" | "activity" | "watch";
 
 type WidgetDef = {
   id: string;
@@ -37,7 +37,7 @@ type WidgetDef = {
 const TABS: { id: ProfileTab; label: string }[] = [
   { id: "board", label: "Board" },
   { id: "activity", label: "Activity" },
-  { id: "wishlist", label: "Wishlist" },
+  { id: "watch", label: "Watch" },
 ];
 
 function relativeTime(iso: string) {
@@ -65,23 +65,27 @@ export function ProfileView({ profile, list, isOwner }: Props) {
   const memberSince = formatMemberSince(live.created_at);
 
   const favorites = useMemo(
-    () => list.filter((x) => x.is_favorite).slice(0, 6),
+    () => list.filter((x) => x.is_favorite),
     [list],
   );
   const watching = useMemo(
-    () => list.filter((x) => x.status === "watching").slice(0, 6),
+    () => list.filter((x) => x.status === "watching"),
     [list],
   );
   const completed = useMemo(
-    () => list.filter((x) => x.status === "completed").slice(0, 6),
-    [list],
-  );
-  const onHold = useMemo(
-    () => list.filter((x) => x.status === "on_hold").slice(0, 4),
+    () => list.filter((x) => x.status === "completed"),
     [list],
   );
   const planned = useMemo(
     () => list.filter((x) => x.status === "planned"),
+    [list],
+  );
+  const onHold = useMemo(
+    () => list.filter((x) => x.status === "on_hold"),
+    [list],
+  );
+  const dropped = useMemo(
+    () => list.filter((x) => x.status === "dropped"),
     [list],
   );
   const activity = useMemo(
@@ -99,31 +103,31 @@ export function ProfileView({ profile, list, isOwner }: Props) {
     () => [
       {
         id: "favorites",
-        title: "Favorite anime",
-        emptyHint: "Pin favorites from your list",
+        title: "Favourites",
+        emptyHint: "Star titles as Favourite from the heart menu",
         items: favorites,
         max: 4,
       },
       {
         id: "watching",
-        title: "Watching now",
+        title: "Watching",
         emptyHint: "Mark something as Watching",
         items: watching,
         max: 4,
       },
       {
         id: "completed",
-        title: "Completed gems",
+        title: "Completed",
         emptyHint: "Finished titles show up here",
         items: completed,
         max: 4,
       },
       {
-        id: "rotation",
-        title: "In rotation",
-        emptyHint: "On-hold series for later",
+        id: "on_hold",
+        title: "On hold",
+        emptyHint: "Park series here for later",
         items: onHold,
-        max: 3,
+        max: 4,
       },
     ],
     [favorites, watching, completed, onHold],
@@ -181,15 +185,6 @@ export function ProfileView({ profile, list, isOwner }: Props) {
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#111214]/80 via-transparent to-black/10" />
 
-                {isOwner ? (
-                  <button
-                    type="button"
-                    onClick={() => setEditing(true)}
-                    className="absolute right-3 top-3 rounded-full bg-black/55 px-3 py-1.5 text-[0.7rem] font-medium text-snow/90 backdrop-blur-md transition hover:bg-black/75"
-                  >
-                    Edit banner
-                  </button>
-                ) : null}
               </div>
 
               <div className="relative px-5 pb-6 pt-0">
@@ -223,26 +218,25 @@ export function ProfileView({ profile, list, isOwner }: Props) {
                   </div>
                 </div>
 
-                <div className="mt-3">
-                  <h1 className="truncate text-[1.55rem] font-bold leading-tight tracking-[-0.03em] text-snow">
-                    {name}
-                  </h1>
-                  <p className="mt-0.5 truncate text-sm text-[#b5bac1]">
-                    {handle}
-                  </p>
-                </div>
-
-                {isOwner ? (
-                  <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-3 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h1 className="truncate text-[1.55rem] font-bold leading-tight tracking-[-0.03em] text-snow">
+                      {name}
+                    </h1>
+                    <p className="mt-0.5 truncate text-sm text-[#b5bac1]">
+                      {handle}
+                    </p>
+                  </div>
+                  {isOwner ? (
                     <button
                       type="button"
                       onClick={() => setEditing(true)}
-                      className="rounded-full bg-snow px-4 py-2 text-sm font-medium text-void transition hover:bg-white"
+                      className="mt-1 shrink-0 rounded-md px-1.5 py-0.5 text-[0.7rem] font-medium text-[#949ba4] transition hover:bg-white/[0.06] hover:text-[#dbdee1]"
                     >
-                      Edit profile
+                      Edit Profile
                     </button>
-                  </div>
-                ) : null}
+                  ) : null}
+                </div>
 
                 {/* About */}
                 <section className="mt-5 rounded-2xl bg-[#1e1f22]/90 px-3.5 py-3.5 ring-1 ring-white/[0.04]">
@@ -282,8 +276,10 @@ export function ProfileView({ profile, list, isOwner }: Props) {
                       [
                         ["Watching", watching.length],
                         ["Completed", completed.length],
-                        ["Wishlist", planned.length],
-                        ["Favorites", favorites.length],
+                        ["Plan to watch", planned.length],
+                        ["On hold", onHold.length],
+                        ["Dropped", dropped.length],
+                        ["Favourites", favorites.length],
                       ] as const
                     ).map(([label, count]) => (
                       <div
@@ -345,10 +341,9 @@ export function ProfileView({ profile, list, isOwner }: Props) {
                     accent={accent}
                   />
                 ) : null}
-                {tab === "wishlist" ? (
-                  <WishlistTab
+                {tab === "watch" ? (
+                  <WatchTab
                     items={planned}
-                    favorites={favorites}
                     isOwner={isOwner}
                     accent={accent}
                   />
@@ -576,46 +571,34 @@ function ActivityTab({
   );
 }
 
-function WishlistTab({
+function WatchTab({
   items,
-  favorites,
   isOwner,
   accent,
 }: {
   items: AnimeListEntry[];
-  favorites: AnimeListEntry[];
   isOwner: boolean;
   accent: string;
 }) {
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="mb-1 text-base font-semibold text-snow">Wishlist</h2>
-        <p className="mb-4 text-sm text-[#949ba4]">
-          Plan to watch — titles queued for later.
-        </p>
-        {items.length === 0 ? (
-          <EmptyState
-            title="Wishlist is empty"
-            body={
-              isOwner
-                ? "Mark titles as Plan to watch to fill this shelf."
-                : "Nothing planned yet."
-            }
-            compact
-          />
-        ) : (
-          <PosterGrid items={items} accent={accent} />
-        )}
-      </div>
-
-      {favorites.length > 0 ? (
-        <div>
-          <h2 className="mb-1 text-base font-semibold text-snow">Favorites</h2>
-          <p className="mb-4 text-sm text-[#949ba4]">Starred titles.</p>
-          <PosterGrid items={favorites} accent={accent} />
-        </div>
-      ) : null}
+    <div>
+      <h2 className="mb-1 text-base font-semibold text-snow">Watch</h2>
+      <p className="mb-4 text-sm text-[#949ba4]">
+        Plan to watch — titles queued for later.
+      </p>
+      {items.length === 0 ? (
+        <EmptyState
+          title="Nothing to watch yet"
+          body={
+            isOwner
+              ? "Mark titles as Plan to watch from the heart menu."
+              : "Nothing planned yet."
+          }
+          compact
+        />
+      ) : (
+        <PosterGrid items={items} accent={accent} />
+      )}
     </div>
   );
 }
