@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AnikuraLogo } from "@/components/anikura-logo";
 
 const explore = [
   { href: "/", label: "Home" },
@@ -23,17 +24,7 @@ export function SiteFooter() {
       <div className="border-t border-white/[0.08]">
         <div className="grid gap-12 px-3 py-16 sm:px-4 md:grid-cols-[1.4fr_1fr_1fr]">
           <div className="max-w-sm">
-            <Link href="/" className="inline-flex items-center gap-2.5">
-              <span
-                aria-hidden
-                className="grid h-7 w-7 place-items-center rounded-[0.55rem] bg-snow text-[0.7rem] font-bold tracking-[-0.06em] text-void"
-              >
-                A
-              </span>
-              <span className="text-[1.05rem] font-semibold tracking-[-0.045em] text-snow">
-                Anikura
-              </span>
-            </Link>
+            <AnikuraLogo size={28} />
             <p className="mt-4 text-[0.9375rem] leading-relaxed text-mute">
               A calm, cinematic place to watch anime — designed for quiet,
               focused evenings.

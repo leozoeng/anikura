@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AnikuraLogo } from "@/components/anikura-logo";
 import { SearchCommand } from "@/components/search-command";
 
 const links = [
@@ -53,21 +54,7 @@ export function SiteHeader() {
       }`}
     >
       <div className="flex h-14 w-full items-center gap-5 px-3 sm:h-16 sm:gap-8 sm:px-4">
-        <Link
-          href="/"
-          className="group flex shrink-0 items-center gap-2.5"
-          aria-label="Anikura home"
-        >
-          <span
-            aria-hidden
-            className="grid h-7 w-7 place-items-center rounded-[0.55rem] bg-snow text-[0.7rem] font-bold tracking-[-0.06em] text-void transition group-hover:scale-[1.04]"
-          >
-            A
-          </span>
-          <span className="text-[1.05rem] font-semibold tracking-[-0.045em] text-snow transition group-hover:opacity-85 sm:text-[1.125rem]">
-            Anikura
-          </span>
-        </Link>
+        <AnikuraLogo size={28} />
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
           {links.map((link) => {

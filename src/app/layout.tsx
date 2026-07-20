@@ -23,6 +23,10 @@ export const metadata: Metadata = {
     template: "%s — Anikura",
   },
   description: "A calm, cinematic place to watch anime.",
+  icons: {
+    icon: "/anikura-mark.png",
+    apple: "/anikura-mark.png",
+  },
 };
 
 export const viewport: Viewport = {

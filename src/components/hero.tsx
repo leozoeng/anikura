@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { AnikuraMark } from "@/components/anikura-logo";
 import { CinematicBackdrop } from "@/components/cinematic-backdrop";
 import type { AniListMedia } from "@/lib/anilist";
 import { stripHtml } from "@/lib/anilist";
@@ -95,7 +96,8 @@ export function Hero({ slides }: Props) {
       bannerHoldMs={0}
     >
       <div className="relative mx-auto flex min-h-[100svh] w-full max-w-[1200px] flex-col justify-end px-5 pb-16 pt-28 sm:px-8 lg:pb-24">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          <AnikuraMark size={22} className="opacity-90" />
           <p className="animate-rise text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-snow/70">
             Anikura
           </p>
