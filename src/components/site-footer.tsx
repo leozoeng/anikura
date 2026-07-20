@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AnikuraLogo } from "@/components/anikura-logo";
+import { FooterDonations } from "@/components/footer-donations";
 
 const links = [
   { href: "/", label: "Home" },
@@ -83,6 +84,8 @@ export function SiteFooter() {
               Community
             </a>
           </nav>
+
+          <FooterDonations />
 
           <div className="mt-4 flex flex-col gap-2 border-t border-white/[0.06] pt-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
             <p className="max-w-2xl text-[0.75rem] leading-relaxed text-mute">
