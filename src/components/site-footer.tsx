@@ -38,28 +38,31 @@ export function SiteFooter() {
               </p>
             </div>
 
-            <a
-              href={DISCORD}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-flex shrink-0 items-center gap-3 self-start rounded-2xl border border-white/[0.1] bg-white/[0.04] px-3.5 py-2.5 transition hover:border-white/20 hover:bg-white/[0.07] sm:self-auto"
-            >
-              <span className="flex min-w-0 flex-col">
-                <span className="text-sm font-semibold tracking-[-0.02em] text-snow">
-                  Join Discord
+            <div className="flex flex-col gap-2 self-start sm:flex-row sm:items-center sm:self-auto">
+              <FooterDonations />
+              <a
+                href={DISCORD}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex h-[3.25rem] shrink-0 items-center gap-3 rounded-2xl border border-white/[0.1] bg-white/[0.04] px-3.5 transition hover:border-white/20 hover:bg-white/[0.07]"
+              >
+                <span className="flex min-w-0 flex-col leading-tight">
+                  <span className="text-sm font-semibold tracking-[-0.02em] text-snow">
+                    Join Discord
+                  </span>
+                  <span className="text-[0.7rem] tracking-[-0.01em] text-mute">
+                    Feedback, bugs & updates
+                  </span>
                 </span>
-                <span className="text-[0.7rem] tracking-[-0.01em] text-mute">
-                  Feedback, bugs & updates
+                <span className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/90 bg-[linear-gradient(180deg,#ffffff_0%,#f4f4f6_48%,#e8e8ec_100%)] px-3.5 text-sm font-semibold tracking-[-0.02em] text-[#0a0a0c] shadow-[0_1.5px_0_rgba(255,255,255,0.95)_inset,0_4px_12px_rgba(0,0,0,0.35)] transition group-hover:brightness-[1.03]">
+                  <DiscordIcon />
+                  Open
+                  <span aria-hidden className="text-black/35">
+                    →
+                  </span>
                 </span>
-              </span>
-              <span className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/90 bg-[linear-gradient(180deg,#ffffff_0%,#f4f4f6_48%,#e8e8ec_100%)] px-3.5 text-sm font-semibold tracking-[-0.02em] text-[#0a0a0c] shadow-[0_1.5px_0_rgba(255,255,255,0.95)_inset,0_4px_12px_rgba(0,0,0,0.35)] transition group-hover:brightness-[1.03]">
-                <DiscordIcon />
-                Open
-                <span aria-hidden className="text-black/35">
-                  →
-                </span>
-              </span>
-            </a>
+              </a>
+            </div>
           </div>
 
           <nav
@@ -85,13 +88,11 @@ export function SiteFooter() {
             </a>
           </nav>
 
-          <FooterDonations />
-
           <div className="mt-4 flex flex-col gap-2 border-t border-white/[0.06] pt-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
             <p className="max-w-2xl text-[0.75rem] leading-relaxed text-mute">
               Anikura aggregates listings and does not host media. Streams are
               from third parties — DMCA and copyright requests go to those
-              providers.
+              providers. Donations help keep the site online.
             </p>
             <p className="shrink-0 text-[0.75rem] tracking-[-0.01em] text-mute">
               © {year} Anikura
