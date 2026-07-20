@@ -6,6 +6,10 @@ export type Profile = {
   email: string | null;
   role: "user" | "admin";
   created_at: string;
+  nickname?: string | null;
+  bio?: string | null;
+  avatar_url?: string | null;
+  banner_url?: string | null;
 };
 
 /** Sole source of truth for who may be admin (env). Never trust DB role alone. */

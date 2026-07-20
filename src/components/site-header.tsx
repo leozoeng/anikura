@@ -209,14 +209,24 @@ export function SiteHeader({
                 Create account
               </Link>
             </>
-          ) : isAdmin ? (
-            <Link
-              href="/admin"
-              className="rounded-xl px-4 py-3 text-[0.95rem] tracking-[-0.02em] text-snow transition hover:bg-white/[0.05]"
-            >
-              Admin
-            </Link>
-          ) : null}
+          ) : (
+            <>
+              <Link
+                href="/profile"
+                className="rounded-xl px-4 py-3 text-[0.95rem] tracking-[-0.02em] text-snow transition hover:bg-white/[0.05]"
+              >
+                Profile
+              </Link>
+              {isAdmin ? (
+                <Link
+                  href="/admin"
+                  className="rounded-xl px-4 py-3 text-[0.95rem] tracking-[-0.02em] text-snow transition hover:bg-white/[0.05]"
+                >
+                  Admin
+                </Link>
+              ) : null}
+            </>
+          )}
         </nav>
       </div>
     </header>

@@ -16,6 +16,12 @@ const nextConfig: NextConfig = {
       // YouTube trailer / banner fallbacks
       { protocol: "https", hostname: "i.ytimg.com" },
       { protocol: "https", hostname: "img.youtube.com" },
+      // Supabase storage (avatars / banners)
+      {
+        protocol: "https",
+        hostname: "yotvmnkhxqdztuqnvzpq.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
     ],
   },
 };
