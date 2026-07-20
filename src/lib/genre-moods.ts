@@ -58,8 +58,10 @@ export function genreJp(slug: string) {
 }
 
 /**
- * Curated AniList widescreen banners (1900×400), hosted locally.
+ * Curated AniList widescreen banners (~1900×400), hosted locally.
  * Distinct iconic art per mood — not score-ranked catalog posters.
+ * Fantasy/Adventure swapped from bright Frieren/HxH gold to darker banners
+ * that read under sakura-night overlays.
  */
 export const MOOD_ART: Record<
   string,
@@ -72,8 +74,8 @@ export const MOOD_ART: Record<
   },
   fantasy: {
     src: "/moods/fantasy.jpg",
-    credit: "Frieren: Beyond Journey's End",
-    position: "object-center",
+    credit: "Fate/Zero",
+    position: "object-[center_40%]",
   },
   comedy: {
     src: "/moods/comedy.jpg",
@@ -82,7 +84,7 @@ export const MOOD_ART: Record<
   },
   adventure: {
     src: "/moods/adventure.jpg",
-    credit: "Hunter × Hunter",
+    credit: "Cowboy Bebop",
     position: "object-center",
   },
   drama: {

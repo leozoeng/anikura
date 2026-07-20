@@ -179,59 +179,101 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.55rem;
   border-radius: 980px;
-  background: #fff;
-  color: #000;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background:
+    linear-gradient(180deg, #ffffff 0%, #ffe8ee 100%);
+  color: #12080c;
   font-size: 0.9375rem;
-  font-weight: 560;
-  letter-spacing: -0.01em;
-  padding: 0.85rem 1.45rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  padding: 0.88rem 1.5rem;
   transition:
     transform 0.28s var(--ease-out-soft),
     background 0.22s ease,
-    box-shadow 0.28s ease;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    border-color 0.22s ease,
+    box-shadow 0.28s ease,
+    color 0.22s ease;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    0 12px 32px rgba(0, 0, 0, 0.38),
+    0 0 0 1px rgba(255, 140, 170, 0.08);
 }
 
 .btn-primary:hover {
-  background: var(--color-sakura-mist);
-  transform: scale(1.02);
-  box-shadow: 0 14px 36px rgba(255, 140, 170, 0.18);
+  background:
+    linear-gradient(180deg, #fff7fa 0%, var(--color-sakura-mist) 100%);
+  border-color: rgba(255, 140, 170, 0.55);
+  transform: scale(1.03);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 16px 40px rgba(255, 140, 170, 0.28),
+    0 0 0 1px rgba(255, 140, 170, 0.18);
 }
 
 .btn-primary:active {
   transform: scale(0.98);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.4) inset,
+    0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary svg {
+  flex-shrink: 0;
+  opacity: 0.92;
 }
 
 .btn-ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.55rem;
   border-radius: 980px;
-  border: 1px solid var(--color-line-strong);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background:
+    linear-gradient(160deg, rgba(255, 140, 170, 0.1), transparent 55%),
+    rgba(255, 255, 255, 0.05);
   color: var(--color-snow);
   font-size: 0.9375rem;
-  font-weight: 520;
-  letter-spacing: -0.01em;
-  padding: 0.85rem 1.45rem;
-  backdrop-filter: blur(16px);
+  font-weight: 540;
+  letter-spacing: -0.015em;
+  padding: 0.88rem 1.5rem;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
   transition:
     transform 0.28s var(--ease-out-soft),
     background 0.22s ease,
-    border-color 0.22s ease;
+    border-color 0.22s ease,
+    box-shadow 0.28s ease,
+    color 0.22s ease;
 }
 
 .btn-ghost:hover {
-  background: rgba(255, 140, 170, 0.08);
-  border-color: rgba(255, 140, 170, 0.35);
-  transform: scale(1.02);
+  background:
+    linear-gradient(160deg, rgba(255, 140, 170, 0.18), transparent 55%),
+    rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 140, 170, 0.45);
+  color: var(--color-sakura-mist);
+  transform: scale(1.03);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.28),
+    0 0 24px rgba(255, 140, 170, 0.12);
 }
 
 .btn-ghost:active {
   transform: scale(0.98);
+}
+
+.btn-ghost svg {
+  flex-shrink: 0;
+  transition: transform 0.28s var(--ease-out-soft);
+  opacity: 0.85;
+}
+
+.btn-ghost:hover svg {
+  transform: translateX(2px);
+  opacity: 1;
 }
 
 .section-eyebrow {

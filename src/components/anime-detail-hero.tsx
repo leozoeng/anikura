@@ -101,6 +101,7 @@ export function AnimeDetailHero({
                 href={watchHref(anime, episodes[0].number)}
                 className="btn-primary"
               >
+                <PlayIcon />
                 Play episode {episodes[0].number}
               </Link>
               {hasDub && (
@@ -109,6 +110,7 @@ export function AnimeDetailHero({
                   className="btn-ghost"
                 >
                   Play dub
+                  <ChevronIcon />
                 </Link>
               )}
             </div>
@@ -116,5 +118,27 @@ export function AnimeDetailHero({
         </div>
       </div>
     </CinematicBackdrop>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+      <path d="M4.5 2.8v10.4L13.2 8 4.5 2.8Z" />
+    </svg>
+  );
+}
+
+function ChevronIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path
+        d="M6 3.5 10.5 8 6 12.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

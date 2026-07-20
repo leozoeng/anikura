@@ -4,7 +4,6 @@ import Image from "next/image";
 import {
   useCallback,
   useEffect,
-  useId,
   useRef,
   useState,
   type ReactNode,
@@ -38,13 +37,14 @@ type YTPlayerConstructor = new (
     events?: {
       onReady?: (event: { target: YTPlayer }) => void;
       onStateChange?: (event: { data: number; target: YTPlayer }) => void;
+      onError?: (event: { data: number }) => void;
     };
   },
 ) => YTPlayer;
 
 declare global {
   interface Window {
-    YT?: { Player: YTPlayerConstructor };
+    YT?: { Player: YTPlayerConstructor; loaded?: number };
     onYouTubeIframeAPIReady?: () => void;
   }
 }
@@ -62,18 +62,29 @@ function loadYouTubeAPI() {
 
   apiPromise = new Promise((resolve) => {
     const done = () => resolve();
+
     if (window.YT?.Player) {
       done();
       return;
     }
-    window.onYouTubeIframeAPIReady = done;
+
+    const prev = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      prev?.();
+      done();
+    };
+
     if (!document.getElementById("youtube-iframe-api")) {
       const tag = document.createElement("script");
       tag.id = "youtube-iframe-api";
       tag.src = "https://www.youtube.com/iframe_api";
       document.head.appendChild(tag);
+    } else if (window.YT?.Player) {
+      // Script already finished while we were wiring the callback.
+      done();
     }
   });
+
   return apiPromise;
 }
 
@@ -114,12 +125,13 @@ export function CinematicBackdrop({
   scale = 1.65,
   showAudioToggle = true,
 }: Props) {
-  const mountId = useId().replace(/:/g, "");
+  const hostRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayer | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(true);
   const [hasTrailer, setHasTrailer] = useState(Boolean(videoId));
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const applyAudio = useCallback((player: YTPlayer, shouldMute: boolean) => {
     if (shouldMute) {
@@ -148,13 +160,22 @@ export function CinematicBackdrop({
   useEffect(() => {
     setHasTrailer(Boolean(videoId) && !reducedMotion);
     setPlaying(false);
+    setFailed(false);
   }, [videoId, reducedMotion]);
 
   useEffect(() => {
-    if (!hasTrailer || !videoId) return;
+    if (!hasTrailer || !videoId || failed) return;
 
     let cancelled = false;
-    const containerId = `yt-${mountId}`;
+    const host = hostRef.current;
+    if (!host) return;
+
+    // Mount into a fresh child so React never reconciles over YouTube's iframe.
+    host.replaceChildren();
+    const mount = document.createElement("div");
+    mount.style.width = "100%";
+    mount.style.height = "100%";
+    host.appendChild(mount);
 
     void loadYouTubeAPI().then(() => {
       if (cancelled || !window.YT?.Player) return;
@@ -163,11 +184,10 @@ export function CinematicBackdrop({
       playerRef.current = null;
       setPlaying(false);
 
-      playerRef.current = new window.YT.Player(containerId, {
+      playerRef.current = new window.YT.Player(mount, {
         videoId,
-        width: 1920,
-        height: 1080,
-        host: "https://www.youtube-nocookie.com",
+        width: "100%",
+        height: "100%",
         playerVars: {
           autoplay: 1,
           mute: 1,
@@ -181,23 +201,35 @@ export function CinematicBackdrop({
           cc_load_policy: 0,
           disablekb: 1,
           fs: 0,
-          showinfo: 0,
-          autohide: 1,
-          vq: "hd1080",
+          origin: window.location.origin,
         },
         events: {
           onReady: (event) => {
             if (cancelled) return;
             preferHd(event.target);
-            const shouldMute = isTrailerMuted();
-            setMuted(shouldMute);
-            applyAudio(event.target, shouldMute);
+            // Autoplay requires mute; soft volume (~20%) only after unmute.
+            event.target.mute();
+            setMuted(true);
+            if (!isTrailerMuted()) {
+              // User previously unmuted — restore after playback starts.
+              window.setTimeout(() => {
+                if (cancelled) return;
+                applyAudio(event.target, false);
+                setMuted(false);
+              }, 250);
+            }
             event.target.playVideo();
 
             const iframe = event.target.getIframe?.();
             if (iframe) {
-              iframe.setAttribute("allow", "autoplay; encrypted-media");
+              iframe.setAttribute(
+                "allow",
+                "autoplay; encrypted-media; picture-in-picture",
+              );
+              iframe.setAttribute("title", `${title} trailer`);
               iframe.style.pointerEvents = "none";
+              iframe.style.width = "100%";
+              iframe.style.height = "100%";
               iframe.tabIndex = -1;
             }
           },
@@ -216,6 +248,12 @@ export function CinematicBackdrop({
             applyAudio(event.target, isTrailerMuted());
             setPlaying(true);
           },
+          onError: () => {
+            if (cancelled) return;
+            setFailed(true);
+            setPlaying(false);
+            setHasTrailer(false);
+          },
         },
       });
     });
@@ -224,8 +262,9 @@ export function CinematicBackdrop({
       cancelled = true;
       playerRef.current?.destroy();
       playerRef.current = null;
+      host.replaceChildren();
     };
-  }, [hasTrailer, videoId, mountId, applyAudio]);
+  }, [hasTrailer, videoId, failed, applyAudio, title]);
 
   useEffect(() => {
     if (!playerRef.current || !playing) return;
@@ -239,23 +278,36 @@ export function CinematicBackdrop({
     if (playerRef.current) applyAudio(playerRef.current, next);
   }
 
-  const showVideo = hasTrailer && videoId;
-  // Poster/banner only when there is no trailer (or reduced motion).
-  const showPoster = !showVideo;
+  const showVideo = hasTrailer && Boolean(videoId) && !failed;
 
   return (
     <section
       className={`relative isolate overflow-hidden ${minHeightClass} ${className}`}
     >
       <div className="absolute inset-0 bg-void">
+        <Image
+          src={posterSrc}
+          alt=""
+          fill
+          priority
+          quality={100}
+          sizes="100vw"
+          className={`object-cover object-[center_25%] transition-opacity duration-700 ${
+            showVideo && playing
+              ? "opacity-0"
+              : posterClassName || "opacity-100"
+          }`}
+        />
+
         {showVideo && (
           <div
-            className="pointer-events-none absolute inset-0 overflow-hidden"
+            className={`pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-700 ${
+              playing ? "opacity-100" : "opacity-0"
+            }`}
             aria-hidden
           >
             <div
-              id={`yt-${mountId}`}
-              title={`${title} trailer`}
+              ref={hostRef}
               className="absolute left-1/2 top-1/2 border-0"
               style={{
                 width: "177.78vh",
@@ -266,20 +318,6 @@ export function CinematicBackdrop({
               }}
             />
           </div>
-        )}
-
-        {showPoster && (
-          <Image
-            src={posterSrc}
-            alt=""
-            fill
-            priority
-            quality={100}
-            sizes="100vw"
-            className={`object-cover object-[center_25%] ${
-              posterClassName || "opacity-100"
-            }`}
-          />
         )}
 
         <div className="absolute inset-0 z-[2] bg-gradient-to-t from-void via-void/50 to-void/10" />

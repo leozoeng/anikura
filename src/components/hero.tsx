@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { AnikuraMark } from "@/components/anikura-logo";
 import { CinematicBackdrop } from "@/components/cinematic-backdrop";
 import type { AniListMedia } from "@/lib/anilist";
 import { stripHtml } from "@/lib/anilist";
@@ -94,12 +93,9 @@ export function Hero({ slides }: Props) {
       scale={1.65}
     >
       <div className="relative mx-auto flex min-h-[100svh] w-full max-w-[1200px] flex-col justify-end px-5 pb-16 pt-28 sm:px-8 lg:pb-24">
-        <div className="flex items-center gap-2.5">
-          <AnikuraMark size={22} className="opacity-90" />
-          <p className="animate-rise text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-snow/70">
-            Anikura
-          </p>
-        </div>
+        <p className="animate-rise text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-snow/70">
+          Anikura
+        </p>
 
         <h1
           className={`animate-rise mt-4 font-semibold text-snow ${titleClass}`}
@@ -125,10 +121,12 @@ export function Hero({ slides }: Props) {
 
         <div className="animate-rise mt-8 flex flex-wrap gap-3">
           <Link href={watchHref(anime, 1)} className="btn-primary">
+            <PlayIcon />
             Play
           </Link>
           <Link href={animeHref(anime)} className="btn-ghost">
             More info
+            <ChevronIcon />
           </Link>
         </div>
 
@@ -149,5 +147,34 @@ export function Hero({ slides }: Props) {
         )}
       </div>
     </CinematicBackdrop>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+      <path d="M4.5 2.8v10.4L13.2 8 4.5 2.8Z" />
+    </svg>
+  );
+}
+
+function ChevronIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden
+      className="transition duration-300 group-hover:translate-x-0.5"
+    >
+      <path
+        d="M6 3.5 10.5 8 6 12.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
