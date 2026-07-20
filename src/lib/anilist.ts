@@ -43,6 +43,7 @@ export type AniListMedia = {
     nodes?: {
       mediaRecommendation?: {
         id: number;
+        idMal?: number | null;
         title: AniListTitle;
         coverImage?: { large?: string | null } | null;
         averageScore?: number | null;
@@ -56,6 +57,7 @@ export type AniListMedia = {
       relationType?: string | null;
       node?: {
         id: number;
+        idMal?: number | null;
         type?: string | null;
         format?: string | null;
         title: AniListTitle;
@@ -192,6 +194,7 @@ export async function getAniListMedia(id: number) {
             relationType
             node {
               id
+              idMal
               type
               format
               title { romaji english native }
@@ -205,6 +208,7 @@ export async function getAniListMedia(id: number) {
           nodes {
             mediaRecommendation {
               id
+              idMal
               title { romaji english }
               coverImage { large }
               averageScore

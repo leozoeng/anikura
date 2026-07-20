@@ -5,6 +5,7 @@ export type CatalogMatch = {
   id: number;
   slug: string;
   poster: string;
+  title: string;
 };
 
 export type RelatedMediaCard = {
@@ -58,13 +59,6 @@ const FORMAT_LABELS: Record<string, string> = {
   MUSIC: "Music",
 };
 
-function normalizeTitle(value?: string | null) {
-  return (value || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
 export function relationLabel(type?: string | null, format?: string | null) {
   const base =
     RELATION_LABELS[type || ""] ||
@@ -91,47 +85,78 @@ export function buildAniIdIndex(catalog: CatalogAnime[]) {
   return byAniId;
 }
 
-function findCatalogMatch(
-  media: { id: number; title: AniListTitle },
-  byAniId: Map<number, CatalogAnime>,
-  catalog: CatalogAnime[],
-): CatalogAnime | null {
-  const direct = byAniId.get(media.id);
-  if (direct) return direct;
-
-  const candidates = [
-    media.title.english,
-    media.title.romaji,
-    media.title.native,
-  ]
-    .map(normalizeTitle)
-    .filter(Boolean);
-
-  if (!candidates.length) return null;
-
+export function buildMalIdIndex(catalog: CatalogAnime[]) {
+  const byMalId = new Map<number, CatalogAnime>();
   for (const item of catalog) {
-    const titles = [
-      item.title,
-      item.alternative,
-      item.native,
-      item.titles,
-    ]
-      .map(normalizeTitle)
-      .filter(Boolean);
-    if (titles.some((t) => candidates.includes(t))) return item;
+    const n = Number(item.mal_id);
+    if (n) byMalId.set(n, item);
+  }
+  return byMalId;
+}
+
+/**
+ * Only exact AniList / MAL id matches — never fuzzy titles.
+ * Title matching was sending users to the wrong anime page.
+ */
+function findCatalogMatch(
+  media: { id: number; idMal?: number | null },
+  byAniId: Map<number, CatalogAnime>,
+  byMalId: Map<number, CatalogAnime>,
+): CatalogAnime | null {
+  const byAni = byAniId.get(media.id);
+  if (byAni) return byAni;
+
+  const mal = Number(media.idMal);
+  if (mal) {
+    const byMal = byMalId.get(mal);
+    if (byMal) return byMal;
   }
 
   return null;
 }
 
 function toMatch(item: CatalogAnime): CatalogMatch {
-  return { id: item.id, slug: item.slug, poster: item.poster };
+  return {
+    id: item.id,
+    slug: item.slug,
+    poster: item.poster,
+    title: item.title,
+  };
+}
+
+/** Keep card art/title aligned with the catalog page the link opens. */
+function cardFromMatch(
+  match: CatalogAnime,
+  media?: {
+    id?: number;
+    title?: AniListTitle;
+    coverImage?: { large?: string | null } | null;
+    seasonYear?: number | null;
+    format?: string | null;
+  },
+): RelatedMediaCard {
+  return {
+    media: {
+      id: Number(match.ani_id) || media?.id || match.id,
+      title: {
+        english: match.title,
+        romaji: media?.title?.romaji || match.title,
+        native: match.native || media?.title?.native,
+      },
+      // Prefer catalog poster so the thumbnail always matches the destination.
+      coverImage: { large: match.poster || media?.coverImage?.large || null },
+      seasonYear: match.year ?? media?.seasonYear ?? null,
+      format: media?.format ?? match.terms_by_type?.type?.[0] ?? null,
+    },
+    match: toMatch(match),
+  };
 }
 
 export function buildRelatedEntries(
   anilist: AniListMedia | null | undefined,
   catalog: CatalogAnime[],
   byAniId = buildAniIdIndex(catalog),
+  byMalId = buildMalIdIndex(catalog),
 ): RelatedEntry[] {
   const edges = anilist?.relations?.edges ?? [];
   const seen = new Set<number>();
@@ -142,23 +167,17 @@ export function buildRelatedEntries(
     if (!node || node.type !== "ANIME") continue;
     const type = edge.relationType || "OTHER";
     if (!RELATED_TYPES.has(type) && node.format !== "MOVIE") continue;
-    if (seen.has(node.id)) continue;
 
-    const match = findCatalogMatch(node, byAniId, catalog);
+    const match = findCatalogMatch(node, byAniId, byMalId);
     if (!match) continue;
+    if (seen.has(match.id)) continue;
+    seen.add(match.id);
 
-    seen.add(node.id);
+    const card = cardFromMatch(match, node);
     out.push({
+      ...card,
       relationType: type,
       relationLabel: relationLabel(type, node.format),
-      media: {
-        id: node.id,
-        title: node.title,
-        coverImage: node.coverImage,
-        seasonYear: node.seasonYear,
-        format: node.format,
-      },
-      match: toMatch(match),
     });
   }
 
@@ -183,19 +202,6 @@ export function buildRelatedEntries(
   return out;
 }
 
-function fromCatalogItem(item: CatalogAnime): RelatedMediaCard {
-  return {
-    media: {
-      id: Number(item.ani_id) || item.id,
-      title: { english: item.title, romaji: item.title, native: item.native },
-      coverImage: { large: item.poster },
-      seasonYear: item.year ?? null,
-      format: item.terms_by_type?.type?.[0] ?? null,
-    },
-    match: toMatch(item),
-  };
-}
-
 function genreOverlapScore(item: CatalogAnime, genres: string[]) {
   if (!genres.length) return 0;
   const set = new Set(item.genres.map((g) => g.toLowerCase()));
@@ -217,6 +223,7 @@ export function buildMoreLikeThis(
 ): RelatedMediaCard[] {
   const limit = options?.limit ?? 16;
   const byAniId = buildAniIdIndex(catalog);
+  const byMalId = buildMalIdIndex(catalog);
   const excludeAni = new Set(options?.excludeAniIds ?? []);
   const excludeCat = new Set(options?.excludeCatalogIds ?? []);
   if (anilist?.id) excludeAni.add(anilist.id);
@@ -234,29 +241,21 @@ export function buildMoreLikeThis(
   for (const node of anilist?.recommendations?.nodes ?? []) {
     const media = node.mediaRecommendation;
     if (!media) continue;
-    const match = findCatalogMatch(media, byAniId, catalog);
+    const match = findCatalogMatch(media, byAniId, byMalId);
     if (!match) continue;
-    push({
-      media: {
-        id: media.id,
-        title: media.title,
-        coverImage: media.coverImage,
-        seasonYear: media.seasonYear,
-        format: media.format,
-      },
-      match: toMatch(match),
-    });
+    push(cardFromMatch(match, media));
     if (out.length >= limit) return out;
   }
 
   const genres = anilist?.genres ?? [];
+  const minOverlap = Math.min(2, Math.max(1, genres.length));
   const scored = catalog
     .map((item) => {
       const overlap = genreOverlapScore(item, genres);
       const rating = Number(item.score) || 0;
       return { item, overlap, rating };
     })
-    .filter((x) => x.overlap > 0)
+    .filter((x) => x.overlap >= minOverlap)
     .sort(
       (a, b) =>
         b.overlap - a.overlap ||
@@ -265,18 +264,8 @@ export function buildMoreLikeThis(
     );
 
   for (const { item } of scored) {
-    push(fromCatalogItem(item));
+    push(cardFromMatch(item));
     if (out.length >= limit) break;
-  }
-
-  if (out.length < Math.min(8, limit)) {
-    const top = [...catalog]
-      .filter((a) => a.score && a.score !== "N/A" && Number(a.score) > 0)
-      .sort((a, b) => Number(b.score) - Number(a.score));
-    for (const item of top) {
-      push(fromCatalogItem(item));
-      if (out.length >= limit) break;
-    }
   }
 
   return out.slice(0, limit);
