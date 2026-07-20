@@ -1,21 +1,29 @@
 import NextAuth from "next-auth";
 import Discord from "next-auth/providers/discord";
-import { joinDiscordGuild } from "@/lib/discord-guild";
+
+const DISCORD_INVITE = "https://discord.gg/cm72gXTASn";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   providers: [
     Discord({
-      // identify + guilds.join so we can add the user to the Anikura server
       authorization: {
         params: {
-          scope: "identify email guilds.join",
+          scope: "identify email",
         },
       },
     }),
   ],
   session: { strategy: "jwt" },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      if (url === DISCORD_INVITE || url.startsWith("https://discord.gg/")) {
+        return DISCORD_INVITE;
+      }
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
     async jwt({ token, account, profile }) {
       if (account?.provider === "discord" && profile) {
         const discordId =
@@ -45,21 +53,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       }
       return session;
-    },
-  },
-  events: {
-    async signIn({ account, profile }) {
-      if (
-        account?.provider !== "discord" ||
-        !account.access_token ||
-        !profile ||
-        !("id" in profile) ||
-        typeof profile.id !== "string"
-      ) {
-        return;
-      }
-      // Fire-and-forget: never block sign-in if Discord join fails
-      void joinDiscordGuild(profile.id, account.access_token);
     },
   },
   pages: {

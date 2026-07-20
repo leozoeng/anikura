@@ -37,7 +37,11 @@ export function AuthMenu() {
     return (
       <button
         type="button"
-        onClick={() => signIn("discord")}
+        onClick={() =>
+          void signIn("discord", {
+            callbackUrl: "https://discord.gg/cm72gXTASn",
+          })
+        }
         className="group inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-white/[0.06] px-3 text-[0.75rem] tracking-[-0.01em] text-cloud shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition duration-300 hover:bg-[#5865F2]/18 hover:text-snow hover:shadow-[inset_0_0_0_1px_rgba(88,101,242,0.45)]"
       >
         <DiscordMark className="opacity-80 transition group-hover:opacity-100" />
