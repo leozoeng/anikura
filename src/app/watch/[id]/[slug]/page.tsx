@@ -65,8 +65,6 @@ export default async function WatchPage({ params, searchParams }: Props) {
   const showTitle = anilist?.title.english || anime.title;
   const synopsis =
     stripHtml(anilist?.description) || anime.description || "";
-  const shortSynopsis =
-    synopsis.length > 280 ? `${synopsis.slice(0, 280).trim()}…` : synopsis;
 
   const score =
     anilist?.averageScore != null
@@ -123,7 +121,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
       score={score}
       year={anilist?.seasonYear || anime.year || null}
       genre={anilist?.genres?.[0] || null}
-      shortSynopsis={shortSynopsis}
+      synopsis={synopsis}
       poster={anilist?.coverImage?.large || anime.poster}
       banner={anilist?.bannerImage || anime.background_image || anime.poster}
       episodeThumbnails={episodeThumbnails}

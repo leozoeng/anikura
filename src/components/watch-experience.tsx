@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AutoplayNext } from "@/components/autoplay-next";
+import { ExpandableText } from "@/components/expandable-text";
 import { MiniPlayer } from "@/components/mini-player";
 import { MyListButton } from "@/components/my-list-button";
 import { VideoPlayer } from "@/components/video-player";
@@ -38,7 +39,7 @@ type Props = {
   score?: string | null;
   year?: number | null;
   genre?: string | null;
-  shortSynopsis: string;
+  synopsis: string;
   poster: string;
   banner: string;
   episodeThumbnails?: Record<number, string>;
@@ -79,6 +80,7 @@ export function WatchExperience(props: Props) {
     score,
     year,
     genre,
+    synopsis,
     poster,
     banner,
     episodeThumbnails = {},
@@ -394,6 +396,14 @@ export function WatchExperience(props: Props) {
                     onServer={() => setServerMenuOpen((o) => !o)}
                     onShare={() => void sharePage()}
                   />
+
+                  {synopsis ? (
+                    <ExpandableText
+                      text={synopsis}
+                      limit={220}
+                      textClassName="text-sm leading-relaxed text-cloud"
+                    />
+                  ) : null}
 
                   {progressPct > 0 && (
                     <div>

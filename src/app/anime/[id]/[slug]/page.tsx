@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { AnimeDetailHero } from "@/components/anime-detail-hero";
 import { EpisodeList } from "@/components/episode-list";
+import { ExpandableText } from "@/components/expandable-text";
 import { RelatedAnimeGrid } from "@/components/related-anime";
 import { getAniListMedia, stripHtml } from "@/lib/anilist";
 import { getGenres, getSeries } from "@/lib/anikoto";
@@ -99,9 +100,7 @@ export default async function AnimeDetailPage({ params }: Props) {
         <div className="grid gap-12 lg:grid-cols-[1fr_280px]">
           <section>
             <h2 className="section-title">Story</h2>
-            <p className="mt-4 max-w-2xl whitespace-pre-line text-[1.05rem] leading-relaxed text-cloud">
-              {description}
-            </p>
+            <ExpandableText text={description} className="mt-4 max-w-2xl" />
           </section>
 
           <aside className="space-y-5 lg:pt-2">
