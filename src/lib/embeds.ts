@@ -1,6 +1,6 @@
 import type { AnimeSummary, Episode } from "./types";
 
-export type EmbedServerId = "vidlink" | "megaplay" | "supaplay" | "megaplay-mal" | "megaplay-ani";
+export type EmbedServerId = "megaplay" | "supaplay" | "megaplay-mal" | "megaplay-ani";
 
 export type EmbedServer = {
   id: EmbedServerId;
@@ -34,15 +34,6 @@ export function buildEmbedServers({
   const aniId = anime.ani_id?.trim();
   const malId = anime.mal_id?.trim();
   const embedId = episode.episode_embed_id;
-
-  // AniList-based players tend to stay healthier than HiAnime-era embed IDs
-  if (aniId) {
-    servers.push({
-      id: "vidlink",
-      label: "VidLink",
-      url: `https://vidlink.pro/anime/${aniId}/${episode.number}/${language}`,
-    });
-  }
 
   const megaFromApi =
     language === "dub"

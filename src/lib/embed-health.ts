@@ -24,8 +24,6 @@ const SUCCESS_HINTS = [
 ];
 
 const ALLOWED_HOSTS = new Set([
-  "vidlink.pro",
-  "www.vidlink.pro",
   "megaplay.buzz",
   "www.megaplay.buzz",
   "supaplay.fun",
