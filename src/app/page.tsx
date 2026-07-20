@@ -3,7 +3,6 @@ import { AniListRow } from "@/components/anilist-row";
 import { AnimeRow } from "@/components/anime-row";
 import { ContinueWatching } from "@/components/continue-watching";
 import { MyListRow } from "@/components/my-list-row";
-import { AnikuraMark } from "@/components/anikura-logo";
 import { Hero, type HeroSlide } from "@/components/hero";
 import {
   getAniListByIds,
@@ -29,12 +28,9 @@ function HeroShell() {
       <div className="absolute inset-0 bg-gradient-to-t from-void via-void/50 to-void/10" />
       <div className="absolute inset-0 bg-gradient-to-r from-void/80 via-void/30 to-transparent" />
       <div className="relative mx-auto flex min-h-[100svh] w-full max-w-[1200px] flex-col justify-end px-5 pb-16 pt-28 sm:px-8 lg:pb-24">
-        <div className="flex items-center gap-2.5">
-          <AnikuraMark size={22} className="opacity-90" />
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-snow/70">
-            Anikura
-          </p>
-        </div>
+        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-snow/70">
+          Anikura
+        </p>
         <div className="mt-6 h-14 w-[min(100%,18rem)] rounded-sm bg-white/8" />
         <div className="mt-5 h-4 w-full max-w-md rounded-sm bg-white/5" />
         <div className="mt-2 h-4 w-3/4 max-w-sm rounded-sm bg-white/5" />

@@ -121,26 +121,30 @@ export function Hero({ slides }: Props) {
 
         <div className="animate-rise mt-8 flex flex-wrap gap-3">
           <Link href={watchHref(anime, 1)} className="btn-primary">
-            <PlayIcon />
+            <span className="btn-icon" aria-hidden>
+              <PlayIcon />
+            </span>
             Play
           </Link>
           <Link href={animeHref(anime)} className="btn-ghost">
             More info
-            <ChevronIcon />
+            <span className="btn-icon" aria-hidden>
+              <ChevronIcon />
+            </span>
           </Link>
         </div>
 
         {queue.length > 1 && (
-          <div className="mt-10 flex items-center gap-2">
+          <div className="hero-dots mt-10" role="tablist" aria-label="Featured titles">
             {queue.map((slide, i) => (
               <button
                 key={slide.anime.id}
                 type="button"
+                role="tab"
                 aria-label={`Show ${slide.anime.title}`}
+                aria-current={i === index ? "true" : undefined}
                 onClick={() => setIndex(i)}
-                className={`h-1 rounded-full transition-all ${
-                  i === index ? "w-8 bg-snow" : "w-3 bg-white/25 hover:bg-white/45"
-                }`}
+                className="hero-dot"
               />
             ))}
           </div>
@@ -152,26 +156,19 @@ export function Hero({ slides }: Props) {
 
 function PlayIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-      <path d="M4.5 2.8v10.4L13.2 8 4.5 2.8Z" />
+    <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+      <path d="M4.2 2.4v11.2L14 8 4.2 2.4Z" />
     </svg>
   );
 }
 
 function ChevronIcon() {
   return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 16 16"
-      fill="none"
-      aria-hidden
-      className="transition duration-300 group-hover:translate-x-0.5"
-    >
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
       <path
         d="M6 3.5 10.5 8 6 12.5"
         stroke="currentColor"
-        strokeWidth="1.4"
+        strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
