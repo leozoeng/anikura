@@ -52,15 +52,6 @@ declare global {
 const YT_ENDED = 0;
 const YT_PLAYING = 1;
 const YT_PAUSED = 2;
-/**
- * Extra wait after PLAYING before revealing the trailer.
- * YouTube often flashes large center prev/pause/next + title chrome
- * for ~1–2s after autoplay starts even with controls:0.
- * Keep this modest — the poster (not a solid void) covers until ready.
- */
-const CHROME_CLEAR_MS = 1400;
-/** Home hero: hold the HD banner before fading into the trailer */
-const DEFAULT_BANNER_HOLD_MS = 0;
 
 let apiPromise: Promise<void> | null = null;
 
@@ -97,6 +88,7 @@ function preferHd(player: YTPlayer) {
 
 type Props = {
   videoId?: string | null;
+  /** Fallback still only — never shown when a trailer is playing. */
   posterSrc: string;
   title: string;
   children?: ReactNode;
@@ -105,12 +97,9 @@ type Props = {
   posterClassName?: string;
   scale?: number;
   showAudioToggle?: boolean;
-  /**
-   * Home: poster covers chrome, then crossfades into the trailer.
-   * Detail: solid void cover only — no banner under/over the trailer.
-   */
+  /** @deprecated Trailer-only; ignored. Kept so call sites don’t break. */
   coverMode?: "poster" | "solid";
-  /** Milliseconds to show the HD banner before fading into the trailer (home). */
+  /** @deprecated No banner hold; trailer starts immediately. */
   bannerHoldMs?: number;
 };
 
@@ -124,16 +113,10 @@ export function CinematicBackdrop({
   posterClassName = "",
   scale = 1.65,
   showAudioToggle = true,
-  coverMode = "poster",
-  bannerHoldMs = DEFAULT_BANNER_HOLD_MS,
 }: Props) {
   const mountId = useId().replace(/:/g, "");
   const playerRef = useRef<YTPlayer | null>(null);
-  const chromeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const chromeScheduled = useRef(false);
-  const [playbackReady, setPlaybackReady] = useState(false);
-  const [holdDone, setHoldDone] = useState(bannerHoldMs <= 0);
+  const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [hasTrailer, setHasTrailer] = useState(Boolean(videoId));
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -146,40 +129,6 @@ export function CinematicBackdrop({
       player.setVolume(TRAILER_VOLUME);
     }
   }, []);
-
-  const clearChromeTimer = useCallback(() => {
-    if (chromeTimer.current) {
-      clearTimeout(chromeTimer.current);
-      chromeTimer.current = null;
-    }
-  }, []);
-
-  const clearHoldTimer = useCallback(() => {
-    if (holdTimer.current) {
-      clearTimeout(holdTimer.current);
-      holdTimer.current = null;
-    }
-  }, []);
-
-  const schedulePlaybackReady = useCallback(
-    (cancelled: () => boolean) => {
-      if (chromeScheduled.current) return;
-      chromeScheduled.current = true;
-      clearChromeTimer();
-      chromeTimer.current = setTimeout(() => {
-        if (cancelled()) return;
-        setPlaybackReady(true);
-        chromeTimer.current = null;
-      }, CHROME_CLEAR_MS);
-    },
-    [clearChromeTimer],
-  );
-
-  const hideChromeAgain = useCallback(() => {
-    clearChromeTimer();
-    chromeScheduled.current = false;
-    setPlaybackReady(false);
-  }, [clearChromeTimer]);
 
   useEffect(() => {
     setMuted(isTrailerMuted());
@@ -196,33 +145,15 @@ export function CinematicBackdrop({
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  // Fresh slide: show HD banner for bannerHoldMs, load trailer underneath
   useEffect(() => {
     setHasTrailer(Boolean(videoId) && !reducedMotion);
-    setPlaybackReady(false);
-    chromeScheduled.current = false;
-    clearChromeTimer();
-    clearHoldTimer();
-
-    if (bannerHoldMs <= 0 || reducedMotion || !videoId) {
-      setHoldDone(true);
-      return;
-    }
-
-    setHoldDone(false);
-    holdTimer.current = setTimeout(() => {
-      setHoldDone(true);
-      holdTimer.current = null;
-    }, bannerHoldMs);
-
-    return () => clearHoldTimer();
-  }, [videoId, reducedMotion, bannerHoldMs, clearChromeTimer, clearHoldTimer]);
+    setPlaying(false);
+  }, [videoId, reducedMotion]);
 
   useEffect(() => {
     if (!hasTrailer || !videoId) return;
 
     let cancelled = false;
-    const isCancelled = () => cancelled;
     const containerId = `yt-${mountId}`;
 
     void loadYouTubeAPI().then(() => {
@@ -230,9 +161,7 @@ export function CinematicBackdrop({
 
       playerRef.current?.destroy();
       playerRef.current = null;
-      clearChromeTimer();
-      chromeScheduled.current = false;
-      setPlaybackReady(false);
+      setPlaying(false);
 
       playerRef.current = new window.YT.Player(containerId, {
         videoId,
@@ -270,17 +199,13 @@ export function CinematicBackdrop({
               iframe.setAttribute("allow", "autoplay; encrypted-media");
               iframe.style.pointerEvents = "none";
               iframe.tabIndex = -1;
-              // Hide native chrome until cover lifts — iframe can paint above siblings.
-              iframe.style.opacity = "0";
             }
           },
           onStateChange: (event) => {
             if (cancelled) return;
 
             if (event.data === YT_PAUSED || event.data === YT_ENDED) {
-              hideChromeAgain();
-              const iframe = event.target.getIframe?.();
-              if (iframe) iframe.style.opacity = "0";
+              setPlaying(false);
               event.target.playVideo();
               return;
             }
@@ -289,7 +214,7 @@ export function CinematicBackdrop({
 
             preferHd(event.target);
             applyAudio(event.target, isTrailerMuted());
-            schedulePlaybackReady(isCancelled);
+            setPlaying(true);
           },
         },
       });
@@ -297,30 +222,15 @@ export function CinematicBackdrop({
 
     return () => {
       cancelled = true;
-      clearChromeTimer();
       playerRef.current?.destroy();
       playerRef.current = null;
     };
-  }, [
-    hasTrailer,
-    videoId,
-    mountId,
-    applyAudio,
-    clearChromeTimer,
-    schedulePlaybackReady,
-    hideChromeAgain,
-  ]);
-
-  const showVideo = hasTrailer && videoId;
-  // Banner hold + chrome clear both required before trailer is visible
-  const videoReady = Boolean(showVideo && holdDone && playbackReady);
+  }, [hasTrailer, videoId, mountId, applyAudio]);
 
   useEffect(() => {
-    if (!playerRef.current) return;
-    const iframe = playerRef.current.getIframe?.();
-    if (iframe) iframe.style.opacity = videoReady ? "1" : "0";
-    if (videoReady) applyAudio(playerRef.current, muted);
-  }, [muted, videoReady, applyAudio]);
+    if (!playerRef.current || !playing) return;
+    applyAudio(playerRef.current, muted);
+  }, [muted, playing, applyAudio]);
 
   function toggleMute() {
     const next = !muted;
@@ -329,20 +239,18 @@ export function CinematicBackdrop({
     if (playerRef.current) applyAudio(playerRef.current, next);
   }
 
-  const covering = Boolean(showVideo && !videoReady);
-  const showPosterImage =
-    coverMode === "poster" || !showVideo ? true : false;
+  const showVideo = hasTrailer && videoId;
+  // Poster/banner only when there is no trailer (or reduced motion).
+  const showPoster = !showVideo;
 
   return (
     <section
       className={`relative isolate overflow-hidden ${minHeightClass} ${className}`}
     >
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 bg-void">
         {showVideo && (
           <div
-            className={`pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-700 ease-out ${
-              videoReady ? "opacity-100" : "opacity-0"
-            }`}
+            className="pointer-events-none absolute inset-0 overflow-hidden"
             aria-hidden
           >
             <div
@@ -360,12 +268,7 @@ export function CinematicBackdrop({
           </div>
         )}
 
-        {/* Solid void only for coverMode="solid" (detail). Prefer poster cover so first paint is never a black void. */}
-        {covering && coverMode === "solid" && (
-          <div className="absolute inset-0 z-[5] bg-void" aria-hidden />
-        )}
-
-        {showPosterImage && (
+        {showPoster && (
           <Image
             src={posterSrc}
             alt=""
@@ -373,12 +276,8 @@ export function CinematicBackdrop({
             priority
             quality={100}
             sizes="100vw"
-            className={`z-[5] object-cover object-[center_25%] transition-opacity duration-[1100ms] ease-out ${
-              showVideo
-                ? covering
-                  ? "opacity-100"
-                  : "opacity-0"
-                : posterClassName || "opacity-100"
+            className={`object-cover object-[center_25%] ${
+              posterClassName || "opacity-100"
             }`}
           />
         )}
@@ -387,7 +286,7 @@ export function CinematicBackdrop({
         <div className="absolute inset-0 z-[2] bg-gradient-to-r from-void/80 via-void/30 to-transparent" />
       </div>
 
-      {showAudioToggle && showVideo && videoReady && (
+      {showAudioToggle && showVideo && (
         <button
           type="button"
           onClick={toggleMute}

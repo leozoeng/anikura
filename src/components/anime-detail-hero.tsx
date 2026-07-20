@@ -44,9 +44,7 @@ export function AnimeDetailHero({
       title={title}
       minHeightClass="min-h-[58vh] pt-16"
       scale={1.65}
-      coverMode="poster"
       posterClassName={trailerId ? "" : "opacity-60"}
-      bannerHoldMs={0}
     >
       <div className="relative mx-auto flex max-w-[1200px] flex-col gap-8 px-5 py-14 sm:flex-row sm:items-end sm:px-8">
         <div className="relative mx-auto h-[280px] w-[190px] shrink-0 overflow-hidden rounded-[1.35rem] shadow-[0_24px_60px_rgba(0,0,0,0.45)] ring-1 ring-white/15 sm:mx-0 sm:h-[340px] sm:w-[230px]">
