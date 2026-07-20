@@ -207,7 +207,7 @@ export function EpisodePicker({
                 onClick={() => selectArc(arc)}
                 className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm tracking-[-0.01em] transition ${
                   active
-                    ? "bg-snow text-void"
+                    ? "bg-white text-black"
                     : "border border-white/12 text-cloud hover:border-white/30 hover:text-snow"
                 }`}
               >
@@ -238,7 +238,7 @@ export function EpisodePicker({
                 onClick={() => setRangeStart(r.start)}
                 className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm tracking-[-0.01em] transition ${
                   active
-                    ? "bg-snow text-void"
+                    ? "bg-white text-black"
                     : "border border-white/12 text-cloud hover:border-white/30 hover:text-snow"
                 }`}
               >
@@ -344,7 +344,7 @@ export function EpisodePicker({
                 </span>
                 <span
                   className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg text-xs font-medium ${
-                    isActive ? "bg-snow text-void" : "bg-raised text-cloud"
+                    isActive ? "bg-white text-black" : "bg-raised text-cloud"
                   }`}
                 >
                   {e.number}
