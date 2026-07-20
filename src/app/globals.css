@@ -165,6 +165,16 @@ button {
   animation: sakura-pulse 2.8s ease-in-out infinite;
 }
 
+.genre-tile {
+  animation: rise 0.7s var(--ease-out-soft) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .genre-tile {
+    animation: none;
+  }
+}
+
 .btn-primary {
   display: inline-flex;
   align-items: center;
