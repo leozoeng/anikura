@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP, Outfit } from "next/font/google";
-import { SiteHeader } from "@/components/site-header";
+import { SiteAtmosphere } from "@/components/site-atmosphere";
 import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -22,7 +23,8 @@ export const metadata: Metadata = {
     default: "Anikura",
     template: "%s — Anikura",
   },
-  description: "A calm, cinematic place to watch anime.",
+  description:
+    "A quiet theater for loud stories — sakura glow, soft nights, and the next episode waiting when you are.",
   icons: {
     icon: "/anikura-mark.png",
     apple: "/anikura-mark.png",
@@ -42,6 +44,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${outfit.variable} ${noto.variable} antialiased`}>
+        <div className="site-atmosphere">
+          <SiteAtmosphere />
+        </div>
         <div className="noise" aria-hidden />
         <SiteHeader />
         <main className="relative z-10 min-h-screen">{children}</main>

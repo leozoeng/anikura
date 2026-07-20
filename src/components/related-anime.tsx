@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { SectionHeading } from "@/components/section-heading";
 import type { RelatedEntry, RelatedMediaCard } from "@/lib/related";
 
 function displayTitle(title: {
@@ -12,12 +13,14 @@ function displayTitle(title: {
 export function RelatedAnimeGrid({
   title,
   subtitle,
+  eyebrow,
   items,
   badge,
   className = "mt-14",
 }: {
   title: string;
   subtitle?: string;
+  eyebrow?: string;
   items: Array<RelatedMediaCard | RelatedEntry>;
   badge?: (item: RelatedMediaCard | RelatedEntry) => string | null | undefined;
   className?: string;
@@ -26,8 +29,7 @@ export function RelatedAnimeGrid({
 
   return (
     <section className={className}>
-      <h2 className="section-title">{title}</h2>
-      {subtitle ? <p className="section-sub">{subtitle}</p> : null}
+      <SectionHeading eyebrow={eyebrow} title={title} subtitle={subtitle} />
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {items.map((item) => {
           const label = badge?.(item);
@@ -38,13 +40,13 @@ export function RelatedAnimeGrid({
               href={`/anime/${item.match.id}/${item.match.slug}`}
               className="group"
             >
-              <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-raised ring-1 ring-white/8 transition group-hover:ring-white/25">
+              <div className="poster-card relative aspect-[2/3]">
                 {poster ? (
                   <Image
                     src={poster}
                     alt={displayTitle(item.media.title)}
                     fill
-                    className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                    className="object-cover transition duration-500 group-hover:scale-[1.04]"
                     sizes="180px"
                   />
                 ) : null}
@@ -54,7 +56,7 @@ export function RelatedAnimeGrid({
                   </span>
                 ) : null}
               </div>
-              <p className="mt-2 line-clamp-2 text-sm tracking-[-0.02em]">
+              <p className="mt-2.5 line-clamp-2 text-sm tracking-[-0.02em] transition group-hover:text-sakura-soft">
                 {displayTitle(item.media.title)}
               </p>
               {item.media.seasonYear ? (
@@ -93,9 +95,9 @@ export function RelatedAnimeList({
             <li key={`${title}-${item.match.id}-${item.media.id}`}>
               <Link
                 href={`/anime/${item.match.id}/${item.match.slug}`}
-                className="flex gap-3 rounded-xl p-1.5 transition hover:bg-white/[0.04]"
+                className="flex gap-3 rounded-xl p-1.5 transition duration-300 hover:bg-[#ff8caa]/08"
               >
-                <span className="relative h-[72px] w-[52px] shrink-0 overflow-hidden rounded-lg bg-raised">
+                <span className="relative h-[72px] w-[52px] shrink-0 overflow-hidden rounded-lg bg-raised ring-1 ring-white/10">
                   <Image
                     src={poster}
                     alt=""

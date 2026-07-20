@@ -27,12 +27,13 @@ export function AnimeRow({ title, subtitle, href, anime }: Props) {
     <section className="group/row relative space-y-5">
       <div className="flex w-full items-end justify-between gap-4 px-3 sm:px-4">
         <div>
+          <p className="section-eyebrow">いま</p>
           <h2 className="section-title">{title}</h2>
           {subtitle && <p className="section-sub">{subtitle}</p>}
         </div>
         {href && (
           <Link href={href} className="link-quiet text-sm">
-            See all
+            See all →
           </Link>
         )}
       </div>

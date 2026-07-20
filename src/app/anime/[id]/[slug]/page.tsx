@@ -3,6 +3,7 @@ import { AnimeDetailHero } from "@/components/anime-detail-hero";
 import { EpisodeList } from "@/components/episode-list";
 import { ExpandableText } from "@/components/expandable-text";
 import { RelatedAnimeGrid } from "@/components/related-anime";
+import { SectionHeading } from "@/components/section-heading";
 import { getAniListMedia, stripHtml } from "@/lib/anilist";
 import { getGenres, getSeries } from "@/lib/anikoto";
 import { findAnimeById, getCatalog } from "@/lib/catalog";
@@ -96,7 +97,7 @@ export default async function AnimeDetailPage({ params }: Props) {
   const episodeFallbackImage = bg || poster;
 
   return (
-    <div className="pb-24">
+    <div className="relative pb-28">
       <AnimeDetailHero
         title={title}
         native={native}
@@ -113,17 +114,29 @@ export default async function AnimeDetailPage({ params }: Props) {
         hasDub={episodes.some((e) => e.embed_url?.dub)}
       />
 
-      <div className="mx-auto max-w-[1200px] px-5 sm:px-8">
-        <div className="grid gap-12 lg:grid-cols-[1fr_280px]">
-          <section>
-            <h2 className="section-title">Story</h2>
-            <ExpandableText text={description} className="mt-4 max-w-2xl" />
+      <div className="relative mx-auto max-w-[1200px] px-5 sm:px-8">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-20 top-10 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(255,140,170,0.12),transparent_70%)] blur-2xl"
+        />
+
+        <div className="relative grid gap-8 lg:grid-cols-[1fr_300px] lg:gap-12">
+          <section className="panel-soft animate-rise p-6 sm:p-8">
+            <SectionHeading
+              eyebrow="ものがたり"
+              title="Story"
+              subtitle="Settle in — here’s what this one is about."
+            />
+            <ExpandableText text={description} className="mt-5 max-w-2xl" />
           </section>
 
-          <aside className="space-y-5 lg:pt-2">
-            <h3 className="text-sm font-semibold tracking-[-0.02em] text-snow">
-              Details
-            </h3>
+          <aside className="panel-soft animate-rise space-y-5 p-6 sm:p-7 [animation-delay:80ms]">
+            <div className="flex items-center gap-2">
+              <span className="sakura-dot h-1.5 w-1.5 rounded-full bg-sakura" />
+              <h3 className="text-sm font-semibold tracking-[-0.02em] text-snow">
+                Details
+              </h3>
+            </div>
             <dl className="space-y-4 text-sm">
               <Info label="Aired" value={anime.aired} />
               <Info
@@ -146,9 +159,9 @@ export default async function AnimeDetailPage({ params }: Props) {
                       href={`https://anilist.co/anime/${aniId}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-apple-blue hover:underline"
+                      className="text-sakura-soft transition hover:text-sakura-mist"
                     >
-                      View on AniList
+                      View on AniList ↗
                     </a>
                   </dd>
                 </div>
@@ -159,16 +172,21 @@ export default async function AnimeDetailPage({ params }: Props) {
 
         <RelatedAnimeGrid
           title="Seasons"
-          subtitle="Prequels and sequels in this series"
-          className="mt-14"
+          eyebrow="つづき"
+          subtitle="Prequels and sequels — keep the night going."
+          className="mt-16"
           items={seasons}
           badge={(item) =>
             "relationLabel" in item ? item.relationLabel : null
           }
         />
 
-        <section className="mt-14">
-          <h2 className="section-title">Episodes</h2>
+        <section className="mt-16">
+          <SectionHeading
+            eyebrow="かいそう"
+            title="Episodes"
+            subtitle="Pick a scene and settle in."
+          />
           <EpisodeList
             anime={anime}
             episodes={episodes}
@@ -180,7 +198,8 @@ export default async function AnimeDetailPage({ params }: Props) {
 
         <RelatedAnimeGrid
           title="Related"
-          subtitle="Movies, spin-offs, and side stories"
+          eyebrow="まわり"
+          subtitle="Movies, spin-offs, and side stories nearby."
           items={related}
           badge={(item) =>
             "relationLabel" in item ? item.relationLabel : null
@@ -189,7 +208,8 @@ export default async function AnimeDetailPage({ params }: Props) {
 
         <RelatedAnimeGrid
           title="More like this"
-          subtitle="Recommendations and similar titles"
+          eyebrow="おすすめ"
+          subtitle="If this mood worked, try these next."
           items={recommendations}
         />
       </div>
@@ -201,8 +221,10 @@ function Info({ label, value }: { label: string; value?: string }) {
   if (!value || value === "&nbsp") return null;
   return (
     <div>
-      <dt className="text-mute">{label}</dt>
-      <dd className="mt-1 capitalize text-cloud">{value}</dd>
+      <dt className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-mute">
+        {label}
+      </dt>
+      <dd className="mt-1.5 capitalize tracking-[-0.01em] text-cloud">{value}</dd>
     </div>
   );
 }

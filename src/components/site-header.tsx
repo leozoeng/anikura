@@ -66,9 +66,9 @@ export function SiteHeader() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative rounded-full px-3.5 py-1.5 text-[0.8125rem] tracking-[-0.01em] transition ${
+                className={`relative rounded-full px-3.5 py-1.5 text-[0.8125rem] tracking-[-0.01em] transition duration-300 ${
                   active
-                    ? "bg-white/[0.1] text-snow"
+                    ? "bg-white/[0.08] text-snow shadow-[inset_0_0_0_1px_rgba(255,140,170,0.22)]"
                     : "text-mute hover:bg-white/[0.05] hover:text-snow"
                 }`}
               >
@@ -84,7 +84,7 @@ export function SiteHeader() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Join Anikura Discord"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-cloud transition hover:bg-white/10 hover:text-snow"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-cloud transition duration-300 hover:bg-[#ff8caa]/12 hover:text-[#ffb3c7]"
           >
             <svg
               width="16"

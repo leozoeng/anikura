@@ -21,6 +21,7 @@ export function AniListRow({ title, subtitle, media, hrefForId }: Props) {
     <section className="space-y-5">
       <div className="flex w-full items-end justify-between gap-4 px-3 sm:px-4">
         <div>
+          <p className="section-eyebrow">いま</p>
           <h2 className="section-title">{title}</h2>
           {subtitle && <p className="section-sub">{subtitle}</p>}
         </div>
@@ -36,7 +37,7 @@ export function AniListRow({ title, subtitle, media, hrefForId }: Props) {
             href={href!}
             className="group w-[138px] shrink-0 sm:w-[156px]"
           >
-            <div className="relative aspect-[2/3] overflow-hidden rounded-[1.1rem] bg-raised ring-1 ring-white/8 transition duration-500 group-hover:-translate-y-1 group-hover:ring-white/25">
+            <div className="relative aspect-[2/3] overflow-hidden rounded-[1.1rem] bg-raised ring-1 ring-white/8 transition duration-500 group-hover:-translate-y-1 group-hover:ring-[#ff8caa]/35">
               {(m.coverImage?.extraLarge || m.coverImage?.large) && (
                 <Image
                   src={m.coverImage.extraLarge || m.coverImage.large || ""}

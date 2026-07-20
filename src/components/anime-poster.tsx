@@ -30,7 +30,7 @@ export function AnimePoster({
       href={href || animeHref(anime)}
       className={`group relative block ${className}`}
     >
-      <div className="relative aspect-[2/3] overflow-hidden rounded-[1.1rem] bg-raised ring-1 ring-white/8 transition duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-1 group-hover:ring-white/25 group-hover:shadow-[0_24px_50px_rgba(0,0,0,0.55)]">
+      <div className="relative aspect-[2/3] overflow-hidden rounded-[1.1rem] bg-raised ring-1 ring-white/8 transition duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-1 group-hover:ring-[#ff8caa]/35 group-hover:shadow-[0_24px_50px_rgba(0,0,0,0.55)]">
         <Image
           src={anime.poster}
           alt={anime.title}

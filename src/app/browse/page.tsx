@@ -38,15 +38,16 @@ export default async function BrowsePage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-[1200px] px-5 pb-24 pt-28 sm:px-8">
-      <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-mute">
+      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-mute uppercase">
+        <span className="sakura-dot h-1.5 w-1.5 rounded-full bg-sakura" />
         Library
-      </p>
-      <h1 className="mt-3 text-[clamp(2.4rem,6vw,4rem)] font-semibold tracking-[-0.05em] text-snow">
+      </div>
+      <h1 className="mt-5 text-[clamp(2.4rem,6vw,4rem)] font-semibold tracking-[-0.05em] text-snow">
         Browse
       </h1>
       <p className="mt-3 max-w-xl text-cloud">
         {meta
-          ? `${meta.totalAnime.toLocaleString()} titles · updated ${new Date(meta.syncedAt).toLocaleDateString()}`
+          ? `${meta.totalAnime.toLocaleString()} titles waiting for a quiet night · updated ${new Date(meta.syncedAt).toLocaleDateString()}`
           : "Run a catalog sync to fill this shelf."}
       </p>
 
@@ -55,10 +56,10 @@ export default async function BrowsePage({ searchParams }: Props) {
           <Link
             key={s.id}
             href={`/browse?sort=${s.id}`}
-            className={`rounded-full px-4 py-2 text-sm tracking-[-0.01em] transition ${
+            className={`rounded-full px-4 py-2 text-sm tracking-[-0.01em] transition duration-300 ${
               sort === s.id
-                ? "bg-snow text-void"
-                : "border border-white/12 text-cloud hover:border-white/30 hover:text-snow"
+                ? "bg-white text-black"
+                : "border border-white/12 text-cloud hover:border-[#ff8caa]/35 hover:bg-[#ff8caa]/08 hover:text-snow"
             }`}
           >
             {s.label}
