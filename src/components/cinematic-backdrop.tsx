@@ -356,14 +356,14 @@ export function CinematicBackdrop({
             alt=""
             fill
             priority
-            quality={92}
+            quality={100}
             sizes="100vw"
-            className={`z-[1] object-cover object-[center_20%] transition-opacity duration-[1100ms] ease-out ${
+            className={`z-[1] object-cover object-[center_25%] transition-opacity duration-[1100ms] ease-out ${
               showVideo
                 ? covering
-                  ? "opacity-100 animate-soft-zoom"
+                  ? "opacity-100"
                   : "opacity-0"
-                : `${posterClassName || "opacity-100"} animate-soft-zoom`
+                : posterClassName || "opacity-100"
             }`}
           />
         )}

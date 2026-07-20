@@ -7,19 +7,18 @@ type AniZipResponse = {
   images?: AniZipImage[];
 };
 
-function pickAniZipPromo(images?: AniZipImage[]): string | null {
-  if (!images?.length) return null;
-  const byType = (type: string) =>
-    images.find(
+function byCoverType(images: AniZipImage[] | undefined, type: string) {
+  return (
+    images?.find(
       (img) =>
         img.coverType?.toLowerCase() === type.toLowerCase() && img.url?.trim(),
-    )?.url?.trim() || null;
-
-  // Fanart = widescreen promo backgrounds; Banner = wide series banner
-  return byType("Fanart") || byType("Banner") || null;
+    )?.url?.trim() || null
+  );
 }
 
-async function fetchAniZipPromo(aniListId: number): Promise<string | null> {
+async function fetchAniZipImages(
+  aniListId: number,
+): Promise<AniZipImage[]> {
   try {
     const res = await fetch(
       `https://api.ani.zip/mappings?anilist_id=${aniListId}`,
@@ -28,11 +27,11 @@ async function fetchAniZipPromo(aniListId: number): Promise<string | null> {
         next: { revalidate: 60 * 60 * 12 },
       },
     );
-    if (!res.ok) return null;
+    if (!res.ok) return [];
     const data = (await res.json()) as AniZipResponse;
-    return pickAniZipPromo(data.images);
+    return data.images || [];
   } catch {
-    return null;
+    return [];
   }
 }
 
@@ -44,22 +43,27 @@ export type PromoBannerFallbacks = {
 };
 
 /**
- * HD promotional still for hero — AniList / TVDB (via ani.zip), never YouTube.
+ * HD promotional still for hero — prefer true widescreen fanart over
+ * AniList's shorter banners (those look soft when stretched full-bleed).
+ * Never YouTube.
  */
 export async function resolvePromoBanner(
   aniListId: number | null | undefined,
   fallbacks: PromoBannerFallbacks = {},
 ): Promise<string> {
   const id = aniListId ? Number(aniListId) : 0;
+  const images = id > 0 ? await fetchAniZipImages(id) : [];
+
+  // Fanart is usually 1920×1080+ — best for full-viewport heroes
+  const fanart = byCoverType(images, "Fanart");
+  if (fanart) return fanart;
 
   if (fallbacks.aniListBanner?.trim()) {
     return fallbacks.aniListBanner.trim();
   }
 
-  if (id > 0) {
-    const fromZip = await fetchAniZipPromo(id);
-    if (fromZip) return fromZip;
-  }
+  const tvdbBanner = byCoverType(images, "Banner");
+  if (tvdbBanner) return tvdbBanner;
 
   return (
     fallbacks.catalogBackground?.trim() ||

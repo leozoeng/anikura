@@ -18,3 +18,4 @@ next-env.d.ts
 
 # Keep synced catalog in repo so production deploys have browse data
 # (regenerate locally with: npm run sync)
+.vercel
