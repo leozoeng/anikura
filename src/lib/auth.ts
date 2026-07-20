@@ -8,12 +8,18 @@ export type Profile = {
   created_at: string;
 };
 
+/** Sole source of truth for who may be admin (env). Never trust DB role alone. */
 function adminEmailsFromEnv(): string[] {
   const raw = process.env.ADMIN_EMAIL ?? "";
   return raw
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
+}
+
+function isAllowlistedAdminEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return adminEmailsFromEnv().includes(email.trim().toLowerCase());
 }
 
 export async function getSessionUser() {
@@ -56,47 +62,34 @@ export async function getProfile(): Promise<Profile | null> {
   };
 }
 
+/**
+ * Admin access is email-allowlist only (`ADMIN_EMAIL`).
+ * Other accounts stay regular users even if profiles.role was tampered with.
+ */
 export async function isAdminUser(): Promise<boolean> {
   const profile = await getProfile();
   if (!profile) return false;
-
-  if (profile.role === "admin") return true;
-
-  const email = profile.email?.toLowerCase();
-  if (email && adminEmailsFromEnv().includes(email)) {
-    return true;
-  }
-
-  return false;
+  return isAllowlistedAdminEmail(profile.email);
 }
 
 /**
- * If the signed-in user is an env allowlisted admin but still role=user,
- * promote them once so RLS/admin RPCs succeed.
+ * Promote the allowlisted admin profile role for RLS/admin RPCs.
+ * Never promotes non-allowlisted emails.
  */
 export async function ensureAdminRole(): Promise<boolean> {
-  if (!(await isAdminUser())) return false;
-
   const profile = await getProfile();
-  if (!profile) return false;
-  if (profile.role === "admin") return true;
-
-  const email = profile.email?.toLowerCase();
-  if (!email || !adminEmailsFromEnv().includes(email)) {
-    // Allowlist-only admins still pass isAdminUser via DB allowlist RPC path
-    return true;
+  if (!profile || !isAllowlistedAdminEmail(profile.email)) {
+    return false;
   }
 
+  if (profile.role === "admin") return true;
+
   const supabase = await createClient();
-  const { error } = await supabase
+  await supabase
     .from("profiles")
     .update({ role: "admin" })
     .eq("id", profile.id);
 
-  // Role change is blocked for non-admins by trigger; allowlist users
-  // already pass private.is_admin() via private.admin_allowlist.
-  if (error) {
-    return true;
-  }
+  // Even if the update is blocked, allowlist email still passes private.is_admin()
   return true;
 }

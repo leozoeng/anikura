@@ -47,30 +47,29 @@ For the simplest local flow, disable email confirmation in the Supabase dashboar
 
 ### Make yourself admin
 
-**Option A — env (app gate):**
+Admin is **email-allowlist only**. New signups always get `role = user` and cannot open `/admin`.
 
 ```bash
-ADMIN_EMAIL=you@example.com
+ADMIN_EMAIL=leozoeng@icloud.com
 ```
 
-Also add the same email to the DB allowlist so admin RPCs / RLS succeed:
+DB allowlist (already seeded for that email):
 
 ```sql
+delete from private.admin_allowlist
+where email is distinct from lower('leozoeng@icloud.com');
+
 insert into private.admin_allowlist (email)
-values (lower('you@example.com'))
+values (lower('leozoeng@icloud.com'))
 on conflict do nothing;
 
 update public.profiles
 set role = 'admin'
-where lower(email) = lower('you@example.com');
-```
+where lower(email) = lower('leozoeng@icloud.com');
 
-**Option B — role only:**
-
-```sql
 update public.profiles
-set role = 'admin'
-where email = 'you@example.com';
+set role = 'user'
+where lower(coalesce(email, '')) is distinct from lower('leozoeng@icloud.com');
 ```
 
 Then open `/admin` for the live dashboard (metrics + active-visitor globe).
