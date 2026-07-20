@@ -10,6 +10,9 @@ function displayTitle(title: {
   return title.english || title.romaji || "Untitled";
 }
 
+/** Matches RelatedAnimeGrid column counts: 2 / 3 / 4 / 5 / 6 */
+const GRID_MAX_COLS = 6;
+
 export function RelatedAnimeGrid({
   title,
   subtitle,
@@ -17,6 +20,7 @@ export function RelatedAnimeGrid({
   items,
   badge,
   className = "mt-14",
+  maxRows,
 }: {
   title: string;
   subtitle?: string;
@@ -24,14 +28,28 @@ export function RelatedAnimeGrid({
   items: Array<RelatedMediaCard | RelatedEntry>;
   badge?: (item: RelatedMediaCard | RelatedEntry) => string | null | undefined;
   className?: string;
+  /** Cap the poster grid to this many rows at every breakpoint. */
+  maxRows?: number;
 }) {
   if (!items.length) return null;
+
+  const visible = maxRows
+    ? items.slice(0, GRID_MAX_COLS * maxRows)
+    : items;
+
+  // Hide items past 2 rows: 4 / 6 / 8 / 10 / 12 by breakpoint.
+  const twoRowCap =
+    maxRows === 2
+      ? " [&>*]:hidden [&>*:nth-child(-n+4)]:block sm:[&>*:nth-child(-n+6)]:block md:[&>*:nth-child(-n+8)]:block lg:[&>*:nth-child(-n+10)]:block xl:[&>*:nth-child(-n+12)]:block"
+      : "";
 
   return (
     <section className={className}>
       <SectionHeading eyebrow={eyebrow} title={title} subtitle={subtitle} />
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-        {items.map((item) => {
+      <div
+        className={`mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6${twoRowCap}`}
+      >
+        {visible.map((item) => {
           const label = badge?.(item);
           const poster = item.media.coverImage?.large || item.match.poster;
           return (

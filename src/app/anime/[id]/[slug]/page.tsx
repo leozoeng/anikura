@@ -96,7 +96,8 @@ export default async function AnimeDetailPage({ params }: Props) {
       ...seasons.map((r) => r.media.id),
       ...related.map((r) => r.media.id),
     ],
-    limit: 18,
+    // 2 rows × up to 6 cols on the detail “More like this” grid
+    limit: 12,
   });
 
   const trailerId =
@@ -210,6 +211,7 @@ export default async function AnimeDetailPage({ params }: Props) {
           title="More like this"
           subtitle="If this mood worked, try these next."
           items={recommendations}
+          maxRows={2}
         />
       </div>
     </div>
