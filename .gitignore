@@ -16,7 +16,5 @@ yarn-error.log*
 next-env.d.ts
 *.tsbuildinfo
 
-# catalog data (generated)
-/data/catalog.json
-/data/genres.json
-/data/sync-meta.json
+# Keep synced catalog in repo so production deploys have browse data
+# (regenerate locally with: npm run sync)
