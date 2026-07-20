@@ -180,8 +180,8 @@ async function HomeRows() {
         <AnimeRow title="Fantasy" href="/genres/fantasy" anime={fantasy} />
       )}
 
-      <section className="page-enter mx-auto max-w-[1200px] px-5 sm:px-8">
-        <div className="flex items-end justify-between gap-4">
+      <section className="page-enter space-y-5">
+        <div className="flex w-full items-end justify-between gap-4 px-3 sm:px-4">
           <div>
             <h2 className="section-title">Genres</h2>
             <p className="section-sub">
@@ -195,7 +195,7 @@ async function HomeRows() {
           </Link>
         </div>
 
-        <div className="fade-x scrollbar-none mt-8 flex gap-3 overflow-x-auto pb-2 sm:gap-3.5">
+        <div className="fade-x scrollbar-none flex gap-3 overflow-x-auto px-3 pb-2 sm:gap-3.5 sm:px-4">
           {genreList.map((g, i) => {
             const cover = genreCovers.get(g.slug);
             return (

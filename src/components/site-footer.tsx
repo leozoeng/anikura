@@ -37,9 +37,9 @@ export function SiteFooter() {
           <div className="footer-petal absolute bottom-40 left-[48%] h-2 w-2 rotate-45 rounded-[50%_40%_60%_50%] bg-[#ff8caa]/25" />
         </div>
 
-        <div className="relative px-4 pb-10 pt-16 sm:px-6 lg:px-8">
+        <div className="relative px-3 pb-10 pt-16 sm:px-4">
           {/* Brand closing statement */}
-          <div className="mx-auto max-w-[1200px]">
+          <div className="w-full">
             <div className="flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-xl">
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-mute uppercase">
