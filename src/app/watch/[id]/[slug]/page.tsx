@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { WatchExperience } from "@/components/watch-experience";
-import { getAniListMedia } from "@/lib/anilist";
-import { getSeries, watchHref } from "@/lib/anikoto";
+import { resolveAniListForAnime } from "@/lib/anilist";
+import { getGenres, getSeries, watchHref } from "@/lib/anikoto";
 import { getCatalog } from "@/lib/catalog";
 import { buildEmbedServers } from "@/lib/embeds";
 import {
@@ -15,6 +15,7 @@ import {
   buildRelatedEntries,
   resolveFranchiseSeasons,
 } from "@/lib/related";
+import type { CatalogAnime } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -40,15 +41,20 @@ export default async function WatchPage({ params, searchParams }: Props) {
   }
 
   const { anime } = series;
-  const aniId = Number(anime.ani_id) || 0;
 
   const [anilist, catalog] = await Promise.all([
-    aniId ? getAniListMedia(aniId) : Promise.resolve(null),
+    resolveAniListForAnime(anime),
     getCatalog(),
   ]);
 
+  const currentCatalog: CatalogAnime =
+    catalog.find((c) => c.id === anime.id) ?? {
+      ...anime,
+      genres: getGenres(anime),
+    };
+
   const episodeMeta = await resolveEpisodeMeta({
-    aniListId: aniId || anilist?.id,
+    aniListId: anilist?.id || Number(anime.ani_id) || undefined,
     streamingEpisodes: anilist?.streamingEpisodes,
   });
 
@@ -91,7 +97,11 @@ export default async function WatchPage({ params, searchParams }: Props) {
         ? anime.score
         : null;
 
-  const seasons = await resolveFranchiseSeasons(anilist, catalog);
+  const seasons = await resolveFranchiseSeasons(
+    anilist,
+    catalog,
+    currentCatalog,
+  );
   const seasonIds = new Set(seasons.map((r) => r.match.id));
   const related = buildRelatedEntries(anilist, catalog, undefined, undefined, {
     excludeCatalogIds: seasonIds,
@@ -159,7 +169,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
       recommendations={recommendations}
       arcContext={{
         malId: anime.mal_id,
-        aniId: anime.ani_id,
+        aniId: anime.ani_id || (anilist?.id ? String(anilist.id) : undefined),
         title: anime.title,
         slug: anime.slug,
       }}

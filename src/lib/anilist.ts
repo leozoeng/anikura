@@ -226,6 +226,63 @@ export async function getAniListMedia(id: number) {
   return data?.Media ?? null;
 }
 
+/** Resolve AniList media when we only have a MyAnimeList id. */
+export async function getAniListMediaByMal(malId: number) {
+  if (!Number.isFinite(malId) || malId <= 0) return null;
+  const data = await anilistFetch<{ Media: AniListMedia | null }>(
+    `query ($idMal: Int) {
+      Media(idMal: $idMal, type: ANIME) {
+        ${MEDIA_FIELDS}
+        format
+        relations {
+          edges {
+            relationType
+            node {
+              id
+              idMal
+              type
+              format
+              title { romaji english native }
+              coverImage { large }
+              seasonYear
+              averageScore
+            }
+          }
+        }
+        recommendations(page: 1, perPage: 25, sort: RATING_DESC) {
+          nodes {
+            mediaRecommendation {
+              id
+              idMal
+              title { romaji english }
+              coverImage { large }
+              averageScore
+              seasonYear
+              format
+            }
+          }
+        }
+      }
+    }`,
+    { idMal: malId },
+  );
+  return data?.Media ?? null;
+}
+
+export async function resolveAniListForAnime(anime: {
+  ani_id?: string | null;
+  mal_id?: string | null;
+}) {
+  const aniId = Number(anime.ani_id) || 0;
+  if (aniId) {
+    const media = await getAniListMedia(aniId);
+    if (media) return media;
+  }
+  const malId = Number(anime.mal_id) || 0;
+  if (malId) return getAniListMediaByMal(malId);
+  return null;
+}
+
 export async function getAniListByIds(ids: number[]) {
   const unique = [...new Set(ids.filter((n) => Number.isFinite(n) && n > 0))];
   if (!unique.length) return [] as AniListMedia[];

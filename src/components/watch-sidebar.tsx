@@ -10,7 +10,11 @@ import {
   getProgressMapForAnime,
   isEpisodeWatched,
 } from "@/lib/progress";
-import type { RelatedEntry, RelatedMediaCard } from "@/lib/related";
+import type {
+  RelatedEntry,
+  RelatedMediaCard,
+  SeasonEntry,
+} from "@/lib/related";
 import type { AnimeSummary, Episode } from "@/lib/types";
 
 type Props = {
@@ -22,7 +26,7 @@ type Props = {
   episodeThumbnails?: Record<number, string>;
   fallbackImage?: string;
   related: RelatedEntry[];
-  seasons?: RelatedEntry[];
+  seasons?: SeasonEntry[];
   recommendations: RelatedMediaCard[];
   nextAirLabel?: string | null;
 };
@@ -238,7 +242,11 @@ export function WatchSidebar({
         title="Seasons"
         items={seasons}
         badge={(item) =>
-          "relationLabel" in item ? item.relationLabel : null
+          "relationLabel" in item && item.relationLabel
+            ? item.relationLabel
+            : "seasonIndex" in item
+              ? `Season ${(item as SeasonEntry).seasonIndex}`
+              : null
         }
       />
 

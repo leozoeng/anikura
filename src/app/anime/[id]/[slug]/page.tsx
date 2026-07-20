@@ -3,8 +3,9 @@ import { AnimeDetailHero } from "@/components/anime-detail-hero";
 import { EpisodeList } from "@/components/episode-list";
 import { ExpandableText } from "@/components/expandable-text";
 import { RelatedAnimeGrid } from "@/components/related-anime";
+import { SeasonsSection } from "@/components/seasons-section";
 import { SectionHeading } from "@/components/section-heading";
-import { getAniListMedia, stripHtml } from "@/lib/anilist";
+import { resolveAniListForAnime, stripHtml } from "@/lib/anilist";
 import { getGenres, getSeries } from "@/lib/anikoto";
 import { findAnimeById, getCatalog } from "@/lib/catalog";
 import {
@@ -16,6 +17,7 @@ import {
   buildRelatedEntries,
   resolveFranchiseSeasons,
 } from "@/lib/related";
+import type { CatalogAnime } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -38,14 +40,19 @@ export default async function AnimeDetailPage({ params }: Props) {
   }
 
   const { anime } = series;
-  const aniId = Number(anime.ani_id) || 0;
   const [anilist, catalog] = await Promise.all([
-    aniId ? getAniListMedia(aniId) : Promise.resolve(null),
+    resolveAniListForAnime(anime),
     getCatalog(),
   ]);
 
+  const currentCatalog: CatalogAnime =
+    catalog.find((c) => c.id === anime.id) ?? {
+      ...anime,
+      genres: getGenres(anime),
+    };
+
   const episodeMeta = await resolveEpisodeMeta({
-    aniListId: aniId || anilist?.id,
+    aniListId: anilist?.id || Number(anime.ani_id) || undefined,
     streamingEpisodes: anilist?.streamingEpisodes,
   });
   const episodes = enrichEpisodesWithMeta(series.episodes, episodeMeta.titles);
@@ -70,7 +77,11 @@ export default async function AnimeDetailPage({ params }: Props) {
         ? anime.score
         : null;
 
-  const seasons = await resolveFranchiseSeasons(anilist, catalog);
+  const seasons = await resolveFranchiseSeasons(
+    anilist,
+    catalog,
+    currentCatalog,
+  );
   const seasonIds = new Set(seasons.map((r) => r.match.id));
   const related = buildRelatedEntries(anilist, catalog, undefined, undefined, {
     excludeCatalogIds: seasonIds,
@@ -95,6 +106,7 @@ export default async function AnimeDetailPage({ params }: Props) {
 
   const episodeThumbnails = episodeMeta.thumbnails;
   const episodeFallbackImage = bg || poster;
+  const aniId = anilist?.id || Number(anime.ani_id) || 0;
 
   return (
     <div className="relative pb-28">
@@ -170,16 +182,7 @@ export default async function AnimeDetailPage({ params }: Props) {
           </aside>
         </div>
 
-        <RelatedAnimeGrid
-          title="Seasons"
-          eyebrow="つづき"
-          subtitle="Prequels and sequels — keep the night going."
-          className="mt-16"
-          items={seasons}
-          badge={(item) =>
-            "relationLabel" in item ? item.relationLabel : null
-          }
-        />
+        <SeasonsSection seasons={seasons} className="mt-16" />
 
         <section className="mt-16">
           <SectionHeading

@@ -16,7 +16,11 @@ import { animeHref, watchHref } from "@/lib/anikoto";
 import { getArcForEpisode } from "@/lib/arcs";
 import type { EmbedServer } from "@/lib/embeds";
 import { getWatchSettings, saveWatchSettings } from "@/lib/progress";
-import type { RelatedEntry, RelatedMediaCard } from "@/lib/related";
+import type {
+  RelatedEntry,
+  RelatedMediaCard,
+  SeasonEntry,
+} from "@/lib/related";
 import type { AnimeSummary, Episode } from "@/lib/types";
 
 const PLAYER_ID = "watch-player";
@@ -47,7 +51,7 @@ type Props = {
     totalEps?: string;
   };
   related: RelatedEntry[];
-  seasons: RelatedEntry[];
+  seasons: SeasonEntry[];
   recommendations: RelatedMediaCard[];
   arcContext: {
     malId?: string;
