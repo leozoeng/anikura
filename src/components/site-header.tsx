@@ -16,11 +16,15 @@ const links = [
 type SiteHeaderProps = {
   email?: string | null;
   isAdmin?: boolean;
+  avatarUrl?: string | null;
+  nickname?: string | null;
 };
 
 export function SiteHeader({
   email = null,
   isAdmin = false,
+  avatarUrl = null,
+  nickname = null,
 }: SiteHeaderProps) {
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
@@ -62,7 +66,12 @@ export function SiteHeader({
           <AnikuraLogo size={28} />
           <span className="text-sm text-mute">Admin</span>
           <div className="ml-auto">
-            <HeaderAuth initialEmail={email} isAdmin={isAdmin} />
+            <HeaderAuth
+              initialEmail={email}
+              isAdmin={isAdmin}
+              initialAvatarUrl={avatarUrl}
+              initialNickname={nickname}
+            />
           </div>
         </div>
       </header>
@@ -123,7 +132,12 @@ export function SiteHeader({
 
           <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
 
-          <HeaderAuth initialEmail={email} isAdmin={isAdmin} />
+          <HeaderAuth
+            initialEmail={email}
+            isAdmin={isAdmin}
+            initialAvatarUrl={avatarUrl}
+            initialNickname={nickname}
+          />
 
           <button
             type="button"

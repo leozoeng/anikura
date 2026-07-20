@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AuthModal } from "@/components/auth/auth-modal";
@@ -9,20 +10,28 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 type HeaderAuthProps = {
   initialEmail?: string | null;
   isAdmin?: boolean;
+  initialAvatarUrl?: string | null;
+  initialNickname?: string | null;
 };
 
 export function HeaderAuth({
   initialEmail = null,
   isAdmin = false,
+  initialAvatarUrl = null,
+  initialNickname = null,
 }: HeaderAuthProps) {
   const [email, setEmail] = useState<string | null>(initialEmail);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl);
+  const [nickname, setNickname] = useState<string | null>(initialNickname);
   const [modalOpen, setModalOpen] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     setEmail(initialEmail);
-  }, [initialEmail]);
+    setAvatarUrl(initialAvatarUrl);
+    setNickname(initialNickname);
+  }, [initialEmail, initialAvatarUrl, initialNickname]);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
@@ -30,8 +39,21 @@ export function HeaderAuth({
     const supabase = createClient();
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setEmail(session?.user?.email ?? null);
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const nextEmail = session?.user?.email ?? null;
+      setEmail(nextEmail);
+      if (!session?.user) {
+        setAvatarUrl(null);
+        setNickname(null);
+        return;
+      }
+      const { data } = await supabase
+        .from("profiles")
+        .select("avatar_url, nickname")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      setAvatarUrl(data?.avatar_url ?? null);
+      setNickname(data?.nickname ?? null);
     });
 
     return () => subscription.unsubscribe();
@@ -42,6 +64,8 @@ export function HeaderAuth({
     const supabase = createClient();
     await supabase.auth.signOut();
     setEmail(null);
+    setAvatarUrl(null);
+    setNickname(null);
     setMenuOpen(false);
     window.location.assign("/");
   }
@@ -84,19 +108,33 @@ export function HeaderAuth({
     );
   }
 
-  const label = email.split("@")[0] ?? "Account";
+  const label =
+    nickname?.trim() || email.split("@")[0] || "Account";
+  const initial = label.slice(0, 1).toUpperCase();
 
   return (
     <div className="relative">
       <button
         type="button"
         onClick={() => setMenuOpen((v) => !v)}
-        className="flex max-w-[9.5rem] items-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-[0.8125rem] text-snow transition hover:bg-white/[0.08]"
+        aria-label={`Account menu for ${label}`}
         aria-expanded={menuOpen}
         aria-haspopup="menu"
+        className="relative h-9 w-9 overflow-hidden rounded-full bg-raised ring-1 ring-white/15 transition hover:ring-white/35"
       >
-        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sakura" aria-hidden />
-        <span className="truncate">{label}</span>
+        {avatarUrl ? (
+          <Image
+            src={avatarUrl}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="36px"
+          />
+        ) : (
+          <span className="grid h-full w-full place-items-center text-[0.8rem] font-medium text-sakura-soft">
+            {initial}
+          </span>
+        )}
       </button>
 
       {menuOpen ? (

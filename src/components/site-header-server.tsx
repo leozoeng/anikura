@@ -10,7 +10,12 @@ export async function SiteHeaderServer() {
   try {
     const [profile, admin] = await Promise.all([getProfile(), isAdminUser()]);
     return (
-      <SiteHeader email={profile?.email ?? null} isAdmin={admin} />
+      <SiteHeader
+        email={profile?.email ?? null}
+        isAdmin={admin}
+        avatarUrl={profile?.avatar_url ?? null}
+        nickname={profile?.nickname ?? null}
+      />
     );
   } catch {
     return <SiteHeader />;
