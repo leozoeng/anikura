@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP, Outfit } from "next/font/google";
-import { auth } from "@/auth";
-import { AuthSessionProvider } from "@/components/session-provider";
 import { SiteAtmosphere } from "@/components/site-atmosphere";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -38,25 +36,21 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
-
   return (
     <html lang="en">
       <body className={`${outfit.variable} ${noto.variable} antialiased`}>
-        <AuthSessionProvider session={session}>
-          <div className="site-atmosphere">
-            <SiteAtmosphere />
-          </div>
-          <div className="noise" aria-hidden />
-          <SiteHeader />
-          <main className="relative z-10 min-h-screen">{children}</main>
-          <SiteFooter />
-        </AuthSessionProvider>
+        <div className="site-atmosphere">
+          <SiteAtmosphere />
+        </div>
+        <div className="noise" aria-hidden />
+        <SiteHeader />
+        <main className="relative z-10 min-h-screen">{children}</main>
+        <SiteFooter />
       </body>
     </html>
   );
