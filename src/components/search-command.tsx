@@ -13,12 +13,38 @@ import {
   useTransition,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
-import type { SearchHit } from "@/app/api/search/route";
+import type { SearchHit } from "@/lib/search";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
+
+const DEBOUNCE_MS = 140;
+const LOADING_DELAY_MS = 120;
+const CLIENT_CACHE_MAX = 32;
+
+const clientCache = new Map<string, SearchHit[]>();
+
+function cacheGet(query: string): SearchHit[] | undefined {
+  const key = query.toLowerCase();
+  const hit = clientCache.get(key);
+  if (!hit) return undefined;
+  clientCache.delete(key);
+  clientCache.set(key, hit);
+  return hit;
+}
+
+function cacheSet(query: string, results: SearchHit[]) {
+  const key = query.toLowerCase();
+  if (clientCache.has(key)) clientCache.delete(key);
+  clientCache.set(key, results);
+  while (clientCache.size > CLIENT_CACHE_MAX) {
+    const oldest = clientCache.keys().next().value;
+    if (oldest === undefined) break;
+    clientCache.delete(oldest);
+  }
+}
 
 export function SearchCommand({ open, onOpenChange }: Props) {
   const router = useRouter();
@@ -29,67 +55,149 @@ export function SearchCommand({ open, onOpenChange }: Props) {
   const [results, setResults] = useState<SearchHit[]>([]);
   const [active, setActive] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showLoading, setShowLoading] = useState(false);
   const [, startTransition] = useTransition();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadingDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     if (open) {
-      const t = setTimeout(() => inputRef.current?.focus(), 20);
+      const t = setTimeout(() => inputRef.current?.focus(), 0);
       return () => clearTimeout(t);
     }
     setQ("");
     setResults([]);
     setActive(0);
+    setLoading(false);
+    setShowLoading(false);
+    abortRef.current?.abort();
   }, [open]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        onOpenChange(true);
+        onOpenChange(!open);
       }
-      if (e.key === "Escape") onOpenChange(false);
+      if (e.key === "Escape" && open) onOpenChange(false);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onOpenChange]);
+  }, [onOpenChange, open]);
 
   useEffect(() => {
     function onPointer(e: PointerEvent) {
       if (!rootRef.current?.contains(e.target as Node)) {
-        if (!q) onOpenChange(false);
+        onOpenChange(false);
       }
     }
     if (!open) return;
     document.addEventListener("pointerdown", onPointer);
     return () => document.removeEventListener("pointerdown", onPointer);
-  }, [open, q, onOpenChange]);
+  }, [open, onOpenChange]);
 
-  const runSearch = useCallback(async (value: string) => {
-    if (value.trim().length < 2) {
-      setResults([]);
-      setLoading(false);
-      return;
+  useEffect(() => {
+    if (loading) {
+      loadingDelayRef.current = setTimeout(() => setShowLoading(true), LOADING_DELAY_MS);
+      return () => {
+        if (loadingDelayRef.current) clearTimeout(loadingDelayRef.current);
+      };
     }
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(value.trim())}`);
-      const data = (await res.json()) as { results: SearchHit[] };
-      setResults(data.results || []);
-      setActive(0);
-    } catch {
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
+    setShowLoading(false);
+    if (loadingDelayRef.current) clearTimeout(loadingDelayRef.current);
+  }, [loading]);
+
+  const applyResults = useCallback((hits: SearchHit[]) => {
+    setResults(hits);
+    setActive(0);
   }, []);
+
+  const runSearch = useCallback(
+    async (value: string) => {
+      const trimmed = value.trim();
+      if (trimmed.length < 2) {
+        abortRef.current?.abort();
+        setResults([]);
+        setLoading(false);
+        return;
+      }
+
+      const cached = cacheGet(trimmed);
+      if (cached) {
+        applyResults(cached);
+        setLoading(false);
+      }
+
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      const requestId = ++requestIdRef.current;
+
+      if (!cached) setLoading(true);
+
+      try {
+        // Paint local catalog hits first, then enrich with AniList if needed.
+        const localRes = await fetch(
+          `/api/search?q=${encodeURIComponent(trimmed)}&scope=local`,
+          { signal: controller.signal },
+        );
+        if (requestId !== requestIdRef.current) return;
+        const localData = (await localRes.json()) as { results: SearchHit[] };
+        const localHits = localData.results || [];
+        if (!cached || localHits.length) {
+          applyResults(localHits);
+          if (localHits.length) cacheSet(trimmed, localHits);
+        }
+
+        // Enough catalog hits — skip AniList round-trip.
+        if (localHits.length >= 5) {
+          cacheSet(trimmed, localHits);
+          return;
+        }
+
+        const fullRes = await fetch(
+          `/api/search?q=${encodeURIComponent(trimmed)}`,
+          { signal: controller.signal },
+        );
+        if (requestId !== requestIdRef.current) return;
+        const fullData = (await fullRes.json()) as { results: SearchHit[] };
+        const fullHits = fullData.results || [];
+        applyResults(fullHits);
+        cacheSet(trimmed, fullHits);
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        if (requestId !== requestIdRef.current) return;
+        if (!cached) setResults([]);
+      } finally {
+        if (requestId === requestIdRef.current) setLoading(false);
+      }
+    },
+    [applyResults],
+  );
 
   function onChange(value: string) {
     setQ(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    const trimmed = value.trim();
+    if (trimmed.length < 2) {
+      abortRef.current?.abort();
+      setResults([]);
+      setLoading(false);
+      return;
+    }
+
+    const cached = cacheGet(trimmed);
+    if (cached) {
+      applyResults(cached);
+      setLoading(false);
+    }
+
     debounceRef.current = setTimeout(() => {
       void runSearch(value);
-    }, 220);
+    }, cached ? 80 : DEBOUNCE_MS);
   }
 
   function go(href: string) {
@@ -115,6 +223,9 @@ export function SearchCommand({ open, onOpenChange }: Props) {
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setActive((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter" && results[active]) {
+      e.preventDefault();
+      go(results[active].href);
     } else if (e.key === "Escape") {
       onOpenChange(false);
     }
@@ -147,6 +258,8 @@ export function SearchCommand({ open, onOpenChange }: Props) {
     );
   }
 
+  const showPanel = results.length > 0 || (showLoading && q.trim().length >= 2);
+
   return (
     <div ref={rootRef} className="relative animate-rise">
       <form onSubmit={onSubmit}>
@@ -160,29 +273,39 @@ export function SearchCommand({ open, onOpenChange }: Props) {
             role="combobox"
             aria-expanded={results.length > 0}
             aria-controls={listId}
+            aria-activedescendant={
+              results[active] ? `${listId}-${active}` : undefined
+            }
             aria-autocomplete="list"
             placeholder="Search anime"
+            autoComplete="off"
+            spellCheck={false}
             className="w-[min(78vw,320px)] rounded-full border border-white/15 bg-white/8 py-2 pl-4 pr-12 text-sm text-snow outline-none placeholder:text-mute focus:border-white/35 focus:bg-white/10"
           />
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-mute">
-            {loading ? "…" : "⌘K"}
+            {showLoading ? (
+              <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border border-mute/40 border-t-snow/80" />
+            ) : (
+              "⌘K"
+            )}
           </span>
         </label>
       </form>
 
-      {(results.length > 0 || (loading && q.length >= 2)) && (
+      {showPanel && (
         <div
           id={listId}
           role="listbox"
           className="absolute right-0 z-50 mt-2 w-[min(92vw,380px)] overflow-hidden rounded-2xl border border-white/10 bg-black/90 shadow-[0_30px_80px_rgba(0,0,0,0.65)] backdrop-blur-2xl"
         >
-          {loading && results.length === 0 ? (
+          {showLoading && results.length === 0 ? (
             <p className="px-4 py-6 text-sm text-mute">Searching…</p>
           ) : (
             <ul className="max-h-[70vh] overflow-y-auto py-2">
               {results.map((hit, index) => (
                 <li key={hit.key}>
                   <Link
+                    id={`${listId}-${index}`}
                     href={hit.href}
                     role="option"
                     aria-selected={index === active}
@@ -200,6 +323,7 @@ export function SearchCommand({ open, onOpenChange }: Props) {
                           fill
                           className="object-cover"
                           sizes="40px"
+                          priority={index < 4}
                         />
                       ) : null}
                     </div>

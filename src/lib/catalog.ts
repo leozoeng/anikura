@@ -7,6 +7,9 @@ const DATA_DIR = path.join(process.cwd(), "data");
 const CATALOG_PATH = path.join(DATA_DIR, "catalog.json");
 const GENRES_PATH = path.join(DATA_DIR, "genres.json");
 const META_PATH = path.join(DATA_DIR, "sync-meta.json");
+const CATALOG_MEM_TTL_MS = 60_000;
+
+let catalogMem: { data: CatalogAnime[]; at: number } | null = null;
 
 async function readJson<T>(filePath: string): Promise<T | null> {
   try {
@@ -22,7 +25,13 @@ export async function ensureDataDir() {
 }
 
 export async function getCatalog(): Promise<CatalogAnime[]> {
-  return (await readJson<CatalogAnime[]>(CATALOG_PATH)) ?? [];
+  const now = Date.now();
+  if (catalogMem && now - catalogMem.at < CATALOG_MEM_TTL_MS) {
+    return catalogMem.data;
+  }
+  const data = (await readJson<CatalogAnime[]>(CATALOG_PATH)) ?? [];
+  catalogMem = { data, at: now };
+  return data;
 }
 
 export async function getGenreStats(): Promise<GenreStat[]> {
@@ -60,6 +69,7 @@ export async function saveCatalog(
     fs.writeFile(META_PATH, JSON.stringify(meta, null, 2)),
   ]);
 
+  catalogMem = { data: catalog, at: Date.now() };
   return { genres, meta };
 }
 
