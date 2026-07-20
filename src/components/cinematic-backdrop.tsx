@@ -52,8 +52,12 @@ declare global {
 const YT_ENDED = 0;
 const YT_PLAYING = 1;
 const YT_PAUSED = 2;
-/** Extra wait after playback starts so YT chrome (pause/skip) is gone */
-const CHROME_CLEAR_MS = 1200;
+/**
+ * Extra wait after PLAYING before revealing the trailer.
+ * YouTube often flashes large center prev/pause/next + title chrome
+ * for ~1–2s after autoplay starts even with controls:0.
+ */
+const CHROME_CLEAR_MS = 2400;
 /** Home hero: hold the HD banner before fading into the trailer */
 const DEFAULT_BANNER_HOLD_MS = 0;
 
@@ -248,6 +252,7 @@ export function CinematicBackdrop({
           disablekb: 1,
           fs: 0,
           showinfo: 0,
+          autohide: 1,
           vq: "hd1080",
         },
         events: {
@@ -264,6 +269,8 @@ export function CinematicBackdrop({
               iframe.setAttribute("allow", "autoplay; encrypted-media");
               iframe.style.pointerEvents = "none";
               iframe.tabIndex = -1;
+              // Hide native chrome until cover lifts — iframe can paint above siblings.
+              iframe.style.opacity = "0";
             }
           },
           onStateChange: (event) => {
@@ -271,6 +278,8 @@ export function CinematicBackdrop({
 
             if (event.data === YT_PAUSED || event.data === YT_ENDED) {
               hideChromeAgain();
+              const iframe = event.target.getIframe?.();
+              if (iframe) iframe.style.opacity = "0";
               event.target.playVideo();
               return;
             }
@@ -306,8 +315,10 @@ export function CinematicBackdrop({
   const videoReady = Boolean(showVideo && holdDone && playbackReady);
 
   useEffect(() => {
-    if (!playerRef.current || !videoReady) return;
-    applyAudio(playerRef.current, muted);
+    if (!playerRef.current) return;
+    const iframe = playerRef.current.getIframe?.();
+    if (iframe) iframe.style.opacity = videoReady ? "1" : "0";
+    if (videoReady) applyAudio(playerRef.current, muted);
   }, [muted, videoReady, applyAudio]);
 
   function toggleMute() {
@@ -328,7 +339,9 @@ export function CinematicBackdrop({
       <div className="absolute inset-0">
         {showVideo && (
           <div
-            className="pointer-events-none absolute inset-0 overflow-hidden"
+            className={`pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-700 ease-out ${
+              videoReady ? "opacity-100" : "opacity-0"
+            }`}
             aria-hidden
           >
             <div
@@ -346,8 +359,9 @@ export function CinematicBackdrop({
           </div>
         )}
 
+        {/* Opaque cover above iframe until PLAYING + chrome delay — hides YT center controls */}
         {covering && coverMode === "solid" && (
-          <div className="absolute inset-0 z-[1] bg-void" aria-hidden />
+          <div className="absolute inset-0 z-[5] bg-void" aria-hidden />
         )}
 
         {showPosterImage && (
@@ -358,7 +372,7 @@ export function CinematicBackdrop({
             priority
             quality={100}
             sizes="100vw"
-            className={`z-[1] object-cover object-[center_25%] transition-opacity duration-[1100ms] ease-out ${
+            className={`z-[5] object-cover object-[center_25%] transition-opacity duration-[1100ms] ease-out ${
               showVideo
                 ? covering
                   ? "opacity-100"
