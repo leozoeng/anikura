@@ -59,6 +59,10 @@ export function SiteHeader({
 
   const solid = scrolled || searchOpen || menuOpen;
 
+  const navLinks = email
+    ? [...links, { href: "/profile", label: "Profile" }]
+    : links;
+
   if (hideChrome) {
     return (
       <header className="site-chrome fixed inset-x-0 top-0 z-40 bg-void/90 backdrop-blur-md">
@@ -90,7 +94,7 @@ export function SiteHeader({
         <AnikuraLogo size={28} />
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
-          {links.map((link) => {
+          {navLinks.map((link) => {
             const active =
               link.href === "/"
                 ? pathname === "/"
@@ -175,7 +179,7 @@ export function SiteHeader({
         }`}
       >
         <nav className="flex w-full flex-col gap-1 px-3 py-4 sm:px-4" aria-label="Mobile">
-          {links.map((link) => {
+          {navLinks.map((link) => {
             const active =
               link.href === "/"
                 ? pathname === "/"
@@ -223,24 +227,14 @@ export function SiteHeader({
                 Create account
               </Link>
             </>
-          ) : (
-            <>
-              <Link
-                href="/profile"
-                className="rounded-xl px-4 py-3 text-[0.95rem] tracking-[-0.02em] text-snow transition hover:bg-white/[0.05]"
-              >
-                Profile
-              </Link>
-              {isAdmin ? (
-                <Link
-                  href="/admin"
-                  className="rounded-xl px-4 py-3 text-[0.95rem] tracking-[-0.02em] text-snow transition hover:bg-white/[0.05]"
-                >
-                  Admin
-                </Link>
-              ) : null}
-            </>
-          )}
+          ) : isAdmin ? (
+            <Link
+              href="/admin"
+              className="rounded-xl px-4 py-3 text-[0.95rem] tracking-[-0.02em] text-snow transition hover:bg-white/[0.05]"
+            >
+              Admin
+            </Link>
+          ) : null}
         </nav>
       </div>
     </header>

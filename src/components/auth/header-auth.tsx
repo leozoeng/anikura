@@ -150,14 +150,6 @@ export function HeaderAuth({
             className="absolute right-0 top-[calc(100%+8px)] z-50 min-w-[11rem] overflow-hidden rounded-xl border border-white/[0.1] bg-[#0c0c0e] py-1 shadow-[0_20px_50px_rgba(0,0,0,0.55)]"
           >
             <p className="truncate px-3 py-2 text-[0.7rem] text-mute">{email}</p>
-            <Link
-              href="/profile"
-              role="menuitem"
-              className="block px-3 py-2 text-sm text-snow transition hover:bg-white/[0.06]"
-              onClick={() => setMenuOpen(false)}
-            >
-              Profile
-            </Link>
             {isAdmin ? (
               <Link
                 href="/admin"
