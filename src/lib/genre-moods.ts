@@ -68,8 +68,8 @@ export const MOOD_ART: Record<
 > = {
   action: {
     src: "/moods/action.jpg",
-    credit: "Jujutsu Kaisen",
-    position: "object-[center_30%]",
+    credit: "One Piece",
+    position: "object-[center_22%]",
   },
   fantasy: {
     src: "/moods/fantasy.jpg",
