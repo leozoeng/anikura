@@ -20,6 +20,10 @@ type Props = {
   watchBasePath: string;
   language: "sub" | "dub";
   episode: number;
+  /** Hide the compact bar under the player (action row hosts Server instead). */
+  hideToolbar?: boolean;
+  menuOpen?: boolean;
+  onMenuOpenChange?: (open: boolean) => void;
 };
 
 export function VideoPlayer({
@@ -29,6 +33,9 @@ export function VideoPlayer({
   watchBasePath,
   language,
   episode,
+  hideToolbar = false,
+  menuOpen: menuOpenProp,
+  onMenuOpenChange,
 }: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -39,7 +46,16 @@ export function VideoPlayer({
   const [resolving, setResolving] = useState(true);
   const [resolveError, setResolveError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpenInternal, setMenuOpenInternal] = useState(false);
+  const menuOpen = menuOpenProp ?? menuOpenInternal;
+  const setMenuOpen = useCallback(
+    (next: boolean | ((prev: boolean) => boolean)) => {
+      const value = typeof next === "function" ? next(menuOpen) : next;
+      if (onMenuOpenChange) onMenuOpenChange(value);
+      else setMenuOpenInternal(value);
+    },
+    [menuOpen, onMenuOpenChange],
+  );
   const menuRef = useRef<HTMLDivElement>(null);
   const resolveGen = useRef(0);
   const streamKey = `${episode}:${language}:${servers.map((s) => `${s.id}:${s.url}`).join("|")}`;
@@ -148,6 +164,12 @@ export function VideoPlayer({
   );
 
   useEffect(() => {
+    if (preferredServerId && preferredServerId !== serverId) {
+      setServerId(preferredServerId);
+    }
+  }, [preferredServerId, serverId]);
+
+  useEffect(() => {
     void resolveServers({
       preferredId: preferredServerId,
       forcePreferred: Boolean(preferredServerId),
@@ -235,93 +257,110 @@ export function VideoPlayer({
       </div>
 
       {/* Compact playback bar */}
-      <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-elevated/50 px-3 py-2 backdrop-blur-sm">
-        <div className="flex min-w-0 items-center gap-2 text-xs text-mute">
-          {active && healthDot(active.id)}
-          <span className="truncate">
-            {active?.label ?? "Server"}
-            {resolving ? " · connecting" : ""}
-          </span>
+      {!hideToolbar && (
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-elevated/50 px-3 py-2 backdrop-blur-sm">
+          <div className="flex min-w-0 items-center gap-2 text-xs text-mute">
+            {active && healthDot(active.id)}
+            <span className="truncate">
+              {active?.label ?? "Server"}
+              {resolving ? " · connecting" : ""}
+            </span>
+          </div>
+
+          <div className="relative shrink-0" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-label="Playback settings"
+              className="grid h-8 w-8 place-items-center rounded-full text-cloud transition hover:bg-white/10 hover:text-snow"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <circle cx="8" cy="3" r="1.25" />
+                <circle cx="8" cy="8" r="1.25" />
+                <circle cx="8" cy="13" r="1.25" />
+              </svg>
+            </button>
+
+            {menuOpen && <ServerMenuPanel />}
+          </div>
         </div>
+      )}
 
-        <div className="relative shrink-0" ref={menuRef}>
-          <button
-            type="button"
-            onClick={() => setMenuOpen((o) => !o)}
-            aria-label="Playback settings"
-            className="grid h-8 w-8 place-items-center rounded-full text-cloud transition hover:bg-white/10 hover:text-snow"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <circle cx="8" cy="3" r="1.25" />
-              <circle cx="8" cy="8" r="1.25" />
-              <circle cx="8" cy="13" r="1.25" />
-            </svg>
-          </button>
-
+      {/* Floating server menu when toolbar is hidden (opened from action row) */}
+      {hideToolbar && (
+        <div className="relative" ref={menuRef}>
           {menuOpen && (
-            <div className="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-2xl border border-white/10 bg-black/95 py-2 shadow-2xl backdrop-blur-xl">
-              <p className="px-3.5 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-mute">
-                Server
-              </p>
-              {servers.map((server) => {
-                const selected = server.id === active?.id;
-                const state = health[server.id] || "unknown";
-                return (
-                  <button
-                    key={server.id}
-                    type="button"
-                    onClick={() => selectManual(server.id)}
-                    className={`flex w-full items-center gap-2 px-3.5 py-2 text-left text-sm transition hover:bg-white/5 ${
-                      selected ? "text-snow" : "text-cloud"
-                    }`}
-                  >
-                    {healthDot(server.id)}
-                    <span className="flex-1">{server.label}</span>
-                    <span className="text-[10px] uppercase text-mute">
-                      {state === "ok" ? "ok" : state === "down" ? "down" : ""}
-                    </span>
-                  </button>
-                );
-              })}
-              <div className="my-2 border-t border-white/8" />
-              <button
-                type="button"
-                onClick={() => {
-                  void resolveServers({ preferredId: null });
-                  setMenuOpen(false);
-                }}
-                className="block w-full px-3.5 py-2 text-left text-sm text-cloud hover:bg-white/5 hover:text-snow"
-              >
-                Auto-select best
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  tryNextServer();
-                  setMenuOpen(false);
-                }}
-                className="block w-full px-3.5 py-2 text-left text-sm text-cloud hover:bg-white/5 hover:text-snow"
-              >
-                Try next server
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setReloadKey((k) => k + 1);
-                  setMenuOpen(false);
-                }}
-                className="block w-full px-3.5 py-2 text-left text-sm text-cloud hover:bg-white/5 hover:text-snow"
-              >
-                Reload player
-              </button>
+            <div className="absolute left-0 right-0 z-30 mt-2 sm:left-auto sm:right-0 sm:w-56">
+              <ServerMenuPanel />
             </div>
           )}
         </div>
-      </div>
+      )}
 
-      {resolveError && (
+      {resolveError && !hideToolbar && (
         <p className="mt-2 text-center text-xs text-mute">{resolveError}</p>
       )}
     </div>
   );
+
+  function ServerMenuPanel() {
+    return (
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/95 py-2 shadow-2xl backdrop-blur-xl">
+        <p className="px-3.5 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-mute">
+          Server
+        </p>
+        {servers.map((server) => {
+          const selected = server.id === active?.id;
+          const state = health[server.id] || "unknown";
+          return (
+            <button
+              key={server.id}
+              type="button"
+              onClick={() => selectManual(server.id)}
+              className={`flex w-full items-center gap-2 px-3.5 py-2 text-left text-sm transition hover:bg-white/5 ${
+                selected ? "text-snow" : "text-cloud"
+              }`}
+            >
+              {healthDot(server.id)}
+              <span className="flex-1">{server.label}</span>
+              <span className="text-[10px] uppercase text-mute">
+                {state === "ok" ? "ok" : state === "down" ? "down" : ""}
+              </span>
+            </button>
+          );
+        })}
+        <div className="my-2 border-t border-white/8" />
+        <button
+          type="button"
+          onClick={() => {
+            void resolveServers({ preferredId: null });
+            setMenuOpen(false);
+          }}
+          className="block w-full px-3.5 py-2 text-left text-sm text-cloud hover:bg-white/5 hover:text-snow"
+        >
+          Auto-select best
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            tryNextServer();
+            setMenuOpen(false);
+          }}
+          className="block w-full px-3.5 py-2 text-left text-sm text-cloud hover:bg-white/5 hover:text-snow"
+        >
+          Try next server
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setReloadKey((k) => k + 1);
+            setMenuOpen(false);
+          }}
+          className="block w-full px-3.5 py-2 text-left text-sm text-cloud hover:bg-white/5 hover:text-snow"
+        >
+          Reload player
+        </button>
+      </div>
+    );
+  }
 }

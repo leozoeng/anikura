@@ -45,6 +45,7 @@ export type AniListMedia = {
         title: AniListTitle;
         coverImage?: { large?: string | null } | null;
         averageScore?: number | null;
+        seasonYear?: number | null;
       } | null;
     }[];
   } | null;
@@ -176,6 +177,7 @@ export async function getAniListMedia(id: number) {
               title { romaji english }
               coverImage { large }
               averageScore
+              seasonYear
             }
           }
         }

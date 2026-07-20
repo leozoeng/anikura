@@ -4,15 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AutoplayNext } from "@/components/autoplay-next";
-import { EpisodePicker } from "@/components/episode-picker";
 import { MiniPlayer } from "@/components/mini-player";
 import { MyListButton } from "@/components/my-list-button";
 import { VideoPlayer } from "@/components/video-player";
 import { WatchControls } from "@/components/watch-controls";
 import { WatchKeyboard } from "@/components/watch-keyboard";
 import { WatchProgressTracker } from "@/components/watch-progress-tracker";
-import { WatchTabs } from "@/components/watch-tabs";
-import { decodeEntities } from "@/lib/anilist";
+import { WatchSidebar } from "@/components/watch-sidebar";
 import { animeHref, watchHref } from "@/lib/anikoto";
 import { getArcForEpisode } from "@/lib/arcs";
 import type { EmbedServer } from "@/lib/embeds";
@@ -24,12 +22,14 @@ import {
 import type { AnimeSummary, Episode } from "@/lib/types";
 
 const PLAYER_ID = "watch-player";
+const TIP_DISMISS_KEY = "anikura:watch-server-tip-dismissed";
 
 type Recommendation = {
   media: {
     id: number;
     title: { english?: string | null; romaji?: string | null };
     coverImage?: { large?: string | null } | null;
+    seasonYear?: number | null;
   };
   match: { id: number; slug: string; poster: string };
 };
@@ -67,6 +67,7 @@ type Props = {
   prevHref?: string;
   nextHref?: string;
   nextTitle?: string;
+  nextAirLabel?: string | null;
   hasSub: boolean;
   hasDub: boolean;
   durationMin?: number;
@@ -86,7 +87,6 @@ export function WatchExperience(props: Props) {
     score,
     year,
     genre,
-    shortSynopsis,
     poster,
     banner,
     episodeThumbnails = {},
@@ -96,6 +96,7 @@ export function WatchExperience(props: Props) {
     prevHref,
     nextHref,
     nextTitle,
+    nextAirLabel,
     hasSub,
     hasDub,
     durationMin,
@@ -104,9 +105,21 @@ export function WatchExperience(props: Props) {
   const [settings, setSettings] = useState(getWatchSettings);
   const [autoplayArmed, setAutoplayArmed] = useState(false);
   const [progressPct, setProgressPct] = useState(0);
+  const [serverMenuOpen, setServerMenuOpen] = useState(false);
+  const [tipVisible, setTipVisible] = useState(true);
   const playerRef = useRef<HTMLDivElement>(null);
 
   const currentArc = getArcForEpisode(arcContext, current.number);
+  const displayEpisodeTitle =
+    episodeTitle || `Episode ${current.number}`;
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(TIP_DISMISS_KEY) === "1") setTipVisible(false);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   useEffect(() => {
     setProgressPct(getEpisodeProgress(anime.id, current.number, language));
@@ -146,15 +159,40 @@ export function WatchExperience(props: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  function toggleTheater() {
-    const next = saveWatchSettings({ theaterMode: !settings.theaterMode });
-    setSettings(next);
+  function dismissTip() {
+    setTipVisible(false);
+    try {
+      localStorage.setItem(TIP_DISMISS_KEY, "1");
+    } catch {
+      /* ignore */
+    }
   }
 
-  function toggleAutoplay() {
-    const next = saveWatchSettings({ autoplayNext: !settings.autoplayNext });
-    setSettings(next);
+  async function sharePage() {
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: displayEpisodeTitle, url });
+        return;
+      }
+    } catch {
+      /* fall through to clipboard */
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      /* ignore */
+    }
   }
+
+  const metaBits = [
+    `Episode ${current.number}`,
+    language === "dub" ? "Dub" : "Sub",
+    score ? `★ ${score}` : null,
+    year ? String(year) : null,
+    genre,
+    currentArc?.name,
+  ].filter(Boolean);
 
   return (
     <div
@@ -182,20 +220,19 @@ export function WatchExperience(props: Props) {
       <MiniPlayer
         title={showTitle}
         episode={current.number}
-        episodeTitle={episodeTitle}
+        episodeTitle={displayEpisodeTitle}
         poster={poster}
         watchHref={watchHref(anime, current.number, language)}
         playerAnchorId={PLAYER_ID}
       />
 
-      {/* Backdrop */}
       {!settings.theaterMode && (
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[min(70vh,520px)] overflow-hidden">
           <Image
             src={banner}
             alt=""
             fill
-            className="object-cover opacity-25 blur-3xl"
+            className="object-cover opacity-20 blur-3xl"
             sizes="100vw"
             priority
           />
@@ -210,275 +247,236 @@ export function WatchExperience(props: Props) {
             : "pt-14"
         }`}
       >
-        <div
-          className={`${
-            settings.theaterMode
-              ? "flex flex-1 flex-col justify-center px-4 py-6 sm:px-8"
-              : "mx-auto max-w-[1100px] px-5 sm:px-8"
-          }`}
-        >
-          {!settings.theaterMode && (
-            <nav className="flex flex-wrap items-center gap-3 py-4 text-sm text-mute">
-              <Link href={animeHref(anime)} className="hover:text-snow">
-                ← {showTitle}
-              </Link>
-            </nav>
-          )}
-
-          <div id={PLAYER_ID} ref={playerRef}>
-            <VideoPlayer
-              title={`${showTitle} episode ${current.number}`}
-              servers={servers}
-              preferredServerId={preferredServerId || null}
-              watchBasePath={watchBase}
-              language={language}
-              episode={current.number}
-            />
-          </div>
-
-          {/* Watch toolbar */}
-          <div
-            className={`mt-4 flex flex-wrap items-center gap-2 ${
-              settings.theaterMode ? "justify-center" : ""
-            }`}
-          >
-            <button
-              type="button"
-              onClick={toggleTheater}
-              className={`rounded-full border px-3.5 py-1.5 text-sm transition ${
-                settings.theaterMode
-                  ? "border-white/30 bg-white/10 text-snow"
-                  : "border-white/12 text-cloud hover:text-snow"
-              }`}
-            >
-              {settings.theaterMode ? "Exit theater" : "Theater mode"}
-            </button>
-            <button
-              type="button"
-              onClick={toggleAutoplay}
-              className={`rounded-full border px-3.5 py-1.5 text-sm transition ${
-                settings.autoplayNext
-                  ? "border-white/30 bg-white/10 text-snow"
-                  : "border-white/12 text-cloud hover:text-snow"
-              }`}
-            >
-              Autoplay {settings.autoplayNext ? "on" : "off"}
-            </button>
-            <MyListButton
-              id={anime.id}
-              slug={anime.slug}
-              title={anime.title}
-              poster={anime.poster}
-              className="!bg-elevated !opacity-100"
-            />
-          </div>
-
-          {progressPct > 0 && (
-            <div className="mt-3">
-              <div className="flex items-center justify-between text-xs text-mute">
-                <span>Watch progress</span>
-                <span>{Math.round(progressPct)}%</span>
-              </div>
-              <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/10">
-                <div
-                  className="h-full rounded-full bg-snow transition-all duration-500"
-                  style={{ width: `${progressPct}%` }}
-                />
-              </div>
+        {settings.theaterMode ? (
+          <div className="flex flex-1 flex-col justify-center px-4 py-6 sm:px-8">
+            <div id={PLAYER_ID} ref={playerRef}>
+              <VideoPlayer
+                title={`${showTitle} episode ${current.number}`}
+                servers={servers}
+                preferredServerId={preferredServerId || null}
+                watchBasePath={watchBase}
+                language={language}
+                episode={current.number}
+              />
             </div>
-          )}
-
-          {!settings.theaterMode && (
-            <>
-              <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                <div className="flex min-w-0 gap-4">
-                  <Link
-                    href={animeHref(anime)}
-                    className="relative hidden h-24 w-[68px] shrink-0 overflow-hidden rounded-xl ring-1 ring-white/12 sm:block"
-                  >
-                    <Image
-                      src={poster}
-                      alt=""
-                      fill
-                      className="object-cover"
-                      sizes="68px"
-                    />
-                  </Link>
-                  <div className="min-w-0">
-                    <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-mute">
-                      Now playing
-                      {currentArc ? ` · ${currentArc.name}` : ""}
-                    </p>
-                    <h1 className="mt-1 text-[clamp(1.35rem,3vw,2rem)] font-semibold tracking-[-0.04em]">
-                      Episode {current.number}
-                      {episodeTitle && (
-                        <span className="text-cloud"> · {episodeTitle}</span>
-                      )}
-                    </h1>
-                    <p className="mt-2 text-sm text-mute">
-                      {showTitle}
-                      {score && ` · ${score}`}
-                      {year && ` · ${year}`}
-                      {genre && ` · ${genre}`}
-                    </p>
-                    <p className="mt-2 hidden text-xs text-mute/80 sm:block">
-                      ← → or J / K · Theater ⌘+T
-                    </p>
-                  </div>
-                </div>
-
+            <div className="mt-4 border-t border-white/8 px-1 py-4 text-center">
+              <p className="text-sm text-cloud">
+                {showTitle} · Episode {current.number}
+                {episodeTitle && ` · ${episodeTitle}`}
+              </p>
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
                 <WatchControls
+                  animeId={anime.id}
+                  episode={current.number}
                   language={language}
                   hasSub={hasSub}
                   hasDub={hasDub}
                   subHref={watchHref(anime, current.number, "sub")}
                   dubHref={watchHref(anime, current.number, "dub")}
-                  prevHref={prevHref}
-                  nextHref={nextHref}
+                  onShare={() => void sharePage()}
                 />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = saveWatchSettings({ theaterMode: false });
+                    setSettings(next);
+                  }}
+                  className="rounded-full bg-snow px-3.5 py-2 text-sm font-medium text-void"
+                >
+                  Exit theater
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="mx-auto w-full max-w-[1400px] px-4 pt-4 sm:px-6 lg:px-8">
+            <nav className="mb-3 flex flex-wrap items-center gap-1.5 text-sm text-mute">
+              <Link
+                href="/"
+                aria-label="Home"
+                className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/8 hover:text-snow"
+              >
+                <HomeIcon />
+              </Link>
+              <Chevron />
+              <Link
+                href={animeHref(anime)}
+                className="max-w-[min(40vw,280px)] truncate hover:text-snow"
+              >
+                {showTitle}
+              </Link>
+              <Chevron />
+              <span className="text-cloud">Episode {current.number}</span>
+            </nav>
+
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="min-w-0">
+                <div id={PLAYER_ID} ref={playerRef}>
+                  <VideoPlayer
+                    title={`${showTitle} episode ${current.number}`}
+                    servers={servers}
+                    preferredServerId={preferredServerId || null}
+                    watchBasePath={watchBase}
+                    language={language}
+                    episode={current.number}
+                    hideToolbar
+                    menuOpen={serverMenuOpen}
+                    onMenuOpenChange={setServerMenuOpen}
+                  />
+                </div>
+
+                {tipVisible && (
+                  <div className="mt-3 flex items-start gap-3 rounded-xl border border-white/10 bg-raised/70 px-3.5 py-2.5 text-sm text-cloud">
+                    <InfoIcon />
+                    <p className="min-w-0 flex-1 leading-snug">
+                      If the current server doesn&apos;t work, feel free to try
+                      the other available servers.
+                    </p>
+                    <button
+                      type="button"
+                      aria-label="Dismiss tip"
+                      onClick={dismissTip}
+                      className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-mute transition hover:bg-white/10 hover:text-snow"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+
+                <div className="mt-5 space-y-4">
+                  <div>
+                    <h1 className="text-[clamp(1.35rem,3vw,1.9rem)] font-semibold leading-tight tracking-[-0.04em] text-snow">
+                      {displayEpisodeTitle}
+                    </h1>
+                    <p className="mt-1.5 text-sm text-mute">
+                      {metaBits.join(" · ")}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Link
+                      href={animeHref(anime)}
+                      className="flex min-w-0 items-center gap-3"
+                    >
+                      <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full ring-1 ring-white/15">
+                        <Image
+                          src={poster}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          sizes="44px"
+                        />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold tracking-[-0.02em] text-snow">
+                          {showTitle}
+                        </span>
+                        <span className="block text-xs text-mute">
+                          {anilistMeta.totalEps
+                            ? `${anilistMeta.totalEps} episodes`
+                            : "Series"}
+                        </span>
+                      </span>
+                    </Link>
+
+                    <div className="ml-auto">
+                      <MyListButton
+                        id={anime.id}
+                        slug={anime.slug}
+                        title={anime.title}
+                        poster={anime.poster}
+                        variant="pill"
+                      />
+                    </div>
+                  </div>
+
+                  <WatchControls
+                    animeId={anime.id}
+                    episode={current.number}
+                    language={language}
+                    hasSub={hasSub}
+                    hasDub={hasDub}
+                    subHref={watchHref(anime, current.number, "sub")}
+                    dubHref={watchHref(anime, current.number, "dub")}
+                    onServer={() => setServerMenuOpen((o) => !o)}
+                    onShare={() => void sharePage()}
+                  />
+
+                  {progressPct > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between text-xs text-mute">
+                        <span>Watch progress</span>
+                        <span>{Math.round(progressPct)}%</span>
+                      </div>
+                      <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/10">
+                        <div
+                          className="h-full rounded-full bg-snow transition-all duration-500"
+                          style={{ width: `${progressPct}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {nextHref && (
-                <Link
-                  href={nextHref}
-                  className="mt-6 flex items-center gap-4 rounded-2xl border border-white/8 bg-white/[0.03] p-4 transition hover:border-white/18 hover:bg-white/[0.05]"
-                >
-                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-raised text-base font-semibold">
-                    {current.number + 1}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs uppercase tracking-[0.12em] text-mute">
-                      Up next
-                    </p>
-                    <p className="truncate text-sm font-medium tracking-[-0.02em]">
-                      {nextTitle}
-                    </p>
-                  </div>
-                  <span className="text-sm text-cloud">Play →</span>
-                </Link>
-              )}
-            </>
-          )}
-        </div>
-
-        {settings.theaterMode && (
-          <div className="border-t border-white/8 px-5 py-4 text-center sm:px-8">
-            <p className="text-sm text-cloud">
-              {showTitle} · Episode {current.number}
-              {episodeTitle && ` · ${episodeTitle}`}
-            </p>
-            <div className="mt-3 flex flex-wrap justify-center gap-2">
-              <WatchControls
+              <WatchSidebar
+                anime={anime}
+                showTitle={showTitle}
+                episodes={episodes}
+                current={current.number}
                 language={language}
-                hasSub={hasSub}
-                hasDub={hasDub}
-                subHref={watchHref(anime, current.number, "sub")}
-                dubHref={watchHref(anime, current.number, "dub")}
-                prevHref={prevHref}
-                nextHref={nextHref}
+                episodeThumbnails={episodeThumbnails}
+                fallbackImage={banner || poster}
+                recommendations={recommendations}
+                nextAirLabel={nextAirLabel}
               />
             </div>
           </div>
         )}
       </div>
-
-      {!settings.theaterMode && (
-        <div className="relative mx-auto mt-14 max-w-[1100px] px-5 sm:px-8">
-          <WatchTabs
-            defaultTab="episodes"
-            tabs={[
-              {
-                id: "episodes",
-                label: "Episodes",
-                content: (
-                  <EpisodePicker
-                    anime={anime}
-                    episodes={episodes}
-                    current={current.number}
-                    language={language}
-                    arcContext={arcContext}
-                    episodeThumbnails={episodeThumbnails}
-                    fallbackImage={banner || poster}
-                  />
-                ),
-              },
-              {
-                id: "about",
-                label: "About",
-                content: (
-                  <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr]">
-                    <div>
-                      {shortSynopsis && (
-                        <p className="text-[1.02rem] leading-relaxed text-cloud">
-                          {shortSynopsis}
-                        </p>
-                      )}
-                      <Link
-                        href={animeHref(anime)}
-                        className="mt-5 inline-flex text-sm text-apple-blue hover:underline"
-                      >
-                        Full series page
-                      </Link>
-                    </div>
-                    <dl className="space-y-4 text-sm">
-                      <Meta label="Studios" value={anilistMeta.studios} />
-                      <Meta label="Genres" value={anilistMeta.genres} />
-                      <Meta label="Status" value={anilistMeta.status} />
-                      <Meta label="Total episodes" value={anilistMeta.totalEps} />
-                    </dl>
-                  </div>
-                ),
-              },
-              ...(recommendations.length
-                ? [
-                    {
-                      id: "similar",
-                      label: "More like this",
-                      content: (
-                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                          {recommendations.map(({ media, match }) => (
-                            <Link
-                              key={media.id}
-                              href={`/anime/${match.id}/${match.slug}`}
-                              className="group"
-                            >
-                              <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-raised ring-1 ring-white/8 transition group-hover:-translate-y-0.5 group-hover:ring-white/25">
-                                <Image
-                                  src={media.coverImage?.large || match.poster}
-                                  alt={
-                                    media.title.english ||
-                                    media.title.romaji ||
-                                    ""
-                                  }
-                                  fill
-                                  className="object-cover transition duration-500 group-hover:scale-[1.03]"
-                                  sizes="160px"
-                                />
-                              </div>
-                              <p className="mt-2 line-clamp-2 text-sm tracking-[-0.02em]">
-                                {media.title.english || media.title.romaji}
-                              </p>
-                            </Link>
-                          ))}
-                        </div>
-                      ),
-                    },
-                  ]
-                : []),
-            ]}
-          />
-        </div>
-      )}
     </div>
   );
 }
 
-function Meta({ label, value }: { label: string; value?: string }) {
-  if (!value) return null;
+function Chevron() {
   return (
-    <div>
-      <dt className="text-mute">{label}</dt>
-      <dd className="mt-1 text-cloud">{value}</dd>
-    </div>
+    <span className="text-mute/70" aria-hidden>
+      ›
+    </span>
+  );
+}
+
+function HomeIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path
+        d="M2.5 7.5 8 2.5l5.5 5M4 6.8V13h3.2V9.5h1.6V13H12V6.8"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function InfoIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden
+      className="mt-0.5 shrink-0 text-mute"
+    >
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3" />
+      <path
+        d="M8 7.2V11M8 5.2v.2"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }

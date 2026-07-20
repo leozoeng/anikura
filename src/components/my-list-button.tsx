@@ -9,6 +9,8 @@ type Props = {
   title: string;
   poster: string;
   className?: string;
+  /** Compact icon button vs full pill label */
+  variant?: "icon" | "pill";
 };
 
 export function MyListButton({
@@ -17,6 +19,7 @@ export function MyListButton({
   title,
   poster,
   className = "",
+  variant = "icon",
 }: Props) {
   const [saved, setSaved] = useState(false);
 
@@ -27,16 +30,50 @@ export function MyListButton({
     return () => window.removeEventListener("anikura:mylist", sync);
   }, [id]);
 
+  function onClick(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const next = toggleMyList({ id, slug, title, poster });
+    setSaved(next);
+  }
+
+  if (variant === "pill") {
+    return (
+      <button
+        type="button"
+        aria-label={saved ? "Remove from My List" : "Add to My List"}
+        onClick={onClick}
+        className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium tracking-[-0.01em] transition ${
+          saved
+            ? "bg-raised text-snow ring-1 ring-white/15 hover:bg-white/10"
+            : "bg-snow text-void hover:bg-white/90"
+        } ${className}`}
+      >
+        {saved ? (
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
+            <path
+              d="M3.5 8.5 6.5 11.5 12.5 4.5"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ) : (
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
+            <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        )}
+        {saved ? "In My List" : "Add to List"}
+      </button>
+    );
+  }
+
   return (
     <button
       type="button"
       aria-label={saved ? "Remove from My List" : "Add to My List"}
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const next = toggleMyList({ id, slug, title, poster });
-        setSaved(next);
-      }}
+      onClick={onClick}
       className={`grid h-8 w-8 place-items-center rounded-full backdrop-blur-md transition ${
         saved
           ? "bg-snow text-void"

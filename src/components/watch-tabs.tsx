@@ -20,26 +20,26 @@ export function WatchTabs({ tabs, defaultTab }: Props) {
 
   return (
     <div>
-      <div className="flex gap-1 border-b border-white/8">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActive(tab.id)}
-            className={`relative px-4 py-3 text-sm font-medium tracking-[-0.01em] transition ${
-              active === tab.id
-                ? "text-snow"
-                : "text-mute hover:text-cloud"
-            }`}
-          >
-            {tab.label}
-            {active === tab.id && (
-              <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-snow" />
-            )}
-          </button>
-        ))}
+      <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
+        {tabs.map((tab) => {
+          const isActive = active === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActive(tab.id)}
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium tracking-[-0.01em] transition ${
+                isActive
+                  ? "bg-snow text-void"
+                  : "bg-raised text-cloud hover:bg-white/10 hover:text-snow"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
-      <div className="pt-8">{current?.content}</div>
+      <div className="pt-6">{current?.content}</div>
     </div>
   );
 }
