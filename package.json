@@ -10,6 +10,9 @@
     "sync": "tsx scripts/sync-catalog.ts"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.3",
+    "@supabase/supabase-js": "^2.110.7",
+    "cobe": "^2.0.1",
     "next": "^16.2.10",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"

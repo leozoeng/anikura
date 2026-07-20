@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP, Outfit } from "next/font/google";
+import { PresenceTracker } from "@/components/presence-tracker";
 import { SiteAtmosphere } from "@/components/site-atmosphere";
 import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
+import { SiteHeaderServer } from "@/components/site-header-server";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -48,7 +49,8 @@ export default function RootLayout({
           <SiteAtmosphere />
         </div>
         <div className="noise" aria-hidden />
-        <SiteHeader />
+        <SiteHeaderServer />
+        <PresenceTracker />
         <main className="relative z-10 min-h-screen">{children}</main>
         <SiteFooter />
       </body>

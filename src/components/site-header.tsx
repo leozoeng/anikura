@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnikuraLogo } from "@/components/anikura-logo";
+import { HeaderAuth } from "@/components/auth/header-auth";
 import { SearchCommand } from "@/components/search-command";
 
 const links = [
@@ -12,11 +13,20 @@ const links = [
   { href: "/genres", label: "Genres" },
 ];
 
-export function SiteHeader() {
+type SiteHeaderProps = {
+  email?: string | null;
+  isAdmin?: boolean;
+};
+
+export function SiteHeader({
+  email = null,
+  isAdmin = false,
+}: SiteHeaderProps) {
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const hideChrome = pathname.startsWith("/admin");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -44,6 +54,20 @@ export function SiteHeader() {
   }, [menuOpen]);
 
   const solid = scrolled || searchOpen || menuOpen;
+
+  if (hideChrome) {
+    return (
+      <header className="site-chrome fixed inset-x-0 top-0 z-40 bg-void/90 backdrop-blur-md">
+        <div className="flex h-14 w-full items-center gap-5 px-3 sm:h-16 sm:px-4">
+          <AnikuraLogo size={28} />
+          <span className="text-sm text-mute">Admin</span>
+          <div className="ml-auto">
+            <HeaderAuth initialEmail={email} isAdmin={isAdmin} />
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header
@@ -98,6 +122,8 @@ export function SiteHeader() {
           </a>
 
           <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
+
+          <HeaderAuth initialEmail={email} isAdmin={isAdmin} />
 
           <button
             type="button"
@@ -168,6 +194,21 @@ export function SiteHeader() {
           >
             Discord
           </a>
+          {!email ? (
+            <Link
+              href="/login"
+              className="rounded-xl px-4 py-3 text-[0.95rem] tracking-[-0.02em] text-snow transition hover:bg-white/[0.05]"
+            >
+              Sign in
+            </Link>
+          ) : isAdmin ? (
+            <Link
+              href="/admin"
+              className="rounded-xl px-4 py-3 text-[0.95rem] tracking-[-0.02em] text-snow transition hover:bg-white/[0.05]"
+            >
+              Admin
+            </Link>
+          ) : null}
         </nav>
       </div>
     </header>
