@@ -22,7 +22,10 @@ export function AnikuraMark({
       alt=""
       width={size}
       height={size}
-      className={`rounded-[0.55rem] ${className}`}
+      sizes={`${size}px`}
+      quality={100}
+      className={`rounded-[0.45rem] object-cover ${className}`}
+      style={{ width: size, height: size }}
       priority
     />
   );
