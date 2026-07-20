@@ -138,7 +138,6 @@ export default async function GenresPage() {
                       style={{
                         animationDelay: `${Math.min(i, 14) * 18}ms`,
                         background: `linear-gradient(155deg, ${genreWash(genre.slug)} 0%, rgba(12,12,16,0.92) 55%, rgba(0,0,0,0.96) 100%)`,
-                        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.07)",
                       }}
                     >
                       <span
@@ -228,8 +227,6 @@ function FeaturedMoodTile({
           background: `radial-gradient(600px 280px at 20% 80%, ${genreWash(genre.slug)}, transparent 70%)`,
         }}
       />
-
-      <div className="absolute inset-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition duration-300 group-hover:shadow-[inset_0_0_0_1px_rgba(255,140,170,0.35)]" />
 
       <div
         className={`relative z-10 flex h-full flex-col justify-between p-5 sm:p-6 ${
