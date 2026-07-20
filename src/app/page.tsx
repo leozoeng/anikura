@@ -24,6 +24,7 @@ import {
   pickGenreCovers,
   visibleGenres,
 } from "@/lib/genre-moods";
+import { fetchMoodArtOverrides } from "@/lib/mood-art";
 
 /** Cache the home shell so refresh isn't blocked on cold API waits. */
 export const revalidate = 120;
@@ -94,6 +95,7 @@ async function HomeRows() {
     meta,
     trending,
     seasonal,
+    moodOverrides,
   ] = await Promise.all([
     getRecentAnime(1, 24),
     getCatalog(),
@@ -103,6 +105,7 @@ async function HomeRows() {
     getSyncMeta(),
     getTrendingAnime(18),
     getPopularThisSeason(18),
+    fetchMoodArtOverrides(),
   ]);
 
   const byAniId = new Map<number, (typeof catalog)[number]>();
@@ -130,7 +133,7 @@ async function HomeRows() {
           count: 0,
         }));
 
-  const genreCovers = pickGenreCovers(catalog, genreList);
+  const genreCovers = pickGenreCovers(catalog, genreList, moodOverrides);
 
   return (
     <div className="relative z-10 space-y-12 pt-8 sm:space-y-14 sm:pt-10">

@@ -32,6 +32,7 @@ export function genreWash(slug: string) {
  * Curated AniList widescreen banners (~1900×400), hosted locally.
  * Distinct iconic art per mood — not score-ranked catalog posters.
  * Prefer sharp, genre-clear banners; tile overlays darken for sakura-night UI.
+ * Admin overrides (Supabase `mood_art`) take precedence at runtime.
  */
 export const MOOD_ART: Record<
   string,
@@ -69,20 +70,67 @@ export const MOOD_ART: Record<
   },
 };
 
-export function moodArt(slug: string) {
-  return MOOD_ART[slug] ?? null;
+export type MoodArtResolved = {
+  src: string;
+  credit: string;
+  position?: string;
+  /** True when src comes from an admin override. */
+  overridden?: boolean;
+};
+
+export type MoodArtOverrides = Map<string, string> | Record<string, string>;
+
+function overrideUrl(
+  slug: string,
+  overrides?: MoodArtOverrides | null,
+): string | null {
+  if (!overrides) return null;
+  if (overrides instanceof Map) return overrides.get(slug) ?? null;
+  return overrides[slug] ?? null;
 }
 
-/** Prefer curated mood art; fall back to unique high-score banners from catalog. */
+/** Prefer admin override URL; fall back to bundled MOOD_ART. */
+export function moodArt(
+  slug: string,
+  overrides?: MoodArtOverrides | null,
+): MoodArtResolved | null {
+  const custom = overrideUrl(slug, overrides);
+  const base = MOOD_ART[slug];
+  if (custom) {
+    return {
+      src: custom,
+      credit: base?.credit ?? "",
+      position: base?.position ?? "object-center",
+      overridden: true,
+    };
+  }
+  return base ? { ...base, overridden: false } : null;
+}
+
+/** Moods shown in the admin art desk (curated + wash palette). */
+export function adminMoodSlugs(): string[] {
+  const set = new Set([...Object.keys(MOOD_ART), ...Object.keys(GENRE_WASH)]);
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
+export function moodLabel(slug: string) {
+  return slug
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+/** Prefer curated / overridden mood art; fall back to unique high-score banners. */
 export function pickGenreCovers(
   catalog: CatalogAnime[],
   genres: GenreStat[],
+  overrides?: MoodArtOverrides | null,
 ): Map<string, { src: string; position?: string }> {
   const out = new Map<string, { src: string; position?: string }>();
   const used = new Set<string>();
 
   for (const genre of genres) {
-    const curated = MOOD_ART[genre.slug];
+    const curated = moodArt(genre.slug, overrides);
     if (curated) {
       out.set(genre.slug, { src: curated.src, position: curated.position });
       used.add(curated.src);

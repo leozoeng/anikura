@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { LiveGlobe, type GlobeMarker } from "@/components/admin/live-globe";
+import { MoodArtManager } from "@/components/admin/mood-art-manager";
 
 export type DashboardMetrics = {
   live_users: number;
@@ -32,6 +33,7 @@ type AdminDashboardProps = {
   presence: PresencePoint[];
   series: SignupDay[];
   adminEmail: string | null;
+  moodOverrides: Record<string, string>;
 };
 
 type RangeKey = "7" | "14" | "30";
@@ -98,6 +100,7 @@ export function AdminDashboard({
   presence,
   series,
   adminEmail,
+  moodOverrides,
 }: AdminDashboardProps) {
   const [range, setRange] = useState<RangeKey>("14");
 
@@ -256,6 +259,8 @@ export function AdminDashboard({
           </div>
         </div>
       </section>
+
+      <MoodArtManager initialOverrides={moodOverrides} />
 
       <section className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
         <h2 className="text-lg tracking-[-0.02em] text-snow">

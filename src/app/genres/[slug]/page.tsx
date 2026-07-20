@@ -1,6 +1,7 @@
 import { AnimePoster } from "@/components/anime-poster";
 import { getByGenre, getCatalog, getGenreStats } from "@/lib/catalog";
 import { genreWash, moodArt, pickGenreCovers } from "@/lib/genre-moods";
+import { fetchMoodArtOverrides } from "@/lib/mood-art";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,20 +14,25 @@ type Props = {
 
 export default async function GenreDetailPage({ params }: Props) {
   const { slug } = await params;
-  const [genres, result, catalog] = await Promise.all([
+  const [genres, result, catalog, moodOverrides] = await Promise.all([
     getGenreStats(),
     getByGenre(slug, 96),
     getCatalog(),
+    fetchMoodArtOverrides(),
   ]);
 
   const genre = genres.find((g) => g.slug === slug);
   if (!genre && result.total === 0) notFound();
 
   const name = genre?.name ?? slug.replace(/-/g, " ");
-  const curated = moodArt(slug);
+  const curated = moodArt(slug, moodOverrides);
   const cover =
     curated ??
-    pickGenreCovers(catalog, [{ name, slug, count: result.total }]).get(slug);
+    pickGenreCovers(
+      catalog,
+      [{ name, slug, count: result.total }],
+      moodOverrides,
+    ).get(slug);
 
   return (
     <div className="page-enter relative pb-16">

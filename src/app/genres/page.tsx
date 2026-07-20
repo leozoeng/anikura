@@ -6,21 +6,23 @@ import {
   pickGenreCovers,
   visibleGenres,
 } from "@/lib/genre-moods";
+import { fetchMoodArtOverrides } from "@/lib/mood-art";
 import type { GenreStat } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function GenresPage() {
-  const [genresRaw, meta, catalog] = await Promise.all([
+  const [genresRaw, meta, catalog, moodOverrides] = await Promise.all([
     getGenreStats(),
     getSyncMeta(),
     getCatalog(),
+    fetchMoodArtOverrides(),
   ]);
 
   const genres = visibleGenres(genresRaw);
   const featured = genres.slice(0, 6);
   const rest = genres.slice(6);
-  const covers = pickGenreCovers(catalog, featured);
+  const covers = pickGenreCovers(catalog, featured, moodOverrides);
 
   return (
     <div className="relative pb-16">

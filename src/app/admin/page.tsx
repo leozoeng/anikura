@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
 import { AdminRefresh } from "@/components/admin/admin-refresh";
 import { ensureAdminRole, getProfile, isAdminUser } from "@/lib/auth";
+import { fetchMoodArtOverrides } from "@/lib/mood-art";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -50,12 +51,19 @@ export default async function AdminPage() {
 
   const supabase = await createClient();
 
-  const [{ data: metricsRaw }, { data: presence }, { data: series }] =
-    await Promise.all([
-      supabase.rpc("admin_dashboard_metrics", { p_live_seconds: 120 }),
-      supabase.rpc("admin_live_presence", { p_live_seconds: 120 }),
-      supabase.rpc("admin_signup_series", { p_days: 30 }),
-    ]);
+  const [
+    { data: metricsRaw },
+    { data: presence },
+    { data: series },
+    moodOverrideMap,
+  ] = await Promise.all([
+    supabase.rpc("admin_dashboard_metrics", { p_live_seconds: 120 }),
+    supabase.rpc("admin_live_presence", { p_live_seconds: 120 }),
+    supabase.rpc("admin_signup_series", { p_days: 30 }),
+    fetchMoodArtOverrides(),
+  ]);
+
+  const moodOverrides = Object.fromEntries(moodOverrideMap);
 
   const metrics = (metricsRaw ?? {}) as {
     live_users?: number;
@@ -81,6 +89,7 @@ export default async function AdminPage() {
       <AdminRefresh intervalMs={30_000} />
       <AdminDashboard
         adminEmail={profile.email}
+        moodOverrides={moodOverrides}
         metrics={{
           live_users: metrics.live_users ?? 0,
           total_signups: metrics.total_signups ?? 0,
