@@ -75,14 +75,14 @@ export function HeaderAuth({
   if (!email) {
     return (
       <>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-0.5">
           <button
             type="button"
             onClick={() => {
               setMode("signin");
               setModalOpen(true);
             }}
-            className="hidden rounded-full px-3.5 py-1.5 text-[0.8125rem] text-cloud transition hover:bg-white/[0.06] hover:text-snow sm:inline-flex"
+            className="rounded-full px-2.5 py-1 text-[0.75rem] tracking-[-0.01em] text-mute transition hover:text-snow"
           >
             Sign in
           </button>
@@ -92,10 +92,9 @@ export function HeaderAuth({
               setMode("signup");
               setModalOpen(true);
             }}
-            className="inline-flex rounded-full bg-snow px-3.5 py-1.5 text-[0.75rem] font-medium text-void transition hover:bg-white sm:text-[0.8125rem]"
+            className="rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-1 text-[0.75rem] tracking-[-0.01em] text-cloud transition hover:border-white/25 hover:bg-white/[0.07] hover:text-snow"
           >
-            <span className="sm:hidden">Sign in</span>
-            <span className="hidden sm:inline">Create account</span>
+            Create account
           </button>
         </div>
         <AuthModal
