@@ -134,7 +134,7 @@ export function ProfileView({ profile, list, isOwner }: Props) {
   );
 
   return (
-    <div className="relative px-3 pb-24 pt-8 sm:px-4 sm:pt-12">
+    <div className="relative px-3 pb-24 pt-12 sm:px-4 sm:pt-16">
       {/* Ambient wash behind the card */}
       {ambient ? (
         <div
