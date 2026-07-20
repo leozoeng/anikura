@@ -1,15 +1,15 @@
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AnimeDetailHero } from "@/components/anime-detail-hero";
 import { EpisodeList } from "@/components/episode-list";
+import { RelatedAnimeGrid } from "@/components/related-anime";
 import { getAniListMedia, stripHtml } from "@/lib/anilist";
-import {
-  getGenres,
-  getSeries,
-} from "@/lib/anikoto";
+import { getGenres, getSeries } from "@/lib/anikoto";
 import { findAnimeById, getCatalog } from "@/lib/catalog";
 import { resolveEpisodeThumbnails } from "@/lib/episode-thumbs";
+import {
+  buildMoreLikeThis,
+  buildRelatedEntries,
+} from "@/lib/related";
 
 export const dynamic = "force-dynamic";
 
@@ -38,12 +38,6 @@ export default async function AnimeDetailPage({ params }: Props) {
     getCatalog(),
   ]);
 
-  const byAniId = new Map<number, (typeof catalog)[number]>();
-  for (const item of catalog) {
-    const n = Number(item.ani_id);
-    if (n) byAniId.set(n, item);
-  }
-
   const title = anilist?.title.english || anime.title;
   const native = anilist?.title.native || anime.native;
   const description =
@@ -64,17 +58,13 @@ export default async function AnimeDetailPage({ params }: Props) {
         ? anime.score
         : null;
 
-  const recommendations =
-    anilist?.recommendations?.nodes
-      ?.map((n) => n.mediaRecommendation)
-      .filter(Boolean)
-      .map((m) => {
-        const match = byAniId.get(m!.id);
-        if (!match) return null;
-        return { media: m!, match };
-      })
-      .filter(Boolean)
-      .slice(0, 8) ?? [];
+  const related = buildRelatedEntries(anilist, catalog);
+  const relatedIds = new Set(related.map((r) => r.match.id));
+  const recommendations = buildMoreLikeThis(anilist, catalog, {
+    excludeCatalogIds: [anime.id, ...relatedIds],
+    excludeAniIds: related.map((r) => r.media.id),
+    limit: 18,
+  });
 
   const trailerId =
     anilist?.trailer?.site?.toLowerCase() === "youtube"
@@ -162,40 +152,20 @@ export default async function AnimeDetailPage({ params }: Props) {
           />
         </section>
 
-        {recommendations.length > 0 && (
-          <section className="mt-14">
-            <h2 className="section-title">More like this</h2>
-            <p className="section-sub">Recommendations from AniList</p>
-            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {recommendations.map((item) => {
-                if (!item) return null;
-                const { media, match } = item;
-                return (
-                  <Link
-                    key={media.id}
-                    href={`/anime/${match.id}/${match.slug}`}
-                    className="group"
-                  >
-                    <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-raised ring-1 ring-white/8 transition group-hover:ring-white/25">
-                      {(media.coverImage?.large || match.poster) && (
-                        <Image
-                          src={media.coverImage?.large || match.poster}
-                          alt={media.title.english || media.title.romaji || ""}
-                          fill
-                          className="object-cover transition duration-500 group-hover:scale-[1.03]"
-                          sizes="180px"
-                        />
-                      )}
-                    </div>
-                    <p className="mt-2 line-clamp-2 text-sm tracking-[-0.02em]">
-                      {media.title.english || media.title.romaji}
-                    </p>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        )}
+        <RelatedAnimeGrid
+          title="Related"
+          subtitle="Prequels, sequels, movies, and spin-offs"
+          items={related}
+          badge={(item) =>
+            "relationLabel" in item ? item.relationLabel : null
+          }
+        />
+
+        <RelatedAnimeGrid
+          title="More like this"
+          subtitle="Recommendations and similar titles"
+          items={recommendations}
+        />
       </div>
     </div>
   );

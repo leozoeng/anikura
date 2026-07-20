@@ -38,6 +38,7 @@ export type AniListMedia = {
   studios?: {
     nodes?: { name: string }[];
   } | null;
+  format?: string | null;
   recommendations?: {
     nodes?: {
       mediaRecommendation?: {
@@ -46,6 +47,21 @@ export type AniListMedia = {
         coverImage?: { large?: string | null } | null;
         averageScore?: number | null;
         seasonYear?: number | null;
+        format?: string | null;
+      } | null;
+    }[];
+  } | null;
+  relations?: {
+    edges?: {
+      relationType?: string | null;
+      node?: {
+        id: number;
+        type?: string | null;
+        format?: string | null;
+        title: AniListTitle;
+        coverImage?: { large?: string | null } | null;
+        seasonYear?: number | null;
+        averageScore?: number | null;
       } | null;
     }[];
   } | null;
@@ -170,7 +186,22 @@ export async function getAniListMedia(id: number) {
     `query ($id: Int) {
       Media(id: $id, type: ANIME) {
         ${MEDIA_FIELDS}
-        recommendations(page: 1, perPage: 8, sort: RATING_DESC) {
+        format
+        relations {
+          edges {
+            relationType
+            node {
+              id
+              type
+              format
+              title { romaji english native }
+              coverImage { large }
+              seasonYear
+              averageScore
+            }
+          }
+        }
+        recommendations(page: 1, perPage: 25, sort: RATING_DESC) {
           nodes {
             mediaRecommendation {
               id
@@ -178,6 +209,7 @@ export async function getAniListMedia(id: number) {
               coverImage { large }
               averageScore
               seasonYear
+              format
             }
           }
         }

@@ -19,20 +19,11 @@ import {
   getWatchSettings,
   saveWatchSettings,
 } from "@/lib/progress";
+import type { RelatedEntry, RelatedMediaCard } from "@/lib/related";
 import type { AnimeSummary, Episode } from "@/lib/types";
 
 const PLAYER_ID = "watch-player";
 const TIP_DISMISS_KEY = "anikura:watch-server-tip-dismissed";
-
-type Recommendation = {
-  media: {
-    id: number;
-    title: { english?: string | null; romaji?: string | null };
-    coverImage?: { large?: string | null } | null;
-    seasonYear?: number | null;
-  };
-  match: { id: number; slug: string; poster: string };
-};
 
 type Props = {
   anime: AnimeSummary;
@@ -57,7 +48,8 @@ type Props = {
     status?: string;
     totalEps?: string;
   };
-  recommendations: Recommendation[];
+  related: RelatedEntry[];
+  recommendations: RelatedMediaCard[];
   arcContext: {
     malId?: string;
     aniId?: string;
@@ -91,6 +83,7 @@ export function WatchExperience(props: Props) {
     banner,
     episodeThumbnails = {},
     anilistMeta,
+    related,
     recommendations,
     arcContext,
     prevHref,
@@ -428,6 +421,7 @@ export function WatchExperience(props: Props) {
                 episodeThumbnails={episodeThumbnails}
                 fallbackImage={banner || poster}
                 recommendations={recommendations}
+                related={related}
                 nextAirLabel={nextAirLabel}
               />
             </div>

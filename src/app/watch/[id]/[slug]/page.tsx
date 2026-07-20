@@ -5,6 +5,7 @@ import { getSeries, watchHref } from "@/lib/anikoto";
 import { getCatalog } from "@/lib/catalog";
 import { buildEmbedServers } from "@/lib/embeds";
 import { resolveEpisodeThumbnails } from "@/lib/episode-thumbs";
+import { buildMoreLikeThis, buildRelatedEntries } from "@/lib/related";
 
 export const dynamic = "force-dynamic";
 
@@ -60,12 +61,6 @@ export default async function WatchPage({ params, searchParams }: Props) {
     getCatalog(),
   ]);
 
-  const byAniId = new Map<number, (typeof catalog)[number]>();
-  for (const item of catalog) {
-    const n = Number(item.ani_id);
-    if (n) byAniId.set(n, item);
-  }
-
   const episodeTitle = decodeEntities(current.title);
   const showTitle = anilist?.title.english || anime.title;
   const synopsis =
@@ -80,28 +75,13 @@ export default async function WatchPage({ params, searchParams }: Props) {
         ? anime.score
         : null;
 
-  const recommendations =
-    anilist?.recommendations?.nodes
-      ?.map((n) => n.mediaRecommendation)
-      .filter(Boolean)
-      .map((m) => {
-        const match = byAniId.get(m!.id);
-        if (!match) return null;
-        return {
-          media: {
-            id: m!.id,
-            title: m!.title,
-            coverImage: m!.coverImage,
-            seasonYear: m!.seasonYear ?? match.year ?? null,
-          },
-          match: {
-            id: match.id,
-            slug: match.slug,
-            poster: match.poster,
-          },
-        };
-      })
-      .filter((x): x is NonNullable<typeof x> => x != null) ?? [];
+  const related = buildRelatedEntries(anilist, catalog);
+  const relatedIds = new Set(related.map((r) => r.match.id));
+  const recommendations = buildMoreLikeThis(anilist, catalog, {
+    excludeCatalogIds: [anime.id, ...relatedIds],
+    excludeAniIds: related.map((r) => r.media.id),
+    limit: 12,
+  });
 
   const nextTitle = next
     ? decodeEntities(next.title) !== `Episode ${next.number}`
@@ -159,7 +139,8 @@ export default async function WatchPage({ params, searchParams }: Props) {
           anilist?.episodes || anime.episodes || episodes.length,
         ),
       }}
-      recommendations={recommendations.slice(0, 8)}
+      related={related}
+      recommendations={recommendations}
       arcContext={{
         malId: anime.mal_id,
         aniId: anime.ani_id,

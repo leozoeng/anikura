@@ -3,19 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { RelatedAnimeList } from "@/components/related-anime";
 import { decodeEntities } from "@/lib/anilist";
 import { watchHref } from "@/lib/anikoto";
+import type { RelatedEntry, RelatedMediaCard } from "@/lib/related";
 import type { AnimeSummary, Episode } from "@/lib/types";
-
-type Recommendation = {
-  media: {
-    id: number;
-    title: { english?: string | null; romaji?: string | null };
-    coverImage?: { large?: string | null } | null;
-    seasonYear?: number | null;
-  };
-  match: { id: number; slug: string; poster: string };
-};
 
 type Props = {
   anime: Pick<AnimeSummary, "id" | "slug">;
@@ -25,7 +17,8 @@ type Props = {
   language: "sub" | "dub";
   episodeThumbnails?: Record<number, string>;
   fallbackImage?: string;
-  recommendations: Recommendation[];
+  related: RelatedEntry[];
+  recommendations: RelatedMediaCard[];
   nextAirLabel?: string | null;
 };
 
@@ -37,6 +30,7 @@ export function WatchSidebar({
   language,
   episodeThumbnails = {},
   fallbackImage,
+  related,
   recommendations,
   nextAirLabel,
 }: Props) {
@@ -199,47 +193,15 @@ export function WatchSidebar({
         </div>
       )}
 
-      {recommendations.length > 0 && (
-        <div>
-          <h3 className="text-base font-semibold tracking-[-0.02em] text-snow">
-            More like this
-          </h3>
-          <ul className="mt-3 space-y-3">
-            {recommendations.map(({ media, match }) => {
-              const title =
-                media.title.english || media.title.romaji || "Untitled";
-              const poster = media.coverImage?.large || match.poster;
-              return (
-                <li key={media.id}>
-                  <Link
-                    href={`/anime/${match.id}/${match.slug}`}
-                    className="flex gap-3 rounded-xl p-1.5 transition hover:bg-white/[0.04]"
-                  >
-                    <span className="relative h-[72px] w-[52px] shrink-0 overflow-hidden rounded-lg bg-raised">
-                      <Image
-                        src={poster}
-                        alt=""
-                        fill
-                        className="object-cover"
-                        sizes="52px"
-                      />
-                    </span>
-                    <span className="min-w-0 flex-1 py-1">
-                      <span className="line-clamp-2 text-sm font-medium leading-snug tracking-[-0.02em] text-snow">
-                        {title}
-                      </span>
-                      <span className="mt-1 block text-xs text-mute">
-                        TV
-                        {media.seasonYear ? ` · ${media.seasonYear}` : ""}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
+      <RelatedAnimeList
+        title="Related"
+        items={related}
+        badge={(item) =>
+          "relationLabel" in item ? item.relationLabel : null
+        }
+      />
+
+      <RelatedAnimeList title="More like this" items={recommendations} />
     </aside>
   );
 }
