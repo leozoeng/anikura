@@ -2,11 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import {
-  labelForStatus,
-  type AnimeListEntry,
-} from "@/lib/anime-list";
+import { useEffect, useMemo, useState } from "react";
+import type { AnimeListEntry } from "@/lib/anime-list";
 import {
   accentAmbientEnabled,
   displayName,
@@ -16,6 +13,10 @@ import {
   resolveAccentHex,
   type PublicProfile,
 } from "@/lib/profile";
+import {
+  getContinueWatching,
+  type WatchProgress,
+} from "@/lib/progress";
 import { ProfileEditPanel } from "@/components/profile/profile-edit-panel";
 
 type Props = {
@@ -40,8 +41,8 @@ const TABS: { id: ProfileTab; label: string }[] = [
   { id: "watch", label: "Watch" },
 ];
 
-function relativeTime(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
+function relativeTime(ms: number) {
+  const diff = Date.now() - ms;
   const mins = Math.floor(diff / 60_000);
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
@@ -49,13 +50,14 @@ function relativeTime(iso: string) {
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
   if (days < 30) return `${days}d ago`;
-  return formatMemberSince(iso);
+  return formatMemberSince(new Date(ms).toISOString());
 }
 
 export function ProfileView({ profile, list, isOwner }: Props) {
   const [editing, setEditing] = useState(false);
   const [tab, setTab] = useState<ProfileTab>("board");
   const [live, setLive] = useState(profile);
+  const [episodes, setEpisodes] = useState<WatchProgress[]>([]);
 
   const name = displayName(live);
   const handle = handleFromProfile(live);
@@ -63,6 +65,17 @@ export function ProfileView({ profile, list, isOwner }: Props) {
   const ambient = accentAmbientEnabled(live);
   const rgb = hexToRgbChannels(accent);
   const memberSince = formatMemberSince(live.created_at);
+
+  useEffect(() => {
+    if (!isOwner) {
+      setEpisodes([]);
+      return;
+    }
+    const sync = () => setEpisodes(getContinueWatching());
+    sync();
+    window.addEventListener("anikura:progress", sync);
+    return () => window.removeEventListener("anikura:progress", sync);
+  }, [isOwner]);
 
   const favorites = useMemo(
     () => list.filter((x) => x.is_favorite),
@@ -84,34 +97,22 @@ export function ProfileView({ profile, list, isOwner }: Props) {
     () => list.filter((x) => x.status === "on_hold"),
     [list],
   );
-  const dropped = useMemo(
-    () => list.filter((x) => x.status === "dropped"),
-    [list],
-  );
-  const activity = useMemo(
-    () =>
-      [...list]
-        .sort(
-          (a, b) =>
-            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
-        )
-        .slice(0, 24),
-    [list],
-  );
+
+  const continueStrip = useMemo(() => episodes.slice(0, 4), [episodes]);
 
   const widgets: WidgetDef[] = useMemo(
     () => [
       {
         id: "favorites",
         title: "Favourites",
-        emptyHint: "Star titles as Favourite from the heart menu",
+        emptyHint: "Star a title from the heart menu",
         items: favorites,
         max: 4,
       },
       {
         id: "watching",
         title: "Watching",
-        emptyHint: "Mark something as Watching",
+        emptyHint: "Mark a title as Watching",
         items: watching,
         max: 4,
       },
@@ -125,7 +126,7 @@ export function ProfileView({ profile, list, isOwner }: Props) {
       {
         id: "on_hold",
         title: "On hold",
-        emptyHint: "Park series here for later",
+        emptyHint: "Paused titles land here",
         items: onHold,
         max: 4,
       },
@@ -135,7 +136,6 @@ export function ProfileView({ profile, list, isOwner }: Props) {
 
   return (
     <div className="relative px-3 pb-24 pt-12 sm:px-4 sm:pt-16">
-      {/* Ambient wash behind the card */}
       {ambient ? (
         <div
           aria-hidden
@@ -163,7 +163,6 @@ export function ProfileView({ profile, list, isOwner }: Props) {
           }}
         >
           <div className="grid lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)]">
-            {/* ── Left identity column ── */}
             <aside className="relative border-b border-white/[0.06] lg:border-b-0 lg:border-r lg:border-white/[0.06]">
               <div className="relative h-[140px] sm:h-[160px]">
                 {live.banner_url ? (
@@ -184,11 +183,9 @@ export function ProfileView({ profile, list, isOwner }: Props) {
                   />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#111214]/80 via-transparent to-black/10" />
-
               </div>
 
               <div className="relative px-5 pb-6 pt-0">
-                {/* Avatar overlapping banner */}
                 <div
                   className="-mt-12 inline-flex rounded-full p-[6px]"
                   style={{
@@ -226,6 +223,9 @@ export function ProfileView({ profile, list, isOwner }: Props) {
                     <p className="mt-0.5 truncate text-sm text-[#b5bac1]">
                       {handle}
                     </p>
+                    <p className="mt-1 text-[0.7rem] text-[#6d6f78]">
+                      Anikura · {memberSince}
+                    </p>
                   </div>
                   {isOwner ? (
                     <button
@@ -238,66 +238,68 @@ export function ProfileView({ profile, list, isOwner }: Props) {
                   ) : null}
                 </div>
 
-                {/* About */}
-                <section className="mt-5 rounded-2xl bg-[#1e1f22]/90 px-3.5 py-3.5 ring-1 ring-white/[0.04]">
+                <section className="mt-4 rounded-2xl bg-[#1e1f22]/90 px-3.5 py-3 ring-1 ring-white/[0.04]">
                   <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#949ba4]">
                     About Me
                   </p>
                   {live.bio ? (
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[#dbdee1]">
+                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-[#dbdee1]">
                       {live.bio}
                     </p>
                   ) : (
-                    <p className="mt-2 text-sm text-[#6d6f78]">
-                      {isOwner
-                        ? "Add a short bio from Edit profile."
-                        : "No bio yet."}
-                    </p>
+                    <p className="mt-1.5 text-sm text-[#6d6f78]">No bio yet.</p>
                   )}
                 </section>
 
-                {/* Member Since */}
-                <section className="mt-3 rounded-2xl bg-[#1e1f22]/90 px-3.5 py-3.5 ring-1 ring-white/[0.04]">
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#949ba4]">
-                    Member Since
-                  </p>
-                  <p className="mt-2 text-sm text-[#dbdee1]">
-                    Anikura · {memberSince}
-                  </p>
-                </section>
-
-                {/* Connections-style list summary */}
-                <section className="mt-3 rounded-2xl bg-[#1e1f22]/90 px-3.5 py-3.5 ring-1 ring-white/[0.04]">
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#949ba4]">
-                    Library
-                  </p>
-                  <div className="mt-2.5 grid grid-cols-2 gap-2">
-                    {(
-                      [
-                        ["Watching", watching.length],
-                        ["Completed", completed.length],
-                        ["Plan to watch", planned.length],
-                        ["On hold", onHold.length],
-                        ["Dropped", dropped.length],
-                        ["Favourites", favorites.length],
-                      ] as const
-                    ).map(([label, count]) => (
-                      <div
-                        key={label}
-                        className="rounded-xl bg-black/25 px-2.5 py-2"
+                {isOwner && continueStrip.length > 0 ? (
+                  <section className="mt-3 rounded-2xl bg-[#1e1f22]/90 px-3.5 py-3 ring-1 ring-white/[0.04]">
+                    <div className="mb-2.5 flex items-center justify-between gap-2">
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#949ba4]">
+                        Continue
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setTab("activity")}
+                        className="text-[0.65rem] font-medium text-[#949ba4] transition hover:text-[#dbdee1]"
                       >
-                        <p className="text-[0.65rem] text-[#949ba4]">{label}</p>
-                        <p className="text-sm font-semibold text-snow">
-                          {count}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </section>
+                        See all
+                      </button>
+                    </div>
+                    <div className="flex gap-2">
+                      {continueStrip.map((item) => (
+                        <Link
+                          key={`${item.id}-${item.episode}-${item.language}`}
+                          href={`/watch/${item.id}/${item.slug}?ep=${item.episode}&lang=${item.language}`}
+                          className="group min-w-0 flex-1"
+                          title={`${item.title} · Episode ${item.episode}`}
+                        >
+                          <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-[#111214] ring-1 ring-white/8 transition group-hover:ring-white/25">
+                            {item.poster ? (
+                              <Image
+                                src={item.poster}
+                                alt=""
+                                fill
+                                className="object-cover"
+                                sizes="72px"
+                              />
+                            ) : null}
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-1 pb-1 pt-4">
+                              <p
+                                className="truncate text-[0.55rem] font-medium"
+                                style={{ color: accent }}
+                              >
+                                Ep {item.episode}
+                              </p>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
               </div>
             </aside>
 
-            {/* ── Right content column ── */}
             <div className="flex min-h-[420px] flex-col bg-[#0e0f12]/40">
               <div className="flex items-center gap-1 border-b border-white/[0.06] px-4 pt-3 sm:px-5">
                 {TABS.map((t) => {
@@ -336,7 +338,7 @@ export function ProfileView({ profile, list, isOwner }: Props) {
                 ) : null}
                 {tab === "activity" ? (
                   <ActivityTab
-                    items={activity}
+                    items={episodes}
                     isOwner={isOwner}
                     accent={accent}
                   />
@@ -383,15 +385,13 @@ function BoardTab({
 }) {
   return (
     <div>
-      <div className="mb-4 flex items-end justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-snow">Profile board</h2>
-          <p className="mt-0.5 text-sm text-[#949ba4]">
-            {isOwner
-              ? "Customise your profile with widgets from your list."
-              : "Showcase shelves from this viewer’s list."}
-          </p>
-        </div>
+      <div className="mb-4">
+        <h2 className="text-base font-semibold text-snow">Profile board</h2>
+        <p className="mt-0.5 text-sm text-[#949ba4]">
+          {isOwner
+            ? "Shelves from your list."
+            : "Shelves from this viewer’s list."}
+        </p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -507,34 +507,41 @@ function ActivityTab({
   isOwner,
   accent,
 }: {
-  items: AnimeListEntry[];
+  items: WatchProgress[];
   isOwner: boolean;
   accent: string;
 }) {
+  if (!isOwner) {
+    return (
+      <EmptyState
+        title="Episode activity is private"
+        body="Recently watched episodes stay on this viewer’s device."
+      />
+    );
+  }
+
   if (items.length === 0) {
     return (
       <EmptyState
-        title="No recent activity"
-        body={
-          isOwner
-            ? "Update a title’s status from Browse or a series page — it will show up here."
-            : "This viewer hasn’t updated their list yet."
-        }
+        title="No episodes yet"
+        body="Watch something — recently played episodes show up here."
       />
     );
   }
 
   return (
     <div>
-      <h2 className="mb-1 text-base font-semibold text-snow">Recent activity</h2>
+      <h2 className="mb-1 text-base font-semibold text-snow">
+        Recently watched
+      </h2>
       <p className="mb-4 text-sm text-[#949ba4]">
-        List updates and status changes.
+        Episodes you’ve been watching.
       </p>
       <ul className="space-y-2">
         {items.map((item) => (
-          <li key={item.id}>
+          <li key={`${item.id}-${item.episode}-${item.language}-${item.updatedAt}`}>
             <Link
-              href={`/anime/${item.anime_id}/${item.slug}`}
+              href={`/watch/${item.id}/${item.slug}?ep=${item.episode}&lang=${item.language}`}
               className="flex items-center gap-3 rounded-2xl bg-[#1e1f22]/90 p-2.5 ring-1 ring-white/[0.04] transition hover:bg-[#232428] hover:ring-white/[0.08]"
             >
               <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-[#111214]">
@@ -554,15 +561,29 @@ function ActivityTab({
                 </p>
                 <p className="mt-0.5 text-xs text-[#949ba4]">
                   <span style={{ color: accent }}>
-                    {item.is_favorite ? "★ " : ""}
-                    {labelForStatus(item.status)}
+                    Episode {item.episode}
                   </span>
                   <span className="text-[#6d6f78]">
                     {" "}
-                    · {relativeTime(item.updated_at)}
+                    · {item.language.toUpperCase()}
+                    {" · "}
+                    {relativeTime(item.updatedAt)}
                   </span>
                 </p>
               </div>
+              {item.percent > 0 && item.percent < 100 ? (
+                <div className="hidden w-16 shrink-0 sm:block">
+                  <div className="h-1 overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.min(100, item.percent)}%`,
+                        background: accent,
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : null}
             </Link>
           </li>
         ))}
@@ -582,13 +603,13 @@ function WatchTab({
 }) {
   return (
     <div>
-      <h2 className="mb-1 text-base font-semibold text-snow">Watch</h2>
+      <h2 className="mb-1 text-base font-semibold text-snow">Plan to watch</h2>
       <p className="mb-4 text-sm text-[#949ba4]">
-        Plan to watch — titles queued for later.
+        Series queued for later.
       </p>
       {items.length === 0 ? (
         <EmptyState
-          title="Nothing to watch yet"
+          title="Queue is empty"
           body={
             isOwner
               ? "Mark titles as Plan to watch from the heart menu."
@@ -618,12 +639,7 @@ function PosterGrid({
           href={`/anime/${item.anime_id}/${item.slug}`}
           className="group block"
         >
-          <div
-            className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-[#1e1f22] ring-1 ring-white/8 transition duration-500 group-hover:-translate-y-0.5 group-hover:ring-white/25"
-            style={{
-              boxShadow: `0 0 0 0 transparent`,
-            }}
-          >
+          <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-[#1e1f22] ring-1 ring-white/8 transition duration-500 group-hover:-translate-y-0.5 group-hover:ring-white/25">
             {item.poster ? (
               <Image
                 src={item.poster}
@@ -638,8 +654,7 @@ function PosterGrid({
                 className="truncate text-[0.6rem] uppercase tracking-[0.1em]"
                 style={{ color: accent }}
               >
-                {item.is_favorite ? "★ " : ""}
-                {labelForStatus(item.status)}
+                Plan to watch
               </p>
             </div>
           </div>
