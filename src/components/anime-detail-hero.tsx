@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CinematicBackdrop } from "@/components/cinematic-backdrop";
+import { ListStatusButton } from "@/components/list-status-button";
 import { slugifyGenre, watchHref } from "@/lib/anikoto";
 import type { AnimeSummary, Episode } from "@/lib/types";
 
@@ -95,30 +96,39 @@ export function AnimeDetailHero({
             ))}
           </div>
 
-          {episodes[0] && (
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href={watchHref(anime, episodes[0].number)}
-                className="btn-primary"
-              >
-                <span className="btn-icon" aria-hidden>
-                  <PlayIcon />
-                </span>
-                Play episode {episodes[0].number}
-              </Link>
-              {hasDub && (
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            {episodes[0] ? (
+              <>
                 <Link
-                  href={watchHref(anime, episodes[0].number, "dub")}
-                  className="btn-ghost"
+                  href={watchHref(anime, episodes[0].number)}
+                  className="btn-primary"
                 >
-                  Play dub
                   <span className="btn-icon" aria-hidden>
-                    <ChevronIcon />
+                    <PlayIcon />
                   </span>
+                  Play episode {episodes[0].number}
                 </Link>
-              )}
-            </div>
-          )}
+                {hasDub ? (
+                  <Link
+                    href={watchHref(anime, episodes[0].number, "dub")}
+                    className="btn-ghost"
+                  >
+                    Play dub
+                    <span className="btn-icon" aria-hidden>
+                      <ChevronIcon />
+                    </span>
+                  </Link>
+                ) : null}
+              </>
+            ) : null}
+            <ListStatusButton
+              anime_id={anime.id}
+              slug={anime.slug}
+              title={anime.title}
+              poster={anime.poster}
+              variant="pill"
+            />
+          </div>
         </div>
       </div>
     </CinematicBackdrop>

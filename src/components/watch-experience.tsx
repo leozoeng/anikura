@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from "react";
 import { AutoplayNext } from "@/components/autoplay-next";
 import { ExpandableText } from "@/components/expandable-text";
 import { MiniPlayer } from "@/components/mini-player";
-import { MyListButton } from "@/components/my-list-button";
 import { VideoPlayer } from "@/components/video-player";
 import { WatchControls } from "@/components/watch-controls";
 import { WatchKeyboard } from "@/components/watch-keyboard";
@@ -367,16 +366,6 @@ export function WatchExperience(props: Props) {
                         </span>
                       </span>
                     </Link>
-
-                    <div className="ml-auto">
-                      <MyListButton
-                        id={anime.id}
-                        slug={anime.slug}
-                        title={anime.title}
-                        poster={anime.poster}
-                        variant="pill"
-                      />
-                    </div>
                   </div>
 
                   <WatchControls

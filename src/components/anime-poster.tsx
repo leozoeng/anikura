@@ -25,7 +25,7 @@ export function AnimePoster({
   progress,
   episodeLabel,
   href,
-  showMyList = true,
+  showMyList = false,
   index,
 }: Props) {
   const score =
