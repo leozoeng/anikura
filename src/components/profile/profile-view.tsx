@@ -35,6 +35,9 @@ type WidgetDef = {
   max: number;
 };
 
+/** Per-shelf poster cap on the profile board. */
+const BOARD_SHELF_MAX = 12;
+
 const TABS: { id: ProfileTab; label: string }[] = [
   { id: "board", label: "Board" },
   { id: "activity", label: "Activity" },
@@ -107,28 +110,28 @@ export function ProfileView({ profile, list, isOwner }: Props) {
         title: "Favourites",
         emptyHint: "Star a title from the heart menu",
         items: favorites,
-        max: 4,
+        max: BOARD_SHELF_MAX,
       },
       {
         id: "watching",
         title: "Watching",
         emptyHint: "Mark a title as Watching",
         items: watching,
-        max: 4,
+        max: BOARD_SHELF_MAX,
       },
       {
         id: "completed",
         title: "Completed",
         emptyHint: "Finished titles show up here",
         items: completed,
-        max: 4,
+        max: BOARD_SHELF_MAX,
       },
       {
         id: "on_hold",
         title: "On hold",
         emptyHint: "Paused titles land here",
         items: onHold,
-        max: 4,
+        max: BOARD_SHELF_MAX,
       },
     ],
     [favorites, watching, completed, onHold],
@@ -421,7 +424,8 @@ function WidgetCard({
   rgb: string;
 }) {
   const filled = widget.items.slice(0, widget.max);
-  const emptyCount = Math.max(0, widget.max - filled.length);
+  const showAdd =
+    isOwner && filled.length < widget.max;
 
   return (
     <div
@@ -439,13 +443,13 @@ function WidgetCard({
         </span>
       </div>
 
-      {filled.length === 0 && emptyCount === 0 ? null : (
-        <div className="grid grid-cols-4 gap-2">
+      {filled.length === 0 && !showAdd ? null : (
+        <div className="scrollbar-none -mx-0.5 flex gap-2 overflow-x-auto px-0.5 pb-0.5">
           {filled.map((item) => (
             <Link
               key={item.id}
               href={`/anime/${item.anime_id}/${item.slug}`}
-              className="group relative aspect-[2/3] overflow-hidden rounded-xl bg-[#111214] ring-1 ring-white/8 transition hover:ring-white/25"
+              className="group relative aspect-[2/3] w-[4.5rem] shrink-0 overflow-hidden rounded-xl bg-[#111214] ring-1 ring-white/8 transition hover:ring-white/25 sm:w-[5rem]"
             >
               {item.poster ? (
                 <Image
@@ -458,14 +462,9 @@ function WidgetCard({
               ) : null}
             </Link>
           ))}
-          {Array.from({ length: emptyCount }).map((_, i) => (
-            <EmptySlot
-              key={`empty-${widget.id}-${i}`}
-              isOwner={isOwner}
-              hint={widget.emptyHint}
-              accent={accent}
-            />
-          ))}
+          {showAdd ? (
+            <EmptySlot hint={widget.emptyHint} accent={accent} />
+          ) : null}
         </div>
       )}
 
@@ -477,24 +476,17 @@ function WidgetCard({
 }
 
 function EmptySlot({
-  isOwner,
   hint,
   accent,
 }: {
-  isOwner: boolean;
   hint: string;
   accent: string;
 }) {
-  if (!isOwner) {
-    return (
-      <div className="aspect-[2/3] rounded-xl bg-white/[0.03] ring-1 ring-dashed ring-white/10" />
-    );
-  }
   return (
     <Link
       href="/browse"
       title={hint}
-      className="grid aspect-[2/3] place-items-center rounded-xl bg-white/[0.03] text-lg text-[#6d6f78] ring-1 ring-dashed ring-white/15 transition hover:bg-white/[0.06] hover:text-snow"
+      className="grid aspect-[2/3] w-[4.5rem] shrink-0 place-items-center rounded-xl bg-white/[0.03] text-lg text-[#6d6f78] ring-1 ring-dashed ring-white/15 transition hover:bg-white/[0.06] hover:text-snow sm:w-[5rem]"
       style={{ borderColor: `${accent}33` }}
     >
       +
