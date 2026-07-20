@@ -92,7 +92,7 @@ export function SiteFooter() {
             <p className="max-w-2xl text-[0.75rem] leading-relaxed text-mute">
               Anikura aggregates listings and does not host media. Streams are
               from third parties — DMCA and copyright requests go to those
-              providers. Donations help keep the site online.
+              providers.
             </p>
             <p className="shrink-0 text-[0.75rem] tracking-[-0.01em] text-mute">
               © {year} Anikura

@@ -36,6 +36,20 @@ export function FooterDonations() {
 
   return (
     <div className="flex flex-wrap items-stretch gap-2">
+      <div className="inline-flex h-[3.25rem] max-w-[14.5rem] items-center gap-2.5 rounded-2xl border border-[#ff8caa]/28 bg-[linear-gradient(135deg,rgba(255,140,170,0.16),rgba(255,255,255,0.04)_55%,rgba(255,179,199,0.1))] py-1.5 pl-2.5 pr-3 shadow-[inset_0_1px_0_rgba(255,232,238,0.12)]">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#ff8caa]/18 ring-1 ring-[#ff8caa]/30">
+          <HeartPetal />
+        </span>
+        <span className="min-w-0 leading-tight">
+          <span className="block text-[0.7rem] font-semibold tracking-[-0.02em] text-sakura-mist">
+            Keep Anikura cozy
+          </span>
+          <span className="block text-[0.62rem] tracking-[-0.01em] text-[#ffb3c7]/85">
+            Donations keep the lights on ♡
+          </span>
+        </span>
+      </div>
+
       {DONATIONS.map((d) => (
         <div
           key={d.id}
@@ -68,6 +82,18 @@ export function FooterDonations() {
         </div>
       ))}
     </div>
+  );
+}
+
+function HeartPetal() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden>
+      <path
+        fill="#ffb3c7"
+        d="M12 20.4c-.4 0-.7-.1-1-.4C7.2 16.4 4 13.5 4 10.1 4 7.5 6 5.6 8.5 5.6c1.4 0 2.6.6 3.5 1.7.9-1.1 2.1-1.7 3.5-1.7C17.9 5.6 20 7.5 20 10.1c0 3.4-3.2 6.3-7 9.9-.3.3-.6.4-1 .4Z"
+      />
+      <circle cx="9.2" cy="9.4" r="0.9" fill="#ffe8ee" opacity="0.85" />
+    </svg>
   );
 }
 
