@@ -57,30 +57,102 @@ export function genreJp(slug: string) {
   return GENRE_JP[slug] ?? null;
 }
 
+/**
+ * Curated AniList widescreen banners (1900×400), hosted locally.
+ * Distinct iconic art per mood — not score-ranked catalog posters.
+ */
+export const MOOD_ART: Record<
+  string,
+  { src: string; credit: string; position?: string }
+> = {
+  action: {
+    src: "/moods/action.jpg",
+    credit: "Jujutsu Kaisen",
+    position: "object-[center_30%]",
+  },
+  fantasy: {
+    src: "/moods/fantasy.jpg",
+    credit: "Frieren: Beyond Journey's End",
+    position: "object-center",
+  },
+  comedy: {
+    src: "/moods/comedy.jpg",
+    credit: "Bocchi the Rock!",
+    position: "object-[center_40%]",
+  },
+  adventure: {
+    src: "/moods/adventure.jpg",
+    credit: "Hunter × Hunter",
+    position: "object-center",
+  },
+  drama: {
+    src: "/moods/drama.jpg",
+    credit: "Your Lie in April",
+    position: "object-[center_45%]",
+  },
+  romance: {
+    src: "/moods/romance.jpg",
+    credit: "Your Name.",
+    position: "object-center",
+  },
+};
+
+export function moodArt(slug: string) {
+  return MOOD_ART[slug] ?? null;
+}
+
+/** Prefer curated mood art; fall back to unique high-score banners from catalog. */
 export function pickGenreCovers(
   catalog: CatalogAnime[],
   genres: GenreStat[],
-): Map<string, CatalogAnime> {
-  const wanted = new Set(genres.map((g) => g.slug));
-  const best = new Map<string, { anime: CatalogAnime; score: number }>();
+): Map<string, { src: string; position?: string }> {
+  const out = new Map<string, { src: string; position?: string }>();
+  const used = new Set<string>();
+
+  for (const genre of genres) {
+    const curated = MOOD_ART[genre.slug];
+    if (curated) {
+      out.set(genre.slug, { src: curated.src, position: curated.position });
+      used.add(curated.src);
+    }
+  }
+
+  const remaining = genres.filter((g) => !out.has(g.slug));
+  if (!remaining.length) return out;
+
+  const wanted = new Set(remaining.map((g) => g.slug));
+  const best = new Map<
+    string,
+    { src: string; score: number; hasBanner: boolean }
+  >();
 
   for (const anime of catalog) {
-    if (!anime.poster) continue;
+    const banner = anime.background_image?.trim();
+    const src = banner || anime.poster;
+    if (!src || used.has(src)) continue;
     const score = Number(anime.score) || 0;
+    const hasBanner = Boolean(banner);
+
     for (const name of anime.genres) {
       const slug = slugifyGenre(name);
-      if (!wanted.has(slug)) continue;
+      if (!wanted.has(slug) || out.has(slug)) continue;
       const prev = best.get(slug);
-      if (!prev || score > prev.score) {
-        best.set(slug, { anime, score });
+      if (
+        !prev ||
+        (hasBanner && !prev.hasBanner) ||
+        (hasBanner === prev.hasBanner && score > prev.score)
+      ) {
+        best.set(slug, { src, score, hasBanner });
       }
     }
   }
 
-  const out = new Map<string, CatalogAnime>();
   for (const [slug, entry] of best) {
-    out.set(slug, entry.anime);
+    if (used.has(entry.src)) continue;
+    out.set(slug, { src: entry.src, position: "object-center" });
+    used.add(entry.src);
   }
+
   return out;
 }
 

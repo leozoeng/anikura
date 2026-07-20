@@ -1,6 +1,6 @@
 import { AnimePoster } from "@/components/anime-poster";
 import { getByGenre, getCatalog, getGenreStats } from "@/lib/catalog";
-import { genreJp, genreWash, pickGenreCovers } from "@/lib/genre-moods";
+import { genreJp, genreWash, moodArt, pickGenreCovers } from "@/lib/genre-moods";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -24,9 +24,10 @@ export default async function GenreDetailPage({ params }: Props) {
 
   const name = genre?.name ?? slug.replace(/-/g, " ");
   const jp = genreJp(slug);
-  const cover = pickGenreCovers(catalog, [
-    { name, slug, count: result.total },
-  ]).get(slug);
+  const curated = moodArt(slug);
+  const cover =
+    curated ??
+    pickGenreCovers(catalog, [{ name, slug, count: result.total }]).get(slug);
 
   return (
     <div className="relative pb-24">
@@ -34,12 +35,12 @@ export default async function GenreDetailPage({ params }: Props) {
         {cover ? (
           <div aria-hidden className="absolute inset-0">
             <Image
-              src={cover.poster}
+              src={cover.src}
               alt=""
               fill
               priority
               sizes="100vw"
-              className="scale-110 object-cover opacity-35 blur-2xl"
+              className={`scale-110 object-cover opacity-40 blur-2xl ${cover.position ?? "object-center"}`}
             />
             <div
               className="absolute inset-0"

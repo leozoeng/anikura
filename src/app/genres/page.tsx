@@ -7,7 +7,7 @@ import {
   pickGenreCovers,
   visibleGenres,
 } from "@/lib/genre-moods";
-import type { CatalogAnime, GenreStat } from "@/lib/types";
+import type { GenreStat } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -182,7 +182,7 @@ function FeaturedMoodTile({
   index,
 }: {
   genre: GenreStat;
-  cover?: CatalogAnime;
+  cover?: { src: string; position?: string };
   index: number;
 }) {
   const jp = genreJp(genre.slug);
@@ -204,7 +204,7 @@ function FeaturedMoodTile({
       <div className="absolute inset-0 bg-elevated" />
       {cover ? (
         <Image
-          src={cover.poster}
+          src={cover.src}
           alt=""
           fill
           sizes={
@@ -213,7 +213,7 @@ function FeaturedMoodTile({
               : "(max-width: 1024px) 50vw, 40vw"
           }
           priority={index < 2}
-          className="object-cover transition duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
+          className={`object-cover transition duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05] ${cover.position ?? "object-center"}`}
         />
       ) : null}
 
