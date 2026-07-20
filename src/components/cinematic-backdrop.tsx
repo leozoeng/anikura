@@ -56,8 +56,9 @@ const YT_PAUSED = 2;
  * Extra wait after PLAYING before revealing the trailer.
  * YouTube often flashes large center prev/pause/next + title chrome
  * for ~1–2s after autoplay starts even with controls:0.
+ * Keep this modest — the poster (not a solid void) covers until ready.
  */
-const CHROME_CLEAR_MS = 2400;
+const CHROME_CLEAR_MS = 1400;
 /** Home hero: hold the HD banner before fading into the trailer */
 const DEFAULT_BANNER_HOLD_MS = 0;
 
@@ -359,7 +360,7 @@ export function CinematicBackdrop({
           </div>
         )}
 
-        {/* Opaque cover above iframe until PLAYING + chrome delay — hides YT center controls */}
+        {/* Solid void only for coverMode="solid" (detail). Prefer poster cover so first paint is never a black void. */}
         {covering && coverMode === "solid" && (
           <div className="absolute inset-0 z-[5] bg-void" aria-hidden />
         )}

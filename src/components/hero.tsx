@@ -92,7 +92,7 @@ export function Hero({ slides }: Props) {
       posterSrc={bg}
       title={showTitle}
       scale={1.65}
-      coverMode={trailerId ? "solid" : "poster"}
+      coverMode="poster"
       bannerHoldMs={0}
     >
       <div className="relative mx-auto flex min-h-[100svh] w-full max-w-[1200px] flex-col justify-end px-5 pb-16 pt-28 sm:px-8 lg:pb-24">
