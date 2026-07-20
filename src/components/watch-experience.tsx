@@ -281,7 +281,7 @@ export function WatchExperience(props: Props) {
                     const next = saveWatchSettings({ theaterMode: false });
                     setSettings(next);
                   }}
-                  className="rounded-full bg-snow px-3.5 py-2 text-sm font-medium text-void"
+                  className="rounded-full bg-white px-3.5 py-2 text-sm font-semibold text-black"
                 >
                   Exit theater
                 </button>

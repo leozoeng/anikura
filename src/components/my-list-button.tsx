@@ -43,10 +43,10 @@ export function MyListButton({
         type="button"
         aria-label={saved ? "Remove from My List" : "Add to My List"}
         onClick={onClick}
-        className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium tracking-[-0.01em] transition ${
+        className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold tracking-[-0.01em] transition ${
           saved
             ? "bg-raised text-snow ring-1 ring-white/15 hover:bg-white/10"
-            : "bg-snow text-void hover:bg-white/90"
+            : "bg-white text-black hover:bg-white/90"
         } ${className}`}
       >
         {saved ? (
@@ -64,7 +64,9 @@ export function MyListButton({
             <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
           </svg>
         )}
-        {saved ? "In My List" : "Add to List"}
+        <span className={saved ? "text-snow" : "text-black"}>
+          {saved ? "In My List" : "Add to List"}
+        </span>
       </button>
     );
   }

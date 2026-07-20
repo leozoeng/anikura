@@ -57,7 +57,7 @@ export function MiniPlayer({
         </div>
         <Link
           href={watchHref}
-          className="rounded-full bg-snow px-4 py-1.5 text-xs font-medium text-void"
+          className="shrink-0 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-black"
         >
           Back to player
         </Link>

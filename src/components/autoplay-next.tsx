@@ -82,21 +82,6 @@ export function AutoplayNext({
 
   return (
     <>
-      {nextHref && enabled && !armed && (
-        <button
-          type="button"
-          onClick={onArm}
-          className="mt-2 text-xs text-apple-blue hover:underline"
-        >
-          Autoplay next episode
-        </button>
-      )}
-      {armed && seconds == null && (
-        <p className="mt-2 text-xs text-mute">
-          Autoplay armed — countdown starts when the player signals end
-        </p>
-      )}
-
       {seconds != null && (
         <div className="fixed inset-x-0 bottom-6 z-[120] flex justify-center px-4 animate-rise">
           <div className="flex w-full max-w-lg items-center gap-4 rounded-2xl border border-white/12 bg-black/90 p-4 shadow-2xl backdrop-blur-xl">
@@ -120,7 +105,7 @@ export function AutoplayNext({
               <button
                 type="button"
                 onClick={start}
-                className="rounded-full bg-snow px-3 py-1.5 text-xs font-medium text-void"
+                className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-black"
               >
                 Play now
               </button>

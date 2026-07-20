@@ -118,11 +118,8 @@ export function SiteFooter() {
         </div>
 
         <div className="border-t border-white/[0.06]">
-          <div className="flex flex-col gap-3 px-3 py-6 text-xs text-mute sm:flex-row sm:items-center sm:justify-between sm:px-4">
+          <div className="px-3 py-6 text-xs text-mute sm:px-4">
             <p>© {year} Anikura. Built for watching.</p>
-            <p className="tracking-[-0.01em]">
-              Catalog powered by Anikoto · Metadata from AniList
-            </p>
           </div>
         </div>
       </div>
