@@ -195,12 +195,20 @@ export function SiteHeader({
             Discord
           </a>
           {!email ? (
-            <Link
-              href="/login"
-              className="rounded-xl px-4 py-3 text-[0.95rem] tracking-[-0.02em] text-snow transition hover:bg-white/[0.05]"
-            >
-              Sign in
-            </Link>
+            <>
+              <Link
+                href="/login"
+                className="rounded-xl px-4 py-3 text-[0.95rem] tracking-[-0.02em] text-cloud transition hover:bg-white/[0.05] hover:text-snow"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/login?mode=signup"
+                className="rounded-xl bg-snow px-4 py-3 text-center text-[0.95rem] font-medium tracking-[-0.02em] text-void transition hover:bg-white"
+              >
+                Create account
+              </Link>
+            </>
           ) : isAdmin ? (
             <Link
               href="/admin"

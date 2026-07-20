@@ -46,21 +46,19 @@ export function HeaderAuth({
     window.location.assign("/");
   }
 
-  if (!isSupabaseConfigured()) {
-    return null;
-  }
+  const authReady = isSupabaseConfigured();
 
   if (!email) {
     return (
       <>
-        <div className="hidden items-center gap-1.5 sm:flex">
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => {
               setMode("signin");
               setModalOpen(true);
             }}
-            className="rounded-full px-3.5 py-1.5 text-[0.8125rem] text-cloud transition hover:bg-white/[0.06] hover:text-snow"
+            className="hidden rounded-full px-3.5 py-1.5 text-[0.8125rem] text-cloud transition hover:bg-white/[0.06] hover:text-snow sm:inline-flex"
           >
             Sign in
           </button>
@@ -70,25 +68,17 @@ export function HeaderAuth({
               setMode("signup");
               setModalOpen(true);
             }}
-            className="rounded-full bg-snow px-3.5 py-1.5 text-[0.8125rem] font-medium text-void transition hover:bg-white"
+            className="inline-flex rounded-full bg-snow px-3.5 py-1.5 text-[0.75rem] font-medium text-void transition hover:bg-white sm:text-[0.8125rem]"
           >
-            Create account
+            <span className="sm:hidden">Sign in</span>
+            <span className="hidden sm:inline">Create account</span>
           </button>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setMode("signin");
-            setModalOpen(true);
-          }}
-          className="rounded-full bg-snow px-3 py-1.5 text-[0.75rem] font-medium text-void transition hover:bg-white sm:hidden"
-        >
-          Sign in
-        </button>
         <AuthModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}
           initialMode={mode}
+          configured={authReady}
         />
       </>
     );

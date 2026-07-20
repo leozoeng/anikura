@@ -10,12 +10,14 @@ type AuthModalProps = {
   open: boolean;
   onClose: () => void;
   initialMode?: Mode;
+  configured?: boolean;
 };
 
 export function AuthModal({
   open,
   onClose,
   initialMode = "signin",
+  configured,
 }: AuthModalProps) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
@@ -57,8 +59,10 @@ export function AuthModal({
     setError(null);
     setMessage(null);
 
-    if (!isSupabaseConfigured()) {
-      setError("Auth is not configured yet.");
+    if (!(configured ?? isSupabaseConfigured())) {
+      setError(
+        "Auth isn’t live on this deploy yet. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel, then redeploy.",
+      );
       return;
     }
 

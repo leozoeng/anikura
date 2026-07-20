@@ -4,8 +4,14 @@ import Link from "next/link";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-export function LoginForm({ nextPath = "/" }: { nextPath?: string }) {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+export function LoginForm({
+  nextPath = "/",
+  initialMode = "signin",
+}: {
+  nextPath?: string;
+  initialMode?: "signin" | "signup";
+}) {
+  const [mode, setMode] = useState<"signin" | "signup">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
