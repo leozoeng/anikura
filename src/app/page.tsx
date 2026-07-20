@@ -228,10 +228,7 @@ async function HomeRows() {
                   }}
                 />
                 <div className="absolute inset-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition duration-300 group-hover:shadow-[inset_0_0_0_1px_rgba(255,140,170,0.4)]" />
-                <div className="relative z-10 flex h-full flex-col justify-between p-3.5 sm:p-4">
-                  <span className="text-[0.65rem] tracking-[0.14em] text-mute uppercase">
-                    Mood
-                  </span>
+                <div className="relative z-10 flex h-full flex-col justify-end p-3.5 sm:p-4">
                   <div>
                     <span className="block text-[1.05rem] font-medium leading-tight tracking-[-0.03em] text-snow transition duration-300 group-hover:text-sakura-mist">
                       {g.name}

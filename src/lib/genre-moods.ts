@@ -29,9 +29,9 @@ export function genreWash(slug: string) {
 }
 
 /**
- * Curated AniList widescreen banners (~1900×400), hosted locally.
+ * Curated cinematic stills (~1920×1080), hosted locally.
  * Distinct iconic art per mood — not score-ranked catalog posters.
- * Prefer sharp, genre-clear banners; tile overlays darken for sakura-night UI.
+ * Prefer sharp 16:9 compositions that crop cleanly on square dark tiles.
  * Admin overrides (Supabase `mood_art`) take precedence at runtime.
  */
 export const MOOD_ART: Record<
@@ -46,27 +46,37 @@ export const MOOD_ART: Record<
   fantasy: {
     src: "/moods/fantasy.jpg",
     credit: "Frieren: Beyond Journey's End",
-    position: "object-[center_42%]",
+    position: "object-[center_72%]",
   },
   comedy: {
     src: "/moods/comedy.jpg",
     credit: "Bocchi the Rock!",
-    position: "object-[center_40%]",
+    position: "object-[68%_center]",
   },
   adventure: {
     src: "/moods/adventure.jpg",
-    credit: "ONE PIECE",
-    position: "object-[center_35%]",
+    credit: "Fullmetal Alchemist: Brotherhood",
+    position: "object-[center_38%]",
   },
   drama: {
     src: "/moods/drama.jpg",
     credit: "Your Lie in April",
-    position: "object-[center_45%]",
+    position: "object-center",
   },
   romance: {
     src: "/moods/romance.jpg",
     credit: "Your Name.",
-    position: "object-center",
+    position: "object-[center_58%]",
+  },
+  "sci-fi": {
+    src: "/moods/scifi.jpg",
+    credit: "Cyberpunk: Edgerunners",
+    position: "object-[center_68%]",
+  },
+  shounen: {
+    src: "/moods/shounen.jpg",
+    credit: "Demon Slayer: Kimetsu no Yaiba",
+    position: "object-[42%_center]",
   },
 };
 
