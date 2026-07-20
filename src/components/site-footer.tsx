@@ -89,10 +89,7 @@ export function SiteFooter() {
             {/* Link lattice */}
             <div className="mt-16 grid gap-10 border-y border-white/[0.08] py-12 sm:grid-cols-2 lg:grid-cols-[1.1fr_1fr_1fr]">
               <div>
-                <p className="font-[family-name:var(--font-jp)] text-sm text-[#ffb3c7]/80">
-                  今夜も、どうぞ
-                </p>
-                <p className="mt-2 text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-mute">
+                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-mute">
                   Explore
                 </p>
                 <ul className="mt-5 flex flex-wrap gap-2">
@@ -173,8 +170,8 @@ export function SiteFooter() {
                   © {year} Anikura · Built for watching
                 </p>
               </div>
-              <p className="font-[family-name:var(--font-jp)] text-xs tracking-[0.04em] text-mute/80">
-                桜の下で、また会いましょう
+              <p className="text-xs tracking-[-0.01em] text-mute/80">
+                See you under the sakura
               </p>
             </div>
           </div>

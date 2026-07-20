@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { getCatalog, getGenreStats, getSyncMeta } from "@/lib/catalog";
 import {
-  genreJp,
   genreWash,
   pickGenreCovers,
   visibleGenres,
@@ -38,10 +37,7 @@ export default async function GenresPage() {
         <div className="relative mx-auto max-w-[1200px] px-5 pb-14 pt-28 sm:px-8 sm:pb-16">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div className="max-w-2xl">
-              <p className="font-[family-name:var(--font-jp)] text-[0.8rem] tracking-[0.28em] text-sakura-soft/90">
-                ジャンル
-              </p>
-              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-mute uppercase">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-mute uppercase">
                 <span className="sakura-dot h-1.5 w-1.5 rounded-full bg-sakura" />
                 Moods
               </div>
@@ -91,10 +87,9 @@ export default async function GenresPage() {
             <section aria-labelledby="featured-moods">
               <div className="flex items-end justify-between gap-4">
                 <div>
-                  <p className="section-eyebrow">いま</p>
                   <h2
                     id="featured-moods"
-                    className="mt-2 text-[clamp(1.5rem,3vw,2rem)] font-semibold tracking-[-0.04em] text-snow"
+                    className="text-[clamp(1.5rem,3vw,2rem)] font-semibold tracking-[-0.04em] text-snow"
                   >
                     Featured moods
                   </h2>
@@ -120,10 +115,9 @@ export default async function GenresPage() {
               <section aria-labelledby="all-moods" className="mt-16 sm:mt-20">
                 <div className="flex items-end justify-between gap-4">
                   <div>
-                    <p className="section-eyebrow">すべて</p>
                     <h2
                       id="all-moods"
-                      className="mt-2 text-[clamp(1.5rem,3vw,2rem)] font-semibold tracking-[-0.04em] text-snow"
+                      className="text-[clamp(1.5rem,3vw,2rem)] font-semibold tracking-[-0.04em] text-snow"
                     >
                       All moods
                     </h2>
@@ -185,7 +179,6 @@ function FeaturedMoodTile({
   cover?: { src: string; position?: string };
   index: number;
 }) {
-  const jp = genreJp(genre.slug);
   const layout =
     index === 0
       ? "genre-tile sm:col-span-2 lg:col-span-7 lg:row-span-2 min-h-[22rem] lg:min-h-[28rem]"
@@ -241,14 +234,7 @@ function FeaturedMoodTile({
           index === 0 ? "lg:p-8" : ""
         }`}
       >
-        <div className="flex items-start justify-between gap-3">
-          {jp ? (
-            <span className="font-[family-name:var(--font-jp)] text-[0.75rem] tracking-[0.2em] text-sakura-mist/75">
-              {jp}
-            </span>
-          ) : (
-            <span />
-          )}
+        <div className="flex items-start justify-end gap-3">
           <span className="rounded-full bg-black/35 px-2.5 py-1 text-[0.7rem] tracking-[-0.01em] text-cloud backdrop-blur-md">
             {genre.count.toLocaleString()} titles
           </span>

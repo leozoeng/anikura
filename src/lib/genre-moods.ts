@@ -28,35 +28,6 @@ export function genreWash(slug: string) {
   return GENRE_WASH[slug] ?? "rgba(255, 140, 170, 0.14)";
 }
 
-/** Short JP mood labels for featured tiles. */
-export const GENRE_JP: Record<string, string> = {
-  action: "アクション",
-  fantasy: "ファンタジー",
-  comedy: "コメディ",
-  adventure: "冒険",
-  drama: "ドラマ",
-  romance: "恋愛",
-  shounen: "少年",
-  supernatural: "超自然",
-  "sci-fi": "SF",
-  "slice-of-life": "日常",
-  school: "学園",
-  historical: "時代劇",
-  mystery: "ミステリー",
-  horror: "ホラー",
-  isekai: "異世界",
-  mecha: "メカ",
-  music: "音楽",
-  sports: "スポーツ",
-  psychological: "心理",
-  seinen: "青年",
-  shoujo: "少女",
-};
-
-export function genreJp(slug: string) {
-  return GENRE_JP[slug] ?? null;
-}
-
 /**
  * Curated AniList widescreen banners (~1900×400), hosted locally.
  * Distinct iconic art per mood — not score-ranked catalog posters.

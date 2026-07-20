@@ -21,7 +21,6 @@ export function AniListRow({ title, subtitle, media, hrefForId }: Props) {
     <section className="space-y-5">
       <div className="flex w-full items-end justify-between gap-4 px-3 sm:px-4">
         <div>
-          <p className="section-eyebrow">いま</p>
           <h2 className="section-title">{title}</h2>
           {subtitle && <p className="section-sub">{subtitle}</p>}
         </div>

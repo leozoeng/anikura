@@ -18,7 +18,6 @@ export function SeasonsSection({ seasons, className = "mt-16" }: Props) {
   return (
     <section className={className}>
       <SectionHeading
-        eyebrow="シーズン"
         title="Seasons"
         subtitle="Jump to any installment in this series."
       />

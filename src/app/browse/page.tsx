@@ -46,10 +46,7 @@ export default async function BrowsePage({ searchParams }: Props) {
         <div className="absolute right-[-6%] top-16 h-40 w-[36%] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.04),transparent_70%)] blur-3xl" />
       </div>
 
-      <p className="font-[family-name:var(--font-jp)] text-[0.8rem] tracking-[0.28em] text-sakura-soft/90">
-        ライブラリ
-      </p>
-      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-mute uppercase">
+      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-mute uppercase">
         <span className="sakura-dot h-1.5 w-1.5 rounded-full bg-sakura" />
         Library
       </div>

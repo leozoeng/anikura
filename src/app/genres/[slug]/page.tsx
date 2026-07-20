@@ -1,6 +1,6 @@
 import { AnimePoster } from "@/components/anime-poster";
 import { getByGenre, getCatalog, getGenreStats } from "@/lib/catalog";
-import { genreJp, genreWash, moodArt, pickGenreCovers } from "@/lib/genre-moods";
+import { genreWash, moodArt, pickGenreCovers } from "@/lib/genre-moods";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,7 +23,6 @@ export default async function GenreDetailPage({ params }: Props) {
   if (!genre && result.total === 0) notFound();
 
   const name = genre?.name ?? slug.replace(/-/g, " ");
-  const jp = genreJp(slug);
   const curated = moodArt(slug);
   const cover =
     curated ??
@@ -65,15 +64,10 @@ export default async function GenreDetailPage({ params }: Props) {
         <div className="relative mx-auto max-w-[1200px] px-5 pb-12 pt-28 sm:px-8">
           <Link
             href="/genres"
-            className="link-quiet inline-flex items-center gap-2 text-sm"
+            className="link-quiet mt-6 inline-flex items-center gap-2 text-sm"
           >
             ← All moods
           </Link>
-          {jp ? (
-            <p className="mt-6 font-[family-name:var(--font-jp)] text-[0.8rem] tracking-[0.28em] text-sakura-soft/90">
-              {jp}
-            </p>
-          ) : null}
           <h1 className="mt-3 text-[clamp(2.4rem,6vw,4rem)] font-semibold capitalize tracking-[-0.05em] text-snow">
             {name}
           </h1>

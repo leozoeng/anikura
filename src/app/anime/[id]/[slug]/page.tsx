@@ -135,7 +135,6 @@ export default async function AnimeDetailPage({ params }: Props) {
         <div className="relative grid gap-8 lg:grid-cols-[1fr_300px] lg:gap-12">
           <section className="panel-soft animate-rise p-6 sm:p-8">
             <SectionHeading
-              eyebrow="ものがたり"
               title="Story"
               subtitle="Settle in — here’s what this one is about."
             />
@@ -186,7 +185,6 @@ export default async function AnimeDetailPage({ params }: Props) {
 
         <section className="mt-16">
           <SectionHeading
-            eyebrow="かいそう"
             title="Episodes"
             subtitle="Pick a scene and settle in."
           />
@@ -201,7 +199,6 @@ export default async function AnimeDetailPage({ params }: Props) {
 
         <RelatedAnimeGrid
           title="Related"
-          eyebrow="まわり"
           subtitle="Movies, spin-offs, and side stories nearby."
           items={related}
           badge={(item) =>
@@ -211,7 +208,6 @@ export default async function AnimeDetailPage({ params }: Props) {
 
         <RelatedAnimeGrid
           title="More like this"
-          eyebrow="おすすめ"
           subtitle="If this mood worked, try these next."
           items={recommendations}
         />

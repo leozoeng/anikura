@@ -20,7 +20,6 @@ import {
   getTopRated,
 } from "@/lib/catalog";
 import {
-  genreJp,
   genreWash,
   pickGenreCovers,
   visibleGenres,
@@ -184,7 +183,6 @@ async function HomeRows() {
       <section className="page-enter mx-auto max-w-[1200px] px-5 sm:px-8">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="section-eyebrow">ジャンル</p>
             <h2 className="section-title">Genres</h2>
             <p className="section-sub">
               {meta
@@ -200,7 +198,6 @@ async function HomeRows() {
         <div className="fade-x scrollbar-none mt-8 flex gap-3 overflow-x-auto pb-2 sm:gap-3.5">
           {genreList.map((g, i) => {
             const cover = genreCovers.get(g.slug);
-            const jp = genreJp(g.slug);
             return (
               <Link
                 key={g.slug}
@@ -229,15 +226,9 @@ async function HomeRows() {
                 />
                 <div className="absolute inset-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition duration-500 group-hover:shadow-[inset_0_0_0_1px_rgba(255,140,170,0.4)]" />
                 <div className="relative z-10 flex h-full flex-col justify-between p-3.5 sm:p-4">
-                  {jp ? (
-                    <span className="font-[family-name:var(--font-jp)] text-[0.65rem] tracking-[0.18em] text-sakura-mist/70">
-                      {jp}
-                    </span>
-                  ) : (
-                    <span className="text-[0.65rem] tracking-[0.14em] text-mute uppercase">
-                      Mood
-                    </span>
-                  )}
+                  <span className="text-[0.65rem] tracking-[0.14em] text-mute uppercase">
+                    Mood
+                  </span>
                   <div>
                     <span className="block text-[1.05rem] font-medium leading-tight tracking-[-0.03em] text-snow transition duration-300 group-hover:text-sakura-mist">
                       {g.name}
