@@ -133,7 +133,7 @@ async function HomeRows() {
   const genreCovers = pickGenreCovers(catalog, genreList);
 
   return (
-    <div className="relative z-10 space-y-16 pt-10 sm:space-y-20 sm:pt-14">
+    <div className="relative z-10 space-y-12 pt-8 sm:space-y-14 sm:pt-10">
       <ContinueWatching />
 
       <MyListRow />
@@ -203,7 +203,7 @@ async function HomeRows() {
                 key={g.slug}
                 href={`/genres/${g.slug}`}
                 className="genre-tile group relative h-[9.5rem] w-[9.75rem] shrink-0 overflow-hidden rounded-[1.2rem] sm:h-[10.5rem] sm:w-[11rem]"
-                style={{ animationDelay: `${Math.min(i, 9) * 45}ms` }}
+                style={{ animationDelay: `${Math.min(i, 9) * 28}ms` }}
               >
                 <div className="absolute inset-0 bg-elevated" />
                 {cover ? (
@@ -212,11 +212,11 @@ async function HomeRows() {
                     alt=""
                     fill
                     sizes="180px"
-                    className={`object-cover transition duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06] ${cover.position ?? "object-center"}`}
+                    className={`object-cover transition duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04] ${cover.position ?? "object-center"}`}
                   />
                 ) : null}
                 <div
-                  className="absolute inset-0 transition duration-500"
+                  className="absolute inset-0 transition duration-300"
                   style={{
                     background: `
                       linear-gradient(180deg, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.55) 48%, rgba(0,0,0,0.92) 100%),
@@ -224,7 +224,7 @@ async function HomeRows() {
                     `,
                   }}
                 />
-                <div className="absolute inset-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition duration-500 group-hover:shadow-[inset_0_0_0_1px_rgba(255,140,170,0.4)]" />
+                <div className="absolute inset-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition duration-300 group-hover:shadow-[inset_0_0_0_1px_rgba(255,140,170,0.4)]" />
                 <div className="relative z-10 flex h-full flex-col justify-between p-3.5 sm:p-4">
                   <span className="text-[0.65rem] tracking-[0.14em] text-mute uppercase">
                     Mood
@@ -254,7 +254,7 @@ async function HomeRows() {
 
 export default function HomePage() {
   return (
-    <div className="pb-10">
+    <div className="pb-6">
       <Suspense fallback={<HeroShell />}>
         <HomeHero />
       </Suspense>

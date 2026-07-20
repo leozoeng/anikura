@@ -32,7 +32,7 @@ export function AnimePoster({
     anime.score && anime.score !== "N/A" ? anime.score : null;
   const delay =
     typeof index === "number"
-      ? { animationDelay: `${Math.min(index, 24) * 28}ms` }
+      ? { animationDelay: `${Math.min(index, 14) * 18}ms` }
       : undefined;
 
   return (

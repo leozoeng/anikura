@@ -37,7 +37,7 @@ export default async function BrowsePage({ searchParams }: Props) {
   ];
 
   return (
-    <div className="page-enter relative mx-auto max-w-[1200px] px-5 pb-24 pt-28 sm:px-8">
+    <div className="page-enter relative mx-auto max-w-[1200px] px-5 pb-16 pt-28 sm:px-8">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 overflow-hidden"
@@ -94,7 +94,7 @@ export default async function BrowsePage({ searchParams }: Props) {
         </div>
       ) : (
         <>
-          <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
             {slice.map((anime, i) => (
               <AnimePoster key={anime.id} anime={anime} index={i} />
             ))}

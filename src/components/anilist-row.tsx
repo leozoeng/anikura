@@ -35,7 +35,7 @@ export function AniListRow({ title, subtitle, media, hrefForId }: Props) {
             key={m.id}
             href={href!}
             className="poster-link group w-[138px] shrink-0 sm:w-[156px]"
-            style={{ animationDelay: `${Math.min(i, 12) * 28}ms` }}
+            style={{ animationDelay: `${Math.min(i, 12) * 18}ms` }}
           >
             <div className="poster-frame relative aspect-[2/3] overflow-hidden rounded-[1.1rem] bg-raised">
               {(m.coverImage?.extraLarge || m.coverImage?.large) && (

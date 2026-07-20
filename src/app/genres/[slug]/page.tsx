@@ -29,7 +29,7 @@ export default async function GenreDetailPage({ params }: Props) {
     pickGenreCovers(catalog, [{ name, slug, count: result.total }]).get(slug);
 
   return (
-    <div className="page-enter relative pb-24">
+    <div className="page-enter relative pb-16">
       <header className="relative overflow-hidden border-b border-white/[0.06]">
         {cover ? (
           <div aria-hidden className="absolute inset-0">

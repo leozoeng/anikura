@@ -20,42 +20,40 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="site-chrome relative z-10 mt-32 overflow-hidden">
+    <footer className="site-chrome relative z-10 mt-16 overflow-hidden sm:mt-20">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 -top-32 h-32 bg-gradient-to-t from-void via-void/80 to-transparent"
+        className="pointer-events-none absolute inset-x-0 -top-16 h-16 bg-gradient-to-t from-void via-void/80 to-transparent"
       />
 
       <div className="relative border-t border-white/[0.07]">
-        {/* Atmosphere */}
+        {/* Atmosphere — compact sakura night wash */}
         <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-24 bottom-0 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(255,140,170,0.16),transparent_68%)] blur-2xl" />
-          <div className="absolute right-[-10%] top-[-20%] h-[380px] w-[380px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.07),transparent_70%)] blur-3xl" />
-          <div className="absolute inset-0 opacity-[0.035] [background-image:radial-gradient(rgba(255,255,255,0.9)_0.6px,transparent_0.6px)] [background-size:18px_18px]" />
-          <div className="footer-petal absolute left-[12%] top-16 h-3 w-3 rotate-12 rounded-[40%_60%_55%_45%] bg-[#ff8caa]/35 blur-[0.5px]" />
-          <div className="footer-petal-slow absolute right-[22%] top-28 h-2.5 w-2.5 -rotate-6 rounded-[45%_55%_40%_60%] bg-[#ffb3c7]/30" />
-          <div className="footer-petal absolute bottom-40 left-[48%] h-2 w-2 rotate-45 rounded-[50%_40%_60%_50%] bg-[#ff8caa]/25" />
+          <div className="absolute -left-16 bottom-0 h-[220px] w-[220px] rounded-full bg-[radial-gradient(circle,rgba(255,140,170,0.14),transparent_68%)] blur-2xl" />
+          <div className="absolute right-[-8%] top-[-30%] h-[200px] w-[200px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.06),transparent_70%)] blur-3xl" />
+          <div className="absolute inset-0 opacity-[0.03] [background-image:radial-gradient(rgba(255,255,255,0.9)_0.6px,transparent_0.6px)] [background-size:18px_18px]" />
+          <div className="footer-petal absolute left-[14%] top-10 h-2.5 w-2.5 rotate-12 rounded-[40%_60%_55%_45%] bg-[#ff8caa]/30 blur-[0.5px]" />
+          <div className="footer-petal-slow absolute right-[20%] top-14 h-2 w-2 -rotate-6 rounded-[45%_55%_40%_60%] bg-[#ffb3c7]/28" />
         </div>
 
-        <div className="relative px-3 pb-10 pt-16 sm:px-4">
-          {/* Brand closing statement */}
+        <div className="relative px-3 pb-7 pt-10 sm:px-4 sm:pb-8 sm:pt-12">
           <div className="w-full">
-            <div className="flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-xl">
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-mute uppercase">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#ff8caa] shadow-[0_0_12px_rgba(255,140,170,0.8)]" />
                   Night mode, always on
                 </div>
-                <div className="mt-6 flex items-center gap-4">
+                <div className="mt-4 flex items-center gap-3.5">
                   <AnikuraMark
-                    size={44}
+                    size={38}
                     className="shadow-[0_12px_40px_rgba(255,140,170,0.18)] ring-1 ring-white/10"
                   />
-                  <p className="text-[clamp(2.4rem,6vw,4.25rem)] font-semibold leading-[0.92] tracking-[-0.06em] text-snow">
+                  <p className="text-[clamp(2rem,5vw,3.25rem)] font-semibold leading-[0.92] tracking-[-0.06em] text-snow">
                     Anikura
                   </p>
                 </div>
-                <p className="mt-5 max-w-md text-[1.05rem] leading-relaxed tracking-[-0.015em] text-cloud">
+                <p className="mt-3.5 max-w-md text-[0.95rem] leading-relaxed tracking-[-0.015em] text-cloud">
                   A quiet theater for loud stories — sakura glow, soft nights,
                   and the next episode waiting when you are.
                 </p>
@@ -65,11 +63,11 @@ export function SiteFooter() {
                 href={DISCORD}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full bg-white px-5 py-3.5 text-sm font-semibold tracking-[-0.02em] text-black transition duration-300 hover:scale-[1.02] hover:bg-[#ffe8ee]"
+                className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full bg-white px-5 py-3 text-sm font-semibold tracking-[-0.02em] text-black transition duration-200 hover:scale-[1.02] hover:bg-[#ffe8ee]"
               >
                 <span
                   aria-hidden
-                  className="absolute inset-0 opacity-0 transition duration-500 group-hover:opacity-100"
+                  className="absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100"
                   style={{
                     background:
                       "linear-gradient(120deg, transparent 20%, rgba(255,140,170,0.35) 50%, transparent 80%)",
@@ -86,18 +84,17 @@ export function SiteFooter() {
               </a>
             </div>
 
-            {/* Link lattice */}
-            <div className="mt-16 grid gap-10 border-y border-white/[0.08] py-12 sm:grid-cols-2 lg:grid-cols-[1.1fr_1fr_1fr]">
+            <div className="mt-10 grid gap-7 border-y border-white/[0.08] py-8 sm:grid-cols-2 lg:grid-cols-[1.1fr_1fr_1fr] lg:gap-8">
               <div>
                 <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-mute">
                   Explore
                 </p>
-                <ul className="mt-5 flex flex-wrap gap-2">
+                <ul className="mt-3.5 flex flex-wrap gap-2">
                   {explore.map((item) => (
                     <li key={item.label}>
                       <Link
                         href={item.href}
-                        className="footer-link inline-flex rounded-full border border-white/10 bg-white/[0.02] px-3.5 py-2 text-sm text-cloud transition hover:border-[#ff8caa]/35 hover:bg-[#ff8caa]/10 hover:text-snow"
+                        className="footer-link inline-flex rounded-full border border-white/10 bg-white/[0.02] px-3.5 py-1.5 text-sm text-cloud transition hover:border-[#ff8caa]/35 hover:bg-[#ff8caa]/10 hover:text-snow"
                       >
                         {item.label}
                       </Link>
@@ -110,7 +107,7 @@ export function SiteFooter() {
                 <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-mute">
                   For the evening
                 </p>
-                <ul className="mt-5 space-y-3">
+                <ul className="mt-3.5 space-y-2.5">
                   {evenings.map((item) => (
                     <li key={item.label}>
                       <Link
@@ -132,7 +129,7 @@ export function SiteFooter() {
                 <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-mute">
                   Community
                 </p>
-                <p className="mt-5 max-w-xs text-sm leading-relaxed text-cloud">
+                <p className="mt-3.5 max-w-xs text-sm leading-relaxed text-cloud">
                   Drop episode takes, find watch buddies, and catch site updates
                   as they bloom.
                 </p>
@@ -140,7 +137,7 @@ export function SiteFooter() {
                   href={DISCORD}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-4 inline-flex items-center gap-2 text-sm font-medium tracking-[-0.01em] text-[#ffb3c7] transition hover:text-[#ffd0dc]"
+                  className="mt-3 inline-flex items-center gap-2 text-sm font-medium tracking-[-0.01em] text-[#ffb3c7] transition hover:text-[#ffd0dc]"
                 >
                   discord.gg/anikura
                   <span aria-hidden>↗</span>
@@ -148,22 +145,21 @@ export function SiteFooter() {
               </div>
             </div>
 
-            {/* Quiet legal note — not a heavy boxed card */}
             <aside
-              className="mt-10 max-w-3xl"
+              className="mt-7 max-w-3xl"
               aria-label="Important disclaimer"
             >
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-mute">
                 Note
               </p>
-              <p className="mt-3 text-[0.8125rem] leading-relaxed text-mute">
+              <p className="mt-2 text-[0.8125rem] leading-relaxed text-mute">
                 Anikura is a content aggregator and does not host media files.
                 Streams come from third-party providers — for copyright or DMCA
                 requests, contact those providers directly.
               </p>
             </aside>
 
-            <div className="mt-12 flex flex-col gap-4 border-t border-white/[0.07] pt-7 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-8 flex flex-col gap-3 border-t border-white/[0.07] pt-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <AnikuraLogo size={22} withWordmark={false} href="/" />
                 <p className="text-xs tracking-[-0.01em] text-mute">

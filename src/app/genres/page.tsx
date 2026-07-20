@@ -23,7 +23,7 @@ export default async function GenresPage() {
   const covers = pickGenreCovers(catalog, featured);
 
   return (
-    <div className="relative pb-28">
+    <div className="relative pb-16">
       <header className="relative overflow-hidden border-b border-white/[0.06]">
         <div
           aria-hidden
@@ -34,7 +34,7 @@ export default async function GenresPage() {
           <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#ff8caa]/35 to-transparent" />
         </div>
 
-        <div className="relative mx-auto max-w-[1200px] px-5 pb-14 pt-28 sm:px-8 sm:pb-16">
+        <div className="relative mx-auto max-w-[1200px] px-5 pb-10 pt-28 sm:px-8 sm:pb-12">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-mute uppercase">
@@ -77,7 +77,7 @@ export default async function GenresPage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-[1200px] px-5 pt-12 sm:px-8 sm:pt-14">
+      <div className="mx-auto max-w-[1200px] px-5 pt-10 sm:px-8 sm:pt-12">
         {genres.length === 0 ? (
           <p className="text-mute">
             No genres yet. Run <code className="text-snow">npm run sync</code>.
@@ -112,7 +112,7 @@ export default async function GenresPage() {
             </section>
 
             {rest.length > 0 ? (
-              <section aria-labelledby="all-moods" className="mt-16 sm:mt-20">
+              <section aria-labelledby="all-moods" className="mt-12 sm:mt-14">
                 <div className="flex items-end justify-between gap-4">
                   <div>
                     <h2
@@ -132,16 +132,16 @@ export default async function GenresPage() {
                     <Link
                       key={genre.slug}
                       href={`/genres/${genre.slug}`}
-                      className="genre-tile group relative flex min-h-[7.25rem] flex-col justify-between overflow-hidden rounded-[1.15rem] px-4 py-4 transition duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5"
+                      className="genre-tile group relative flex min-h-[7.25rem] flex-col justify-between overflow-hidden rounded-[1.15rem] px-4 py-4 transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5"
                       style={{
-                        animationDelay: `${Math.min(i, 18) * 28}ms`,
+                        animationDelay: `${Math.min(i, 14) * 18}ms`,
                         background: `linear-gradient(155deg, ${genreWash(genre.slug)} 0%, rgba(12,12,16,0.92) 55%, rgba(0,0,0,0.96) 100%)`,
                         boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.07)",
                       }}
                     >
                       <span
                         aria-hidden
-                        className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full opacity-0 blur-2xl transition duration-500 group-hover:opacity-100"
+                        className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full opacity-0 blur-2xl transition duration-300 group-hover:opacity-100"
                         style={{ background: genreWash(genre.slug) }}
                       />
                       <span className="relative text-[0.68rem] tracking-[0.14em] text-mute uppercase transition group-hover:text-sakura-soft/80">
@@ -192,7 +192,7 @@ function FeaturedMoodTile({
     <Link
       href={`/genres/${genre.slug}`}
       className={`group relative overflow-hidden rounded-[1.35rem] ${layout}`}
-      style={{ animationDelay: `${index * 70}ms` }}
+      style={{ animationDelay: `${index * 40}ms` }}
     >
       <div className="absolute inset-0 bg-elevated" />
       {cover ? (
@@ -206,12 +206,12 @@ function FeaturedMoodTile({
               : "(max-width: 1024px) 50vw, 40vw"
           }
           priority={index < 2}
-          className={`object-cover transition duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05] ${cover.position ?? "object-center"}`}
+          className={`object-cover transition duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04] ${cover.position ?? "object-center"}`}
         />
       ) : null}
 
       <div
-        className="absolute inset-0 transition duration-500"
+        className="absolute inset-0 transition duration-300"
         style={{
           background: `
             linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.92) 100%),
@@ -221,13 +221,13 @@ function FeaturedMoodTile({
       />
       <div
         aria-hidden
-        className="absolute inset-0 opacity-0 transition duration-500 group-hover:opacity-100"
+        className="absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100"
         style={{
           background: `radial-gradient(600px 280px at 20% 80%, ${genreWash(genre.slug)}, transparent 70%)`,
         }}
       />
 
-      <div className="absolute inset-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition duration-500 group-hover:shadow-[inset_0_0_0_1px_rgba(255,140,170,0.35)]" />
+      <div className="absolute inset-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition duration-300 group-hover:shadow-[inset_0_0_0_1px_rgba(255,140,170,0.35)]" />
 
       <div
         className={`relative z-10 flex h-full flex-col justify-between p-5 sm:p-6 ${
