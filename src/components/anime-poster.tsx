@@ -14,6 +14,8 @@ type Props = {
   episodeLabel?: string;
   href?: string;
   showMyList?: boolean;
+  /** Stagger index for enter animation (grids / rows). */
+  index?: number;
 };
 
 export function AnimePoster({
@@ -24,22 +26,37 @@ export function AnimePoster({
   episodeLabel,
   href,
   showMyList = true,
+  index,
 }: Props) {
+  const score =
+    anime.score && anime.score !== "N/A" ? anime.score : null;
+  const delay =
+    typeof index === "number"
+      ? { animationDelay: `${Math.min(index, 24) * 28}ms` }
+      : undefined;
+
   return (
     <Link
       href={href || animeHref(anime)}
-      className={`group relative block ${className}`}
+      className={`poster-link group relative block ${className}`}
+      style={delay}
     >
-      <div className="relative aspect-[2/3] overflow-hidden rounded-[1.1rem] bg-raised ring-1 ring-white/8 transition duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-1 group-hover:ring-[#ff8caa]/35 group-hover:shadow-[0_24px_50px_rgba(0,0,0,0.55)]">
+      <div className="poster-frame relative aspect-[2/3] overflow-hidden rounded-[1.1rem] bg-raised">
         <Image
           src={anime.poster}
           alt={anime.title}
           fill
           sizes="(max-width: 768px) 42vw, 180px"
           priority={priority}
-          className="object-cover transition duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+          className="poster-image object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
+        <div className="poster-veil absolute inset-0" />
+
+        {score ? (
+          <span className="poster-score absolute left-2.5 top-2.5 z-[1]">
+            {score}
+          </span>
+        ) : null}
 
         {showMyList && (
           <MyListButton
@@ -47,28 +64,30 @@ export function AnimePoster({
             slug={anime.slug}
             title={anime.title}
             poster={anime.poster}
-            className="absolute right-2 top-2 z-10 opacity-0 transition group-hover:opacity-100"
+            className="absolute right-2 top-2 z-10 opacity-0 transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:opacity-100 group-focus-within:opacity-100"
           />
         )}
 
         {typeof progress === "number" && progress > 0 && (
           <div className="absolute inset-x-3 bottom-3 h-[2px] overflow-hidden rounded-full bg-white/20">
             <div
-              className="h-full rounded-full bg-white"
+              className="h-full rounded-full bg-sakura-soft"
               style={{ width: `${Math.min(100, Math.max(4, progress))}%` }}
             />
           </div>
         )}
       </div>
 
-      <div className="mt-3 space-y-0.5 px-0.5">
-        <h3 className="line-clamp-2 text-[0.8125rem] font-medium leading-snug tracking-[-0.02em] text-snow transition group-hover:text-white">
+      <div className="poster-meta mt-3 space-y-0.5 px-0.5">
+        <h3 className="line-clamp-2 text-[0.8125rem] font-medium leading-snug tracking-[-0.02em] text-snow transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-sakura-mist">
           {anime.title}
         </h3>
         {episodeLabel ? (
           <p className="text-[0.75rem] text-mute">{episodeLabel}</p>
-        ) : anime.score && anime.score !== "N/A" ? (
-          <p className="text-[0.75rem] text-mute">{anime.score}</p>
+        ) : score ? (
+          <p className="text-[0.75rem] text-mute transition duration-300 group-hover:text-cloud">
+            {score}
+          </p>
         ) : null}
       </div>
     </Link>

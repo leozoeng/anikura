@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { AniListRow } from "@/components/anilist-row";
 import { AnimeRow } from "@/components/anime-row";
 import { ContinueWatching } from "@/components/continue-watching";
@@ -17,7 +19,12 @@ import {
   getSyncMeta,
   getTopRated,
 } from "@/lib/catalog";
-import Link from "next/link";
+import {
+  genreJp,
+  genreWash,
+  pickGenreCovers,
+  visibleGenres,
+} from "@/lib/genre-moods";
 
 /** Cache the home shell so refresh isn't blocked on cold API waits. */
 export const revalidate = 120;
@@ -115,12 +122,16 @@ async function HomeRows() {
     .slice(0, 18);
 
   const genreList = genres.length
-    ? genres.slice(0, 10)
-    : Array.from(new Set(recent.flatMap((a) => getGenres(a)))).map((name) => ({
-        name,
-        slug: slugifyGenre(name),
-        count: 0,
-      }));
+    ? visibleGenres(genres).slice(0, 10)
+    : Array.from(new Set(recent.flatMap((a) => getGenres(a))))
+        .slice(0, 10)
+        .map((name) => ({
+          name,
+          slug: slugifyGenre(name),
+          count: 0,
+        }));
+
+  const genreCovers = pickGenreCovers(catalog, genreList);
 
   return (
     <div className="relative z-10 space-y-16 pt-10 sm:space-y-20 sm:pt-14">
@@ -170,39 +181,80 @@ async function HomeRows() {
         <AnimeRow title="Fantasy" href="/genres/fantasy" anime={fantasy} />
       )}
 
-      <section className="mx-auto max-w-[1200px] px-5 sm:px-8">
+      <section className="page-enter mx-auto max-w-[1200px] px-5 sm:px-8">
         <div className="flex items-end justify-between gap-4">
           <div>
+            <p className="section-eyebrow">ジャンル</p>
             <h2 className="section-title">Genres</h2>
             <p className="section-sub">
               {meta
-                ? `${meta.totalAnime.toLocaleString()} titles in your library`
+                ? `${meta.totalAnime.toLocaleString()} titles · pick a mood`
                 : "Sync the catalog to unlock deeper browsing"}
             </p>
           </div>
           <Link href="/genres" className="link-quiet text-sm">
-            View all
+            View all →
           </Link>
         </div>
 
-        <div className="mt-8 divide-y divide-white/8 border-y border-white/8">
-          {genreList.map((g) => (
-            <Link
-              key={g.slug}
-              href={`/genres/${g.slug}`}
-              className="group flex items-center justify-between py-4 transition hover:bg-white/[0.03]"
-            >
-              <span className="text-[1.05rem] tracking-[-0.02em] text-snow transition group-hover:translate-x-1">
-                {g.name}
-              </span>
-              <span className="text-sm text-mute">
-                {g.count > 0 ? g.count.toLocaleString() : "Explore"}
-                <span className="ml-3 text-cloud transition group-hover:text-snow">
-                  →
-                </span>
-              </span>
-            </Link>
-          ))}
+        <div className="fade-x scrollbar-none mt-8 flex gap-3 overflow-x-auto pb-2 sm:gap-3.5">
+          {genreList.map((g, i) => {
+            const cover = genreCovers.get(g.slug);
+            const jp = genreJp(g.slug);
+            return (
+              <Link
+                key={g.slug}
+                href={`/genres/${g.slug}`}
+                className="genre-tile group relative h-[9.5rem] w-[9.75rem] shrink-0 overflow-hidden rounded-[1.2rem] sm:h-[10.5rem] sm:w-[11rem]"
+                style={{ animationDelay: `${Math.min(i, 9) * 45}ms` }}
+              >
+                <div className="absolute inset-0 bg-elevated" />
+                {cover ? (
+                  <Image
+                    src={cover.src}
+                    alt=""
+                    fill
+                    sizes="180px"
+                    className={`object-cover transition duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06] ${cover.position ?? "object-center"}`}
+                  />
+                ) : null}
+                <div
+                  className="absolute inset-0 transition duration-500"
+                  style={{
+                    background: `
+                      linear-gradient(180deg, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.55) 48%, rgba(0,0,0,0.92) 100%),
+                      linear-gradient(145deg, ${genreWash(g.slug)} 0%, transparent 58%)
+                    `,
+                  }}
+                />
+                <div className="absolute inset-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition duration-500 group-hover:shadow-[inset_0_0_0_1px_rgba(255,140,170,0.4)]" />
+                <div className="relative z-10 flex h-full flex-col justify-between p-3.5 sm:p-4">
+                  {jp ? (
+                    <span className="font-[family-name:var(--font-jp)] text-[0.65rem] tracking-[0.18em] text-sakura-mist/70">
+                      {jp}
+                    </span>
+                  ) : (
+                    <span className="text-[0.65rem] tracking-[0.14em] text-mute uppercase">
+                      Mood
+                    </span>
+                  )}
+                  <div>
+                    <span className="block text-[1.05rem] font-medium leading-tight tracking-[-0.03em] text-snow transition duration-300 group-hover:text-sakura-mist">
+                      {g.name}
+                    </span>
+                    <span className="mt-1 flex items-center justify-between text-[0.72rem] text-mute">
+                      <span>
+                        {g.count > 0 ? g.count.toLocaleString() : "Explore"}
+                      </span>
+                      <span className="translate-x-0 text-cloud transition duration-300 group-hover:translate-x-0.5 group-hover:text-sakura-soft">
+                        →
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
     </div>

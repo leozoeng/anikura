@@ -30,7 +30,7 @@ export default async function GenreDetailPage({ params }: Props) {
     pickGenreCovers(catalog, [{ name, slug, count: result.total }]).get(slug);
 
   return (
-    <div className="relative pb-24">
+    <div className="page-enter relative pb-24">
       <header className="relative overflow-hidden border-b border-white/[0.06]">
         {cover ? (
           <div aria-hidden className="absolute inset-0">
@@ -85,8 +85,8 @@ export default async function GenreDetailPage({ params }: Props) {
 
       <div className="mx-auto max-w-[1200px] px-5 pt-12 sm:px-8">
         <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-          {result.anime.map((anime) => (
-            <AnimePoster key={anime.id} anime={anime} />
+          {result.anime.map((anime, i) => (
+            <AnimePoster key={anime.id} anime={anime} index={i} />
           ))}
         </div>
       </div>

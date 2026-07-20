@@ -37,8 +37,19 @@ export default async function BrowsePage({ searchParams }: Props) {
   ];
 
   return (
-    <div className="mx-auto max-w-[1200px] px-5 pb-24 pt-28 sm:px-8">
-      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-mute uppercase">
+    <div className="page-enter relative mx-auto max-w-[1200px] px-5 pb-24 pt-28 sm:px-8">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 overflow-hidden"
+      >
+        <div className="absolute left-[-8%] top-8 h-48 w-[42%] rounded-full bg-[radial-gradient(circle,rgba(255,140,170,0.12),transparent_68%)] blur-3xl" />
+        <div className="absolute right-[-6%] top-16 h-40 w-[36%] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.04),transparent_70%)] blur-3xl" />
+      </div>
+
+      <p className="font-[family-name:var(--font-jp)] text-[0.8rem] tracking-[0.28em] text-sakura-soft/90">
+        ライブラリ
+      </p>
+      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-mute uppercase">
         <span className="sakura-dot h-1.5 w-1.5 rounded-full bg-sakura" />
         Library
       </div>
@@ -51,20 +62,25 @@ export default async function BrowsePage({ searchParams }: Props) {
           : "Run a catalog sync to fill this shelf."}
       </p>
 
-      <div className="mt-8 flex flex-wrap gap-2">
-        {sorts.map((s) => (
-          <Link
-            key={s.id}
-            href={`/browse?sort=${s.id}`}
-            className={`rounded-full px-4 py-2 text-sm tracking-[-0.01em] transition duration-300 ${
-              sort === s.id
-                ? "bg-white text-black"
-                : "border border-white/12 text-cloud hover:border-[#ff8caa]/35 hover:bg-[#ff8caa]/08 hover:text-snow"
-            }`}
-          >
-            {s.label}
-          </Link>
-        ))}
+      <div
+        className="filter-rail mt-9"
+        role="tablist"
+        aria-label="Browse sort"
+      >
+        {sorts.map((s) => {
+          const active = sort === s.id;
+          return (
+            <Link
+              key={s.id}
+              href={`/browse?sort=${s.id}`}
+              role="tab"
+              aria-selected={active}
+              className={`filter-pill ${active ? "is-active" : ""}`}
+            >
+              {s.label}
+            </Link>
+          );
+        })}
       </div>
 
       {slice.length === 0 ? (
@@ -82,8 +98,8 @@ export default async function BrowsePage({ searchParams }: Props) {
       ) : (
         <>
           <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {slice.map((anime) => (
-              <AnimePoster key={anime.id} anime={anime} />
+            {slice.map((anime, i) => (
+              <AnimePoster key={anime.id} anime={anime} index={i} />
             ))}
           </div>
 
@@ -91,7 +107,7 @@ export default async function BrowsePage({ searchParams }: Props) {
             {page > 1 && (
               <Link
                 href={`/browse?sort=${sort}&page=${page - 1}`}
-                className="btn-ghost !py-2 !px-4 text-sm"
+                className="btn-ghost !px-4 !py-2 text-sm"
               >
                 Previous
               </Link>
@@ -102,7 +118,7 @@ export default async function BrowsePage({ searchParams }: Props) {
             {page < totalPages && (
               <Link
                 href={`/browse?sort=${sort}&page=${page + 1}`}
-                className="btn-primary !py-2 !px-4 text-sm"
+                className="btn-primary !px-4 !py-2 text-sm"
               >
                 Next
               </Link>

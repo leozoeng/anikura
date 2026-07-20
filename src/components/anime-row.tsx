@@ -62,7 +62,7 @@ export function AnimeRow({ title, subtitle, href, anime }: Props) {
         >
           {anime.map((item, i) => (
             <div key={item.id} className="w-[138px] shrink-0 sm:w-[156px]">
-              <AnimePoster anime={item} priority={i < 5} />
+              <AnimePoster anime={item} priority={i < 5} index={i} />
             </div>
           ))}
         </div>

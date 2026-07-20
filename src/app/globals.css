@@ -167,11 +167,45 @@ button {
 
 .genre-tile {
   animation: rise 0.7s var(--ease-out-soft) both;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+  transition:
+    transform 0.45s var(--ease-out-soft),
+    box-shadow 0.45s var(--ease-out-soft);
+}
+
+.genre-tile:hover,
+.genre-tile:focus-visible {
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 0 1px rgba(255, 140, 170, 0.38),
+    0 0 0 4px rgba(255, 140, 170, 0.1),
+    0 20px 44px rgba(0, 0, 0, 0.5),
+    0 0 32px rgba(255, 140, 170, 0.14);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .genre-tile {
-    animation: none;
+  .genre-tile,
+  .animate-rise,
+  .page-enter,
+  .poster-link,
+  .footer-petal,
+  .footer-petal-slow,
+  .sakura-dot {
+    animation: none !important;
+  }
+
+  .genre-tile,
+  .poster-frame,
+  .poster-image,
+  .filter-pill {
+    transition: none !important;
+  }
+
+  .genre-tile:hover,
+  .genre-tile:focus-visible,
+  .poster-link:hover .poster-frame,
+  .poster-link:focus-visible .poster-frame {
+    transform: none;
   }
 }
 
@@ -472,6 +506,142 @@ button {
     0 0 0 1px rgba(255, 140, 170, 0.28),
     0 18px 40px rgba(0, 0, 0, 0.35);
   transform: translateY(-2px);
+}
+
+/* Poster hover presence — shared by AnimePoster */
+.poster-link {
+  animation: rise 0.65s var(--ease-out-soft) both;
+}
+
+.poster-frame {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transition:
+    transform 0.45s var(--ease-out-soft),
+    box-shadow 0.45s var(--ease-out-soft);
+}
+
+.poster-image {
+  transition: transform 0.7s var(--ease-out-soft);
+}
+
+.poster-veil {
+  background: linear-gradient(
+    180deg,
+    transparent 42%,
+    rgba(0, 0, 0, 0.55) 78%,
+    rgba(0, 0, 0, 0.82) 100%
+  );
+  opacity: 0.85;
+  transition: opacity 0.4s var(--ease-out-soft);
+  pointer-events: none;
+}
+
+.poster-score {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.45);
+  padding: 0.2rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-sakura-mist);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.35s var(--ease-out-soft),
+    transform 0.35s var(--ease-out-soft);
+}
+
+.poster-link:hover .poster-frame,
+.poster-link:focus-visible .poster-frame {
+  transform: translateY(-6px);
+  box-shadow:
+    0 0 0 1px rgba(255, 140, 170, 0.42),
+    0 0 0 4px rgba(255, 140, 170, 0.12),
+    0 22px 48px rgba(0, 0, 0, 0.55),
+    0 0 36px rgba(255, 140, 170, 0.16);
+}
+
+.poster-link:hover .poster-image,
+.poster-link:focus-visible .poster-image {
+  transform: scale(1.055);
+}
+
+.poster-link:hover .poster-veil,
+.poster-link:focus-visible .poster-veil {
+  opacity: 1;
+}
+
+.poster-link:hover .poster-score,
+.poster-link:focus-visible .poster-score {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-enter {
+  animation: rise 0.75s var(--ease-out-soft) both;
+}
+
+.filter-rail {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(160deg, rgba(255, 140, 170, 0.08), transparent 55%),
+    rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 12px 32px rgba(0, 0, 0, 0.22);
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.55rem 1.05rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--color-cloud);
+  transition:
+    color 0.28s var(--ease-out-soft),
+    background 0.28s var(--ease-out-soft),
+    box-shadow 0.28s var(--ease-out-soft),
+    transform 0.28s var(--ease-out-soft);
+}
+
+.filter-pill:hover {
+  color: var(--color-snow);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.filter-pill:focus-visible {
+  outline: none;
+  color: var(--color-snow);
+  box-shadow: 0 0 0 2px rgba(255, 140, 170, 0.45);
+}
+
+.filter-pill.is-active {
+  color: #12080c;
+  background:
+    linear-gradient(180deg, #fff6f9 0%, #ffd6e4 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 6px 18px rgba(255, 140, 170, 0.28);
+  transform: translateY(-0.5px);
+}
+
+.filter-pill.is-active:focus-visible {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 6px 18px rgba(255, 140, 170, 0.28),
+    0 0 0 2px rgba(255, 140, 170, 0.55);
 }
 
 .skeleton {

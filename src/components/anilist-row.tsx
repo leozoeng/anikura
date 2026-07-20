@@ -35,9 +35,10 @@ export function AniListRow({ title, subtitle, media, hrefForId }: Props) {
           <Link
             key={m.id}
             href={href!}
-            className="group w-[138px] shrink-0 sm:w-[156px]"
+            className="poster-link group w-[138px] shrink-0 sm:w-[156px]"
+            style={{ animationDelay: `${Math.min(i, 12) * 28}ms` }}
           >
-            <div className="relative aspect-[2/3] overflow-hidden rounded-[1.1rem] bg-raised ring-1 ring-white/8 transition duration-500 group-hover:-translate-y-1 group-hover:ring-[#ff8caa]/35">
+            <div className="poster-frame relative aspect-[2/3] overflow-hidden rounded-[1.1rem] bg-raised">
               {(m.coverImage?.extraLarge || m.coverImage?.large) && (
                 <Image
                   src={m.coverImage.extraLarge || m.coverImage.large || ""}
@@ -45,17 +46,22 @@ export function AniListRow({ title, subtitle, media, hrefForId }: Props) {
                   fill
                   sizes="160px"
                   priority={i < 4}
-                  className="object-cover transition duration-700 group-hover:scale-[1.04]"
+                  className="poster-image object-cover"
                 />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              <div className="poster-veil absolute inset-0" />
+              {m.averageScore != null && (
+                <span className="poster-score absolute left-2.5 top-2.5 z-[1]">
+                  {(m.averageScore / 10).toFixed(1)}
+                </span>
+              )}
             </div>
             <div className="mt-3 space-y-0.5 px-0.5">
-              <h3 className="line-clamp-2 text-[0.8125rem] font-medium leading-snug tracking-[-0.02em]">
+              <h3 className="line-clamp-2 text-[0.8125rem] font-medium leading-snug tracking-[-0.02em] transition duration-300 group-hover:text-sakura-mist">
                 {displayTitle(m.title)}
               </h3>
               {m.averageScore != null && (
-                <p className="text-[0.75rem] text-mute">
+                <p className="text-[0.75rem] text-mute transition duration-300 group-hover:text-cloud">
                   {(m.averageScore / 10).toFixed(1)}
                 </p>
               )}
