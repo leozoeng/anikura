@@ -185,7 +185,7 @@ export function WatchSidebar({
                           </span>
                           {watched && (
                             <span
-                              className="absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full bg-[#ff8caa] text-black shadow-sm"
+                              className="absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full bg-white text-black shadow-sm"
                               title="Watched"
                               aria-label="Watched"
                             >
