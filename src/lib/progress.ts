@@ -153,3 +153,10 @@ export function getProgressMapForAnime(animeId: number, language: "sub" | "dub")
   }
   return map;
 }
+
+/** Episodes at or above this percent count as watched in the UI. */
+export const WATCHED_THRESHOLD = 90;
+
+export function isEpisodeWatched(percent: number) {
+  return percent >= WATCHED_THRESHOLD;
+}

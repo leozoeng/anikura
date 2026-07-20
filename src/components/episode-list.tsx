@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { decodeEntities } from "@/lib/anilist";
 import { watchHref } from "@/lib/anikoto";
+import { episodeDisplayTitle } from "@/lib/episode-meta";
 import type { AnimeSummary, Episode } from "@/lib/types";
 
 const CHUNK = 50;
@@ -15,12 +15,6 @@ type Props = {
   fallbackImage: string;
   episodeThumbnails?: Record<number, string>;
 };
-
-function episodeLabel(ep: Episode) {
-  const title = decodeEntities(ep.title);
-  if (title && title !== `Episode ${ep.number}`) return title;
-  return `Episode ${ep.number}`;
-}
 
 function EpisodeThumbnail({
   src,
@@ -117,7 +111,7 @@ export function EpisodeList({
 
       <ul className="mt-6 grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-7 lg:grid-cols-4 xl:grid-cols-5">
         {visible.map((ep) => {
-          const label = episodeLabel(ep);
+          const label = episodeDisplayTitle(ep);
           const sceneThumb = episodeThumbnails[ep.number];
           const thumb = sceneThumb || fallbackImage;
           const epHasDub = Boolean(ep.embed_url?.dub);

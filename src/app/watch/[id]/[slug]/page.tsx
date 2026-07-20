@@ -1,11 +1,20 @@
 import { notFound } from "next/navigation";
 import { WatchExperience } from "@/components/watch-experience";
-import { decodeEntities, getAniListMedia, stripHtml } from "@/lib/anilist";
+import { getAniListMedia } from "@/lib/anilist";
 import { getSeries, watchHref } from "@/lib/anikoto";
 import { getCatalog } from "@/lib/catalog";
 import { buildEmbedServers } from "@/lib/embeds";
-import { resolveEpisodeThumbnails } from "@/lib/episode-thumbs";
-import { buildMoreLikeThis, buildRelatedEntries, resolveFranchiseSeasons } from "@/lib/related";
+import {
+  enrichEpisodesWithMeta,
+  episodeDisplayTitle,
+  isGenericTitle,
+  resolveEpisodeMeta,
+} from "@/lib/episode-meta";
+import {
+  buildMoreLikeThis,
+  buildRelatedEntries,
+  resolveFranchiseSeasons,
+} from "@/lib/related";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +39,20 @@ export default async function WatchPage({ params, searchParams }: Props) {
     notFound();
   }
 
-  const { anime, episodes } = series;
+  const { anime } = series;
+  const aniId = Number(anime.ani_id) || 0;
+
+  const [anilist, catalog] = await Promise.all([
+    aniId ? getAniListMedia(aniId) : Promise.resolve(null),
+    getCatalog(),
+  ]);
+
+  const episodeMeta = await resolveEpisodeMeta({
+    aniListId: aniId || anilist?.id,
+    streamingEpisodes: anilist?.streamingEpisodes,
+  });
+
+  const episodes = enrichEpisodesWithMeta(series.episodes, episodeMeta.titles);
   const current =
     episodes.find((e) => e.number === episodeNum) || episodes[0];
 
@@ -54,17 +76,13 @@ export default async function WatchPage({ params, searchParams }: Props) {
   const watchBase = `/watch/${anime.id}/${slug || anime.slug}`;
   const prevHref = prev ? watchHref(anime, prev.number, language) : undefined;
   const nextHref = next ? watchHref(anime, next.number, language) : undefined;
-  const aniId = Number(anime.ani_id) || 0;
 
-  const [anilist, catalog] = await Promise.all([
-    aniId ? getAniListMedia(aniId) : Promise.resolve(null),
-    getCatalog(),
-  ]);
-
-  const episodeTitle = decodeEntities(current.title);
   const showTitle = anilist?.title.english || anime.title;
-  const synopsis =
-    stripHtml(anilist?.description) || anime.description || "";
+  const episodeTitle = isGenericTitle(current.title, current.number)
+    ? ""
+    : episodeDisplayTitle(current);
+  const episodeDescription =
+    episodeMeta.descriptions[current.number]?.trim() || "";
 
   const score =
     anilist?.averageScore != null
@@ -88,19 +106,10 @@ export default async function WatchPage({ params, searchParams }: Props) {
       ...seasons.map((r) => r.media.id),
       ...related.map((r) => r.media.id),
     ],
-    limit: 12,
+    limit: 3,
   });
 
-  const nextTitle = next
-    ? decodeEntities(next.title) !== `Episode ${next.number}`
-      ? decodeEntities(next.title)
-      : `Episode ${next.number}`
-    : undefined;
-
-  const episodeThumbnails = await resolveEpisodeThumbnails({
-    aniListId: aniId || anilist?.id,
-    streamingEpisodes: anilist?.streamingEpisodes,
-  });
+  const nextTitle = next ? episodeDisplayTitle(next) : undefined;
 
   let nextAirLabel: string | null = null;
   if (anime.next_air_schedule_time) {
@@ -125,16 +134,14 @@ export default async function WatchPage({ params, searchParams }: Props) {
       preferredServerId={server || null}
       watchBase={watchBase}
       showTitle={showTitle}
-      episodeTitle={
-        episodeTitle !== `Episode ${current.number}` ? episodeTitle : ""
-      }
+      episodeTitle={episodeTitle}
       score={score}
       year={anilist?.seasonYear || anime.year || null}
       genre={anilist?.genres?.[0] || null}
-      synopsis={synopsis}
+      episodeDescription={episodeDescription}
       poster={anilist?.coverImage?.large || anime.poster}
       banner={anilist?.bannerImage || anime.background_image || anime.poster}
-      episodeThumbnails={episodeThumbnails}
+      episodeThumbnails={episodeMeta.thumbnails}
       anilistMeta={{
         studios:
           anilist?.studios?.nodes?.map((s) => s.name).join(", ") ||

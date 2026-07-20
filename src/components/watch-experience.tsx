@@ -15,11 +15,7 @@ import { WatchSidebar } from "@/components/watch-sidebar";
 import { animeHref, watchHref } from "@/lib/anikoto";
 import { getArcForEpisode } from "@/lib/arcs";
 import type { EmbedServer } from "@/lib/embeds";
-import {
-  getEpisodeProgress,
-  getWatchSettings,
-  saveWatchSettings,
-} from "@/lib/progress";
+import { getWatchSettings, saveWatchSettings } from "@/lib/progress";
 import type { RelatedEntry, RelatedMediaCard } from "@/lib/related";
 import type { AnimeSummary, Episode } from "@/lib/types";
 
@@ -39,7 +35,8 @@ type Props = {
   score?: string | null;
   year?: number | null;
   genre?: string | null;
-  synopsis: string;
+  /** Episode-specific overview when available (not the series synopsis). */
+  episodeDescription?: string;
   poster: string;
   banner: string;
   episodeThumbnails?: Record<number, string>;
@@ -81,7 +78,7 @@ export function WatchExperience(props: Props) {
     score,
     year,
     genre,
-    synopsis,
+    episodeDescription = "",
     poster,
     banner,
     episodeThumbnails = {},
@@ -101,7 +98,6 @@ export function WatchExperience(props: Props) {
 
   const [settings, setSettings] = useState(getWatchSettings);
   const [autoplayArmed, setAutoplayArmed] = useState(false);
-  const [progressPct, setProgressPct] = useState(0);
   const [serverMenuOpen, setServerMenuOpen] = useState(false);
   const [tipVisible, setTipVisible] = useState(true);
   const playerRef = useRef<HTMLDivElement>(null);
@@ -117,14 +113,6 @@ export function WatchExperience(props: Props) {
       /* ignore */
     }
   }, []);
-
-  useEffect(() => {
-    setProgressPct(getEpisodeProgress(anime.id, current.number, language));
-    const sync = () =>
-      setProgressPct(getEpisodeProgress(anime.id, current.number, language));
-    window.addEventListener("anikura:progress", sync);
-    return () => window.removeEventListener("anikura:progress", sync);
-  }, [anime.id, current.number, language]);
 
   useEffect(() => {
     if (settings.autoplayNext) setAutoplayArmed(true);
@@ -399,28 +387,13 @@ export function WatchExperience(props: Props) {
                     onShare={() => void sharePage()}
                   />
 
-                  {synopsis ? (
+                  {episodeDescription ? (
                     <ExpandableText
-                      text={synopsis}
+                      text={episodeDescription}
                       limit={220}
                       textClassName="text-sm leading-relaxed text-cloud"
                     />
                   ) : null}
-
-                  {progressPct > 0 && (
-                    <div>
-                      <div className="flex items-center justify-between text-xs text-mute">
-                        <span>Watch progress</span>
-                        <span>{Math.round(progressPct)}%</span>
-                      </div>
-                      <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/10">
-                        <div
-                          className="h-full rounded-full bg-snow transition-all duration-500"
-                          style={{ width: `${progressPct}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
 

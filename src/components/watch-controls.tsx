@@ -21,6 +21,24 @@ function voteKey(animeId: number, episode: number) {
   return `anikura:vote:${animeId}:${episode}`;
 }
 
+/** Deterministic fake like count from anime + episode (stable across refresh). */
+export function fakeLikeCount(animeId: number, episode: number) {
+  let h = Math.imul(animeId ^ (episode * 2654435761), 2246822519);
+  h ^= h >>> 13;
+  h = Math.imul(h, 3266489917);
+  h ^= h >>> 16;
+  const n = h >>> 0;
+  return 180 + (n % 9740);
+}
+
+function formatCount(n: number) {
+  if (n >= 1000) {
+    const k = n / 1000;
+    return k >= 10 ? `${Math.round(k)}k` : `${k.toFixed(1).replace(/\.0$/, "")}k`;
+  }
+  return String(n);
+}
+
 export function WatchControls({
   animeId,
   episode,
@@ -33,6 +51,8 @@ export function WatchControls({
   onShare,
 }: Props) {
   const [vote, setVote] = useState<Vote>(null);
+  const baseLikes = fakeLikeCount(animeId, episode);
+  const displayLikes = baseLikes + (vote === "up" ? 1 : 0);
 
   useEffect(() => {
     try {
@@ -72,6 +92,9 @@ export function WatchControls({
           }`}
         >
           <ThumbUpIcon />
+          <span className="tabular-nums text-xs font-medium tracking-[-0.01em]">
+            {formatCount(displayLikes)}
+          </span>
         </button>
         <span className="w-px self-stretch bg-white/10" aria-hidden />
         <button

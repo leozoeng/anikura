@@ -5,7 +5,11 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { getArcForEpisode, getArcsForSeries, type StoryArc } from "@/lib/arcs";
 import { decodeEntities } from "@/lib/anilist";
 import { watchHref } from "@/lib/anikoto";
-import { getProgressMapForAnime } from "@/lib/progress";
+import { episodeDisplayTitle } from "@/lib/episode-meta";
+import {
+  getProgressMapForAnime,
+  isEpisodeWatched,
+} from "@/lib/progress";
 import type { AnimeSummary, Episode } from "@/lib/types";
 
 const CHUNK = 50;
@@ -254,12 +258,8 @@ export function EpisodePicker({
           {visible.map((e) => {
             const isActive = e.number === current;
             const pct = progressMap.get(e.number) ?? 0;
-            const watched = pct >= 90;
-            const title = decodeEntities(e.title);
-            const label =
-              title && title !== `Episode ${e.number}`
-                ? title
-                : `Episode ${e.number}`;
+            const watched = isEpisodeWatched(pct);
+            const label = episodeDisplayTitle(e);
             const thumb =
               episodeThumbnails[e.number] || fallbackImage || undefined;
 
@@ -315,10 +315,9 @@ export function EpisodePicker({
         <div className="mt-5 max-h-[420px] divide-y divide-white/6 overflow-y-auto rounded-xl border border-white/6">
           {visible.map((e) => {
             const isActive = e.number === current;
-            const title = decodeEntities(e.title);
-            const label =
-              title && title !== `Episode ${e.number}` ? title : null;
+            const label = episodeDisplayTitle(e);
             const pct = progressMap.get(e.number) ?? 0;
+            const watched = isEpisodeWatched(pct);
             const thumb =
               episodeThumbnails[e.number] || fallbackImage || undefined;
             return (
@@ -335,7 +334,9 @@ export function EpisodePicker({
                     <img
                       src={thumb}
                       alt=""
-                      className="h-full w-full object-cover"
+                      className={`h-full w-full object-cover ${
+                        watched && !isActive ? "opacity-55" : ""
+                      }`}
                       loading="lazy"
                       decoding="async"
                       referrerPolicy="no-referrer"
@@ -350,10 +351,14 @@ export function EpisodePicker({
                   {e.number}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm tracking-[-0.01em] text-snow">
-                    {label || `Episode ${e.number}`}
+                  <span
+                    className={`block truncate text-sm tracking-[-0.01em] ${
+                      watched && !isActive ? "text-cloud" : "text-snow"
+                    }`}
+                  >
+                    {label}
                   </span>
-                  {pct > 0 && (
+                  {pct > 0 && pct < 90 && (
                     <span className="mt-1 block h-0.5 max-w-[120px] rounded-full bg-white/15">
                       <span
                         className="block h-full rounded-full bg-white/70"
@@ -362,9 +367,11 @@ export function EpisodePicker({
                     </span>
                   )}
                 </span>
-                {isActive && (
+                {isActive ? (
                   <span className="text-xs text-mute">Playing</span>
-                )}
+                ) : watched ? (
+                  <span className="text-xs text-mute">Watched</span>
+                ) : null}
               </Link>
             );
           })}

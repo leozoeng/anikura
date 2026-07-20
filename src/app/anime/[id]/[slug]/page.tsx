@@ -6,7 +6,10 @@ import { RelatedAnimeGrid } from "@/components/related-anime";
 import { getAniListMedia, stripHtml } from "@/lib/anilist";
 import { getGenres, getSeries } from "@/lib/anikoto";
 import { findAnimeById, getCatalog } from "@/lib/catalog";
-import { resolveEpisodeThumbnails } from "@/lib/episode-thumbs";
+import {
+  enrichEpisodesWithMeta,
+  resolveEpisodeMeta,
+} from "@/lib/episode-meta";
 import {
   buildMoreLikeThis,
   buildRelatedEntries,
@@ -33,12 +36,18 @@ export default async function AnimeDetailPage({ params }: Props) {
     series = { anime: cached, episodes: [] };
   }
 
-  const { anime, episodes } = series;
+  const { anime } = series;
   const aniId = Number(anime.ani_id) || 0;
   const [anilist, catalog] = await Promise.all([
     aniId ? getAniListMedia(aniId) : Promise.resolve(null),
     getCatalog(),
   ]);
+
+  const episodeMeta = await resolveEpisodeMeta({
+    aniListId: aniId || anilist?.id,
+    streamingEpisodes: anilist?.streamingEpisodes,
+  });
+  const episodes = enrichEpisodesWithMeta(series.episodes, episodeMeta.titles);
 
   const title = anilist?.title.english || anime.title;
   const native = anilist?.title.native || anime.native;
@@ -83,10 +92,7 @@ export default async function AnimeDetailPage({ params }: Props) {
       ? anilist.trailer.id
       : null;
 
-  const episodeThumbnails = await resolveEpisodeThumbnails({
-    aniListId: aniId || anilist?.id,
-    streamingEpisodes: anilist?.streamingEpisodes,
-  });
+  const episodeThumbnails = episodeMeta.thumbnails;
   const episodeFallbackImage = bg || poster;
 
   return (

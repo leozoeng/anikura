@@ -1,11 +1,15 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RelatedAnimeList } from "@/components/related-anime";
 import { decodeEntities } from "@/lib/anilist";
 import { watchHref } from "@/lib/anikoto";
+import { episodeDisplayTitle } from "@/lib/episode-meta";
+import {
+  getProgressMapForAnime,
+  isEpisodeWatched,
+} from "@/lib/progress";
 import type { RelatedEntry, RelatedMediaCard } from "@/lib/related";
 import type { AnimeSummary, Episode } from "@/lib/types";
 
@@ -18,7 +22,7 @@ type Props = {
   episodeThumbnails?: Record<number, string>;
   fallbackImage?: string;
   related: RelatedEntry[];
-  seasons: RelatedEntry[];
+  seasons?: RelatedEntry[];
   recommendations: RelatedMediaCard[];
   nextAirLabel?: string | null;
 };
@@ -32,7 +36,7 @@ export function WatchSidebar({
   episodeThumbnails = {},
   fallbackImage,
   related,
-  seasons,
+  seasons = [],
   recommendations,
   nextAirLabel,
 }: Props) {
@@ -40,6 +44,17 @@ export function WatchSidebar({
   const [reversed, setReversed] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [compact, setCompact] = useState(false);
+  const [progressMap, setProgressMap] = useState<Map<number, number>>(
+    () => new Map(),
+  );
+
+  useEffect(() => {
+    setProgressMap(getProgressMapForAnime(anime.id, language));
+    const sync = () =>
+      setProgressMap(getProgressMapForAnime(anime.id, language));
+    window.addEventListener("anikura:progress", sync);
+    return () => window.removeEventListener("anikura:progress", sync);
+  }, [anime.id, language]);
 
   const visible = useMemo(() => {
     let list = [...episodes];
@@ -130,12 +145,10 @@ export function WatchSidebar({
               ) : (
                 visible.map((ep) => {
                   const isActive = ep.number === current;
-                  const raw = decodeEntities(ep.title);
-                  const label =
-                    raw && raw !== `Episode ${ep.number}`
-                      ? raw
-                      : `Episode ${ep.number}`;
+                  const label = episodeDisplayTitle(ep);
                   const thumb = episodeThumbnails[ep.number] || fallbackImage;
+                  const pct = progressMap.get(ep.number) ?? 0;
+                  const watched = isEpisodeWatched(pct);
 
                   return (
                     <Link
@@ -144,7 +157,9 @@ export function WatchSidebar({
                       className={`flex gap-3 rounded-xl p-2 transition ${
                         isActive
                           ? "bg-white/[0.08] ring-1 ring-white/12"
-                          : "hover:bg-white/[0.04]"
+                          : watched
+                            ? "bg-white/[0.03] hover:bg-white/[0.05]"
+                            : "hover:bg-white/[0.04]"
                       }`}
                     >
                       {!compact && (
@@ -154,7 +169,9 @@ export function WatchSidebar({
                             <img
                               src={thumb}
                               alt=""
-                              className="absolute inset-0 h-full w-full object-cover"
+                              className={`absolute inset-0 h-full w-full object-cover ${
+                                watched && !isActive ? "opacity-55" : ""
+                              }`}
                               loading="lazy"
                               referrerPolicy="no-referrer"
                             />
@@ -162,22 +179,38 @@ export function WatchSidebar({
                           <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-snow backdrop-blur-sm">
                             Ep {ep.number}
                           </span>
+                          {watched && !isActive && (
+                            <span className="absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full bg-black/70 text-snow backdrop-blur-sm">
+                              <CheckIcon />
+                            </span>
+                          )}
                         </span>
                       )}
                       <span className="min-w-0 flex-1 py-0.5">
                         {compact && (
-                          <span className="mb-0.5 block text-[11px] font-medium text-mute">
+                          <span className="mb-0.5 flex items-center gap-1.5 text-[11px] font-medium text-mute">
                             Ep {ep.number}
+                            {watched && !isActive ? (
+                              <span className="text-cloud">· Watched</span>
+                            ) : null}
                           </span>
                         )}
-                        <span className="line-clamp-2 text-sm font-medium leading-snug tracking-[-0.02em] text-snow">
+                        <span
+                          className={`line-clamp-2 text-sm font-medium leading-snug tracking-[-0.02em] ${
+                            watched && !isActive ? "text-cloud" : "text-snow"
+                          }`}
+                        >
                           {label}
                         </span>
-                        {isActive && (
+                        {isActive ? (
                           <span className="mt-1 block text-xs text-mute">
                             Playing
                           </span>
-                        )}
+                        ) : watched && !compact ? (
+                          <span className="mt-1 block text-xs text-mute">
+                            Watched
+                          </span>
+                        ) : null}
                       </span>
                     </Link>
                   );
@@ -241,6 +274,20 @@ function UtilButton({
     >
       {children}
     </button>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path
+        d="M3.5 8.5 6.5 11.5 12.5 4.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
