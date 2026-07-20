@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnikuraLogo } from "@/components/anikura-logo";
+import { AuthMenu } from "@/components/auth-menu";
 import { SearchCommand } from "@/components/search-command";
 
 const links = [
@@ -97,6 +98,8 @@ export function SiteHeader() {
             </svg>
           </a>
 
+          <AuthMenu />
+
           <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
 
           <button
@@ -160,6 +163,9 @@ export function SiteHeader() {
           >
             Search
           </Link>
+          <div className="mt-1 border-t border-white/[0.06] px-1 pt-3">
+            <AuthMenu />
+          </div>
         </nav>
       </div>
     </header>
