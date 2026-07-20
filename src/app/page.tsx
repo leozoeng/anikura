@@ -16,7 +16,6 @@ import {
   getSyncMeta,
   getTopRated,
 } from "@/lib/catalog";
-import { resolvePromoBanners } from "@/lib/promo-banner";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -65,26 +64,10 @@ export default async function HomePage() {
   const heroAni = await getAniListByIds(heroCandidates.map((x) => x.aniId));
   const aniMap = new Map(heroAni.map((m) => [m.id, m]));
 
-  const promoMap = await resolvePromoBanners(
-    heroCandidates.map(({ anime, aniId }) => {
-      const media = aniMap.get(aniId);
-      return {
-        aniListId: aniId,
-        fallbacks: {
-          aniListBanner: media?.bannerImage,
-          catalogBackground: anime.background_image,
-          cover: media?.coverImage?.extraLarge || media?.coverImage?.large,
-          poster: anime.poster,
-        },
-      };
-    }),
-  );
-
   const slides: HeroSlide[] = heroCandidates
     .map(({ anime, aniId }) => ({
       anime,
       anilist: aniMap.get(aniId) || null,
-      bannerSrc: promoMap.get(aniId) || null,
     }))
     .sort((a, b) => {
       const at =
@@ -96,7 +79,7 @@ export default async function HomePage() {
     .slice(0, 5);
 
   if (!slides.length && recent[0]) {
-    slides.push({ anime: recent[0], anilist: null, bannerSrc: recent[0].poster });
+    slides.push({ anime: recent[0], anilist: null });
   }
 
   const fantasy = catalog

@@ -11,8 +11,6 @@ import type { AnimeSummary } from "@/lib/types";
 export type HeroSlide = {
   anime: AnimeSummary;
   anilist?: AniListMedia | null;
-  /** Pre-resolved HD promo banner (AniList / TVDB) — never YouTube */
-  bannerSrc?: string | null;
 };
 
 type Props = {
@@ -44,15 +42,14 @@ export function Hero({ slides }: Props) {
   const current = queue[index] || queue[0];
   if (!current) return null;
 
-  const { anime, anilist, bannerSrc } = current;
+  const { anime, anilist } = current;
   const trailerId =
     anilist?.trailer?.site?.toLowerCase() === "youtube"
       ? anilist.trailer.id
       : null;
 
-  // Promotional HD still only — AniList banner / TVDB fanart / catalog art
+  // Only used when there's no trailer (fallback still)
   const bg =
-    bannerSrc ||
     anilist?.bannerImage ||
     anime.background_image ||
     anilist?.coverImage?.extraLarge ||
@@ -94,8 +91,8 @@ export function Hero({ slides }: Props) {
       posterSrc={bg}
       title={showTitle}
       scale={1.65}
-      coverMode="poster"
-      bannerHoldMs={2800}
+      coverMode={trailerId ? "solid" : "poster"}
+      bannerHoldMs={0}
     >
       <div className="relative flex min-h-[100svh] w-full flex-col justify-end px-3 pb-16 pt-28 sm:px-4 lg:pb-24">
         <div className="flex items-center gap-3">
