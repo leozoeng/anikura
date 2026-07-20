@@ -1,208 +1,213 @@
 [
   {
+    "name": "Comedy",
+    "slug": "comedy",
+    "count": 3822
+  },
+  {
     "name": "Action",
     "slug": "action",
-    "count": 298
+    "count": 3465
   },
   {
     "name": "Fantasy",
     "slug": "fantasy",
-    "count": 275
-  },
-  {
-    "name": "Comedy",
-    "slug": "comedy",
-    "count": 271
+    "count": 2623
   },
   {
     "name": "Adventure",
     "slug": "adventure",
-    "count": 201
+    "count": 2216
   },
   {
     "name": "Drama",
     "slug": "drama",
-    "count": 159
-  },
-  {
-    "name": "Romance",
-    "slug": "romance",
-    "count": 143
-  },
-  {
-    "name": "Shounen",
-    "slug": "shounen",
-    "count": 101
-  },
-  {
-    "name": "Supernatural",
-    "slug": "supernatural",
-    "count": 96
+    "count": 1893
   },
   {
     "name": "Sci-Fi",
     "slug": "sci-fi",
-    "count": 94
+    "count": 1802
   },
   {
-    "name": "Slice of Life",
-    "slug": "slice-of-life",
-    "count": 91
+    "name": "Romance",
+    "slug": "romance",
+    "count": 1729
+  },
+  {
+    "name": "Shounen",
+    "slug": "shounen",
+    "count": 1639
   },
   {
     "name": "School",
     "slug": "school",
-    "count": 84
+    "count": 1340
+  },
+  {
+    "name": "Slice of Life",
+    "slug": "slice-of-life",
+    "count": 1267
+  },
+  {
+    "name": "Supernatural",
+    "slug": "supernatural",
+    "count": 1244
   },
   {
     "name": "Historical",
     "slug": "historical",
-    "count": 69
-  },
-  {
-    "name": "Mystery",
-    "slug": "mystery",
-    "count": 55
-  },
-  {
-    "name": "Martial Arts",
-    "slug": "martial-arts",
-    "count": 44
+    "count": 706
   },
   {
     "name": "Seinen",
     "slug": "seinen",
-    "count": 36
-  },
-  {
-    "name": "Shoujo",
-    "slug": "shoujo",
-    "count": 36
-  },
-  {
-    "name": "Music",
-    "slug": "music",
-    "count": 34
-  },
-  {
-    "name": "Mecha",
-    "slug": "mecha",
-    "count": 33
-  },
-  {
-    "name": "Kids",
-    "slug": "kids",
-    "count": 30
-  },
-  {
-    "name": "Sports",
-    "slug": "sports",
-    "count": 28
-  },
-  {
-    "name": "Ecchi",
-    "slug": "ecchi",
-    "count": 27
-  },
-  {
-    "name": "Isekai",
-    "slug": "isekai",
-    "count": 26
-  },
-  {
-    "name": "Horror",
-    "slug": "horror",
-    "count": 23
+    "count": 700
   },
   {
     "name": "Magic",
     "slug": "magic",
-    "count": 21
+    "count": 691
   },
   {
-    "name": "Psychological",
-    "slug": "psychological",
-    "count": 18
+    "name": "Mecha",
+    "slug": "mecha",
+    "count": 691
   },
   {
-    "name": "Parody",
-    "slug": "parody",
-    "count": 18
+    "name": "Mystery",
+    "slug": "mystery",
+    "count": 668
   },
   {
-    "name": "Thriller",
-    "slug": "thriller",
-    "count": 17
+    "name": "Ecchi",
+    "slug": "ecchi",
+    "count": 648
   },
   {
-    "name": "Military",
-    "slug": "military",
-    "count": 17
-  },
-  {
-    "name": "unknown",
-    "slug": "unknown",
-    "count": 16
-  },
-  {
-    "name": "Game",
-    "slug": "game",
-    "count": 16
-  },
-  {
-    "name": "Harem",
-    "slug": "harem",
-    "count": 15
+    "name": "Shoujo",
+    "slug": "shoujo",
+    "count": 475
   },
   {
     "name": "Super Power",
     "slug": "super-power",
-    "count": 14
+    "count": 442
+  },
+  {
+    "name": "Martial Arts",
+    "slug": "martial-arts",
+    "count": 433
+  },
+  {
+    "name": "Sports",
+    "slug": "sports",
+    "count": 413
+  },
+  {
+    "name": "Military",
+    "slug": "military",
+    "count": 408
+  },
+  {
+    "name": "Music",
+    "slug": "music",
+    "count": 373
+  },
+  {
+    "name": "Harem",
+    "slug": "harem",
+    "count": 364
+  },
+  {
+    "name": "Kids",
+    "slug": "kids",
+    "count": 319
   },
   {
     "name": "Space",
     "slug": "space",
-    "count": 10
-  },
-  {
-    "name": "Shoujo Ai",
-    "slug": "shoujo-ai",
-    "count": 8
+    "count": 305
   },
   {
     "name": "Demons",
     "slug": "demons",
-    "count": 7
+    "count": 305
   },
   {
-    "name": "Shounen Ai",
-    "slug": "shounen-ai",
-    "count": 7
+    "name": "Horror",
+    "slug": "horror",
+    "count": 296
   },
   {
-    "name": "Samurai",
-    "slug": "samurai",
-    "count": 6
+    "name": "Psychological",
+    "slug": "psychological",
+    "count": 292
   },
   {
-    "name": "Vampire",
-    "slug": "vampire",
-    "count": 6
+    "name": "Game",
+    "slug": "game",
+    "count": 287
   },
   {
-    "name": "Josei",
-    "slug": "josei",
-    "count": 5
+    "name": "Parody",
+    "slug": "parody",
+    "count": 250
+  },
+  {
+    "name": "Isekai",
+    "slug": "isekai",
+    "count": 196
   },
   {
     "name": "Police",
     "slug": "police",
-    "count": 5
+    "count": 162
+  },
+  {
+    "name": "Thriller",
+    "slug": "thriller",
+    "count": 154
+  },
+  {
+    "name": "Vampire",
+    "slug": "vampire",
+    "count": 129
+  },
+  {
+    "name": "Samurai",
+    "slug": "samurai",
+    "count": 122
+  },
+  {
+    "name": "Shoujo Ai",
+    "slug": "shoujo-ai",
+    "count": 89
+  },
+  {
+    "name": "Shounen Ai",
+    "slug": "shounen-ai",
+    "count": 82
+  },
+  {
+    "name": "Josei",
+    "slug": "josei",
+    "count": 70
   },
   {
     "name": "Dementia",
     "slug": "dementia",
-    "count": 4
+    "count": 58
+  },
+  {
+    "name": "Cars",
+    "slug": "cars",
+    "count": 38
+  },
+  {
+    "name": "unknown",
+    "slug": "unknown",
+    "count": 31
   },
   {
     "name": "Suspense",
@@ -227,11 +232,6 @@
   {
     "name": "Erotica",
     "slug": "erotica",
-    "count": 1
-  },
-  {
-    "name": "Cars",
-    "slug": "cars",
     "count": 1
   },
   {
