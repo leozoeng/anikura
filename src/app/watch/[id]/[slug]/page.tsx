@@ -5,7 +5,7 @@ import { getSeries, watchHref } from "@/lib/anikoto";
 import { getCatalog } from "@/lib/catalog";
 import { buildEmbedServers } from "@/lib/embeds";
 import { resolveEpisodeThumbnails } from "@/lib/episode-thumbs";
-import { buildMoreLikeThis, buildRelatedEntries } from "@/lib/related";
+import { buildMoreLikeThis, buildRelatedEntries, resolveFranchiseSeasons } from "@/lib/related";
 
 export const dynamic = "force-dynamic";
 
@@ -73,11 +73,21 @@ export default async function WatchPage({ params, searchParams }: Props) {
         ? anime.score
         : null;
 
-  const related = buildRelatedEntries(anilist, catalog);
-  const relatedIds = new Set(related.map((r) => r.match.id));
+  const seasons = await resolveFranchiseSeasons(anilist, catalog);
+  const seasonIds = new Set(seasons.map((r) => r.match.id));
+  const related = buildRelatedEntries(anilist, catalog, undefined, undefined, {
+    excludeCatalogIds: seasonIds,
+  });
+  const relatedIds = new Set([
+    ...seasonIds,
+    ...related.map((r) => r.match.id),
+  ]);
   const recommendations = buildMoreLikeThis(anilist, catalog, {
     excludeCatalogIds: [anime.id, ...relatedIds],
-    excludeAniIds: related.map((r) => r.media.id),
+    excludeAniIds: [
+      ...seasons.map((r) => r.media.id),
+      ...related.map((r) => r.media.id),
+    ],
     limit: 12,
   });
 
@@ -138,6 +148,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
         ),
       }}
       related={related}
+      seasons={seasons}
       recommendations={recommendations}
       arcContext={{
         malId: anime.mal_id,

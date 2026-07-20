@@ -14,16 +14,18 @@ export function RelatedAnimeGrid({
   subtitle,
   items,
   badge,
+  className = "mt-14",
 }: {
   title: string;
   subtitle?: string;
   items: Array<RelatedMediaCard | RelatedEntry>;
   badge?: (item: RelatedMediaCard | RelatedEntry) => string | null | undefined;
+  className?: string;
 }) {
   if (!items.length) return null;
 
   return (
-    <section className="mt-14">
+    <section className={className}>
       <h2 className="section-title">{title}</h2>
       {subtitle ? <p className="section-sub">{subtitle}</p> : null}
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">

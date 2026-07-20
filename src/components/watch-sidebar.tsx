@@ -18,6 +18,7 @@ type Props = {
   episodeThumbnails?: Record<number, string>;
   fallbackImage?: string;
   related: RelatedEntry[];
+  seasons: RelatedEntry[];
   recommendations: RelatedMediaCard[];
   nextAirLabel?: string | null;
 };
@@ -31,6 +32,7 @@ export function WatchSidebar({
   episodeThumbnails = {},
   fallbackImage,
   related,
+  seasons,
   recommendations,
   nextAirLabel,
 }: Props) {
@@ -192,6 +194,14 @@ export function WatchSidebar({
           {nextAirLabel}
         </div>
       )}
+
+      <RelatedAnimeList
+        title="Seasons"
+        items={seasons}
+        badge={(item) =>
+          "relationLabel" in item ? item.relationLabel : null
+        }
+      />
 
       <RelatedAnimeList
         title="Related"

@@ -1,4 +1,9 @@
-import type { AniListMedia, AniListTitle } from "@/lib/anilist";
+import {
+  getAniListRelationGraphs,
+  type AniListMedia,
+  type AniListRelationNode,
+  type AniListTitle,
+} from "@/lib/anilist";
 import type { CatalogAnime } from "@/lib/types";
 
 export type CatalogMatch = {
@@ -36,6 +41,8 @@ const RELATED_TYPES = new Set([
   "OTHER",
   "CONTAINS",
 ]);
+
+const SEASON_TYPES = new Set(["PREQUEL", "SEQUEL"]);
 
 const RELATION_LABELS: Record<string, string> = {
   PREQUEL: "Prequel",
@@ -143,7 +150,6 @@ function cardFromMatch(
         romaji: media?.title?.romaji || match.title,
         native: match.native || media?.title?.native,
       },
-      // Prefer catalog poster so the thumbnail always matches the destination.
       coverImage: { large: match.poster || media?.coverImage?.large || null },
       seasonYear: match.year ?? media?.seasonYear ?? null,
       format: media?.format ?? match.terms_by_type?.type?.[0] ?? null,
@@ -152,20 +158,139 @@ function cardFromMatch(
   };
 }
 
+function seasonLabel(
+  relationType: "PREQUEL" | "SEQUEL",
+  node: AniListRelationNode,
+  rootYear?: number | null,
+) {
+  const year = node.seasonYear;
+  if (relationType === "PREQUEL") {
+    return year ? `Earlier · ${year}` : "Prequel";
+  }
+  if (year && rootYear && year > rootYear) {
+    return `Season · ${year}`;
+  }
+  return year ? `Sequel · ${year}` : "Sequel";
+}
+
+type FranchiseHit = {
+  node: AniListRelationNode;
+  relationType: "PREQUEL" | "SEQUEL";
+};
+
+/**
+ * Walk the full PREQUEL/SEQUEL chain (S1→S2→S3…) so multi-season shows
+ * list every installment, not only the immediate neighbor.
+ */
+export async function resolveFranchiseSeasons(
+  anilist: AniListMedia | null | undefined,
+  catalog: CatalogAnime[],
+): Promise<RelatedEntry[]> {
+  if (!anilist?.id) return [];
+
+  const byAniId = buildAniIdIndex(catalog);
+  const byMalId = buildMalIdIndex(catalog);
+  const rootYear = anilist.seasonYear ?? null;
+
+  const hits = new Map<number, FranchiseHit>();
+  const fetched = new Set<number>();
+  const directionOf = new Map<number, "PREQUEL" | "SEQUEL" | "ROOT">([
+    [anilist.id, "ROOT"],
+  ]);
+
+  const absorbEdge = (
+    fromDir: "PREQUEL" | "SEQUEL" | "ROOT",
+    type: string,
+    node: AniListRelationNode,
+  ) => {
+    if (node.type !== "ANIME") return;
+    if (!SEASON_TYPES.has(type)) return;
+    if (node.id === anilist.id) return;
+
+    // Only walk outward: earlier←prequels, later→sequels.
+    if (fromDir === "PREQUEL" && type !== "PREQUEL") return;
+    if (fromDir === "SEQUEL" && type !== "SEQUEL") return;
+
+    const dir = type as "PREQUEL" | "SEQUEL";
+    if (!hits.has(node.id)) {
+      hits.set(node.id, { node, relationType: dir });
+      directionOf.set(node.id, dir);
+    }
+  };
+
+  // Seed from root relations (already loaded with the page media).
+  for (const edge of anilist.relations?.edges ?? []) {
+    if (edge.node && edge.relationType) {
+      absorbEdge("ROOT", edge.relationType, edge.node);
+    }
+  }
+  fetched.add(anilist.id);
+
+  let guard = 0;
+  while (guard < 10) {
+    guard += 1;
+    const pending = [...hits.keys()].filter((id) => !fetched.has(id));
+    if (!pending.length) break;
+
+    const batchIds = pending.slice(0, 50);
+    for (const id of batchIds) fetched.add(id);
+
+    const graphs = await getAniListRelationGraphs(batchIds);
+    for (const media of graphs) {
+      const fromDir = directionOf.get(media.id) || "ROOT";
+      for (const edge of media.relations?.edges ?? []) {
+        if (edge.node && edge.relationType) {
+          absorbEdge(fromDir, edge.relationType, edge.node);
+        }
+      }
+    }
+  }
+
+  const seenCat = new Set<number>();
+  const out: RelatedEntry[] = [];
+
+  for (const { node, relationType } of hits.values()) {
+    const match = findCatalogMatch(node, byAniId, byMalId);
+    if (!match || seenCat.has(match.id)) continue;
+    seenCat.add(match.id);
+
+    const card = cardFromMatch(match, node);
+    out.push({
+      ...card,
+      relationType,
+      relationLabel: seasonLabel(relationType, node, rootYear),
+    });
+  }
+
+  out.sort((a, b) => {
+    if (a.relationType !== b.relationType) {
+      return a.relationType === "PREQUEL" ? -1 : 1;
+    }
+    const ay = a.media.seasonYear ?? 0;
+    const by = b.media.seasonYear ?? 0;
+    return a.relationType === "PREQUEL" ? by - ay : ay - by;
+  });
+
+  return out;
+}
+
 export function buildRelatedEntries(
   anilist: AniListMedia | null | undefined,
   catalog: CatalogAnime[],
   byAniId = buildAniIdIndex(catalog),
   byMalId = buildMalIdIndex(catalog),
+  options?: { excludeCatalogIds?: Iterable<number> },
 ): RelatedEntry[] {
   const edges = anilist?.relations?.edges ?? [];
-  const seen = new Set<number>();
+  const seen = new Set<number>(options?.excludeCatalogIds ?? []);
   const out: RelatedEntry[] = [];
 
   for (const edge of edges) {
     const node = edge.node;
     if (!node || node.type !== "ANIME") continue;
     const type = edge.relationType || "OTHER";
+    // Seasons are handled by resolveFranchiseSeasons — skip here.
+    if (SEASON_TYPES.has(type)) continue;
     if (!RELATED_TYPES.has(type) && node.format !== "MOVIE") continue;
 
     const match = findCatalogMatch(node, byAniId, byMalId);
@@ -182,8 +307,6 @@ export function buildRelatedEntries(
   }
 
   const order = [
-    "PREQUEL",
-    "SEQUEL",
     "PARENT",
     "SIDE_STORY",
     "SPIN_OFF",

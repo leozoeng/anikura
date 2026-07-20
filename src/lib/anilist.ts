@@ -17,6 +17,17 @@ export type AniListStreamingEpisode = {
   site?: string | null;
 };
 
+export type AniListRelationNode = {
+  id: number;
+  idMal?: number | null;
+  type?: string | null;
+  format?: string | null;
+  title: AniListTitle;
+  coverImage?: { large?: string | null } | null;
+  seasonYear?: number | null;
+  averageScore?: number | null;
+};
+
 export type AniListMedia = {
   id: number;
   idMal?: number | null;
@@ -55,16 +66,7 @@ export type AniListMedia = {
   relations?: {
     edges?: {
       relationType?: string | null;
-      node?: {
-        id: number;
-        idMal?: number | null;
-        type?: string | null;
-        format?: string | null;
-        title: AniListTitle;
-        coverImage?: { large?: string | null } | null;
-        seasonYear?: number | null;
-        averageScore?: number | null;
-      } | null;
+      node?: AniListRelationNode | null;
     }[];
   } | null;
 };
@@ -240,6 +242,53 @@ export async function getAniListByIds(ids: number[]) {
     }`,
     { ids: unique.slice(0, 50) },
     300,
+  );
+
+  return data?.Page?.media ?? [];
+}
+
+/** Lightweight batch fetch of PREQUEL/SEQUEL (etc.) edges for franchise walking. */
+export async function getAniListRelationGraphs(ids: number[]) {
+  const unique = [...new Set(ids.filter((n) => Number.isFinite(n) && n > 0))];
+  if (!unique.length) {
+    return [] as {
+      id: number;
+      relations?: AniListMedia["relations"];
+    }[];
+  }
+
+  const data = await anilistFetch<{
+    Page: {
+      media: {
+        id: number;
+        relations?: AniListMedia["relations"];
+      }[];
+    };
+  }>(
+    `query ($ids: [Int]) {
+      Page(page: 1, perPage: 50) {
+        media(id_in: $ids, type: ANIME) {
+          id
+          relations {
+            edges {
+              relationType
+              node {
+                id
+                idMal
+                type
+                format
+                title { romaji english native }
+                coverImage { large }
+                seasonYear
+                averageScore
+              }
+            }
+          }
+        }
+      }
+    }`,
+    { ids: unique.slice(0, 50) },
+    600,
   );
 
   return data?.Page?.media ?? [];

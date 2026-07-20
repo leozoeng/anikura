@@ -10,6 +10,7 @@ import { resolveEpisodeThumbnails } from "@/lib/episode-thumbs";
 import {
   buildMoreLikeThis,
   buildRelatedEntries,
+  resolveFranchiseSeasons,
 } from "@/lib/related";
 
 export const dynamic = "force-dynamic";
@@ -59,11 +60,21 @@ export default async function AnimeDetailPage({ params }: Props) {
         ? anime.score
         : null;
 
-  const related = buildRelatedEntries(anilist, catalog);
-  const relatedIds = new Set(related.map((r) => r.match.id));
+  const seasons = await resolveFranchiseSeasons(anilist, catalog);
+  const seasonIds = new Set(seasons.map((r) => r.match.id));
+  const related = buildRelatedEntries(anilist, catalog, undefined, undefined, {
+    excludeCatalogIds: seasonIds,
+  });
+  const relatedIds = new Set([
+    ...seasonIds,
+    ...related.map((r) => r.match.id),
+  ]);
   const recommendations = buildMoreLikeThis(anilist, catalog, {
     excludeCatalogIds: [anime.id, ...relatedIds],
-    excludeAniIds: related.map((r) => r.media.id),
+    excludeAniIds: [
+      ...seasons.map((r) => r.media.id),
+      ...related.map((r) => r.media.id),
+    ],
     limit: 18,
   });
 
@@ -140,6 +151,16 @@ export default async function AnimeDetailPage({ params }: Props) {
           </aside>
         </div>
 
+        <RelatedAnimeGrid
+          title="Seasons"
+          subtitle="Prequels and sequels in this series"
+          className="mt-14"
+          items={seasons}
+          badge={(item) =>
+            "relationLabel" in item ? item.relationLabel : null
+          }
+        />
+
         <section className="mt-14">
           <h2 className="section-title">Episodes</h2>
           <EpisodeList
@@ -153,7 +174,7 @@ export default async function AnimeDetailPage({ params }: Props) {
 
         <RelatedAnimeGrid
           title="Related"
-          subtitle="Prequels, sequels, movies, and spin-offs"
+          subtitle="Movies, spin-offs, and side stories"
           items={related}
           badge={(item) =>
             "relationLabel" in item ? item.relationLabel : null

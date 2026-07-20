@@ -50,6 +50,7 @@ type Props = {
     totalEps?: string;
   };
   related: RelatedEntry[];
+  seasons: RelatedEntry[];
   recommendations: RelatedMediaCard[];
   arcContext: {
     malId?: string;
@@ -86,6 +87,7 @@ export function WatchExperience(props: Props) {
     episodeThumbnails = {},
     anilistMeta,
     related,
+    seasons,
     recommendations,
     arcContext,
     prevHref,
@@ -432,6 +434,7 @@ export function WatchExperience(props: Props) {
                 fallbackImage={banner || poster}
                 recommendations={recommendations}
                 related={related}
+                seasons={seasons}
                 nextAirLabel={nextAirLabel}
               />
             </div>
