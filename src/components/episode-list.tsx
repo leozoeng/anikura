@@ -99,7 +99,7 @@ export function EpisodeList({
                 className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium tracking-[-0.01em] transition ${
                   active
                     ? "bg-white text-black"
-                    : "border border-white/12 text-cloud hover:border-white/30 hover:text-snow"
+                    : "border border-white/12 text-cloud hover:border-[#ff8caa]/35 hover:bg-[#ff8caa]/08 hover:text-snow"
                 }`}
               >
                 {r.start}–{r.end}
