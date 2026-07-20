@@ -71,7 +71,7 @@ export function AnimePoster({
         {typeof progress === "number" && progress > 0 && (
           <div className="absolute inset-x-3 bottom-3 h-[2px] overflow-hidden rounded-full bg-white/20">
             <div
-              className="h-full rounded-full bg-sakura-soft"
+              className="h-full rounded-full bg-white"
               style={{ width: `${Math.min(100, Math.max(4, progress))}%` }}
             />
           </div>
