@@ -35,8 +35,8 @@ export function FooterDonations() {
   }
 
   return (
-    <div className="flex flex-wrap items-stretch gap-2">
-      <div className="inline-flex h-[3.25rem] max-w-[14.5rem] items-center gap-2.5 rounded-2xl border border-[#ff8caa]/28 bg-[linear-gradient(135deg,rgba(255,140,170,0.16),rgba(255,255,255,0.04)_55%,rgba(255,179,199,0.1))] py-1.5 pl-2.5 pr-3 shadow-[inset_0_1px_0_rgba(255,232,238,0.12)]">
+    <div className="inline-flex w-full max-w-full flex-col gap-2.5 rounded-2xl border border-[#ff8caa]/28 bg-[linear-gradient(135deg,rgba(255,140,170,0.16),rgba(255,255,255,0.04)_55%,rgba(255,179,199,0.1))] p-2.5 shadow-[inset_0_1px_0_rgba(255,232,238,0.12)] sm:w-auto sm:flex-row sm:items-center sm:gap-3 sm:py-1.5 sm:pl-2.5 sm:pr-1.5">
+      <div className="inline-flex min-w-0 items-center gap-2.5 px-0.5 sm:pr-1">
         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#ff8caa]/18 ring-1 ring-[#ff8caa]/30">
           <HeartPetal />
         </span>
@@ -50,37 +50,44 @@ export function FooterDonations() {
         </span>
       </div>
 
-      {DONATIONS.map((d) => (
-        <div
-          key={d.id}
-          className="inline-flex h-[3.25rem] items-center gap-2 rounded-2xl border border-white/[0.1] bg-white/[0.04] py-1.5 pl-2.5 pr-1.5 transition hover:border-white/20 hover:bg-white/[0.07]"
-          title={`${d.label}: ${d.address}`}
-        >
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-black/40 ring-1 ring-white/10">
-            {d.id === "sol" ? <SolanaIcon /> : <EthereumIcon />}
-          </span>
-          <a
-            href={d.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="min-w-0 leading-tight"
+      <span
+        aria-hidden
+        className="hidden h-7 w-px shrink-0 bg-[#ff8caa]/22 sm:block"
+      />
+
+      <div className="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-1.5">
+        {DONATIONS.map((d) => (
+          <div
+            key={d.id}
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/[0.08] bg-black/25 py-1 pl-2 pr-1 transition hover:border-white/15 hover:bg-black/35"
+            title={`${d.label}: ${d.address}`}
           >
-            <span className="block text-[0.7rem] font-medium tracking-[-0.01em] text-snow">
-              {d.label}
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-black/40 ring-1 ring-white/10">
+              {d.id === "sol" ? <SolanaIcon /> : <EthereumIcon />}
             </span>
-            <span className="block font-mono text-[0.65rem] text-mute">
-              {shortAddress(d.address)}
-            </span>
-          </a>
-          <button
-            type="button"
-            onClick={() => void copy(d.id, d.address)}
-            className="rounded-full px-2.5 py-1.5 text-[0.7rem] text-mute transition hover:bg-white/[0.08] hover:text-snow"
-          >
-            {copied === d.id ? "Copied" : "Copy"}
-          </button>
-        </div>
-      ))}
+            <a
+              href={d.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="min-w-0 leading-tight"
+            >
+              <span className="block text-[0.68rem] font-medium tracking-[-0.01em] text-snow">
+                {d.label}
+              </span>
+              <span className="block font-mono text-[0.62rem] text-mute">
+                {shortAddress(d.address)}
+              </span>
+            </a>
+            <button
+              type="button"
+              onClick={() => void copy(d.id, d.address)}
+              className="rounded-lg px-2 py-1 text-[0.68rem] text-mute transition hover:bg-white/[0.08] hover:text-snow"
+            >
+              {copied === d.id ? "Copied" : "Copy"}
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
