@@ -41,12 +41,22 @@ export function SiteFooter() {
               href={DISCORD}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-white px-3.5 py-1.5 text-sm font-semibold tracking-[-0.02em] text-black transition hover:bg-[#ffe8ee] sm:self-auto"
+              className="group inline-flex shrink-0 items-center gap-3 self-start rounded-2xl border border-white/[0.1] bg-white/[0.04] px-3.5 py-2.5 transition hover:border-white/20 hover:bg-white/[0.07] sm:self-auto"
             >
-              <DiscordIcon />
-              Discord
-              <span aria-hidden className="text-black/40">
-                →
+              <span className="flex min-w-0 flex-col">
+                <span className="text-sm font-semibold tracking-[-0.02em] text-snow">
+                  Join Discord
+                </span>
+                <span className="text-[0.7rem] tracking-[-0.01em] text-mute">
+                  Feedback, bugs & updates
+                </span>
+              </span>
+              <span className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/90 bg-[linear-gradient(180deg,#ffffff_0%,#f4f4f6_48%,#e8e8ec_100%)] px-3.5 text-sm font-semibold tracking-[-0.02em] text-[#0a0a0c] shadow-[0_1.5px_0_rgba(255,255,255,0.95)_inset,0_4px_12px_rgba(0,0,0,0.35)] transition group-hover:brightness-[1.03]">
+                <DiscordIcon />
+                Open
+                <span aria-hidden className="text-black/35">
+                  →
+                </span>
               </span>
             </a>
           </div>
@@ -68,7 +78,7 @@ export function SiteFooter() {
               href={DISCORD}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm tracking-[-0.02em] text-[#ffb3c7]/90 transition hover:text-[#ffd0dc]"
+              className="text-sm tracking-[-0.02em] text-cloud transition hover:text-snow"
             >
               Community
             </a>
