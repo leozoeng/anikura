@@ -158,7 +158,7 @@ export function WatchSidebar({
                         isActive
                           ? "bg-white/[0.08] ring-1 ring-white/12"
                           : watched
-                            ? "bg-white/[0.03] hover:bg-white/[0.05]"
+                            ? "bg-[#ff8caa]/08 ring-1 ring-[#ff8caa]/20 hover:bg-[#ff8caa]/12"
                             : "hover:bg-white/[0.04]"
                       }`}
                     >
@@ -170,7 +170,7 @@ export function WatchSidebar({
                               src={thumb}
                               alt=""
                               className={`absolute inset-0 h-full w-full object-cover ${
-                                watched && !isActive ? "opacity-55" : ""
+                                watched && !isActive ? "opacity-50" : ""
                               }`}
                               loading="lazy"
                               referrerPolicy="no-referrer"
@@ -179,8 +179,12 @@ export function WatchSidebar({
                           <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-snow backdrop-blur-sm">
                             Ep {ep.number}
                           </span>
-                          {watched && !isActive && (
-                            <span className="absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full bg-black/70 text-snow backdrop-blur-sm">
+                          {watched && (
+                            <span
+                              className="absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full bg-[#ff8caa] text-black shadow-sm"
+                              title="Watched"
+                              aria-label="Watched"
+                            >
                               <CheckIcon />
                             </span>
                           )}
@@ -190,8 +194,8 @@ export function WatchSidebar({
                         {compact && (
                           <span className="mb-0.5 flex items-center gap-1.5 text-[11px] font-medium text-mute">
                             Ep {ep.number}
-                            {watched && !isActive ? (
-                              <span className="text-cloud">· Watched</span>
+                            {watched ? (
+                              <span className="text-[#ffb3c7]">· Watched</span>
                             ) : null}
                           </span>
                         )}
@@ -205,9 +209,11 @@ export function WatchSidebar({
                         {isActive ? (
                           <span className="mt-1 block text-xs text-mute">
                             Playing
+                            {watched ? " · Watched" : ""}
                           </span>
                         ) : watched && !compact ? (
-                          <span className="mt-1 block text-xs text-mute">
+                          <span className="mt-1 flex items-center gap-1 text-xs text-[#ffb3c7]">
+                            <CheckIcon />
                             Watched
                           </span>
                         ) : null}
