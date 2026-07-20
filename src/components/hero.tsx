@@ -94,7 +94,7 @@ export function Hero({ slides }: Props) {
       coverMode={trailerId ? "solid" : "poster"}
       bannerHoldMs={0}
     >
-      <div className="relative flex min-h-[100svh] w-full flex-col justify-end px-3 pb-16 pt-28 sm:px-4 lg:pb-24">
+      <div className="relative mx-auto flex min-h-[100svh] w-full max-w-[1200px] flex-col justify-end px-5 pb-16 pt-28 sm:px-8 lg:pb-24">
         <div className="flex items-center gap-3">
           <p className="animate-rise text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-snow/70">
             Anikura
