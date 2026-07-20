@@ -52,7 +52,7 @@ export function SiteHeader() {
           : "bg-gradient-to-b from-black/80 via-black/40 to-transparent"
       }`}
     >
-      <div className="flex h-14 w-full items-center gap-6 px-4 sm:h-16 sm:gap-8 sm:px-6 lg:px-8">
+      <div className="flex h-14 w-full items-center gap-5 px-3 sm:h-16 sm:gap-8 sm:px-4">
         <Link
           href="/"
           className="group flex shrink-0 items-center gap-2.5"
@@ -129,7 +129,7 @@ export function SiteHeader() {
             : "max-h-0 opacity-0"
         }`}
       >
-        <nav className="flex w-full flex-col gap-1 px-4 py-4 sm:px-6 lg:px-8" aria-label="Mobile">
+        <nav className="flex w-full flex-col gap-1 px-3 py-4 sm:px-4" aria-label="Mobile">
           {links.map((link) => {
             const active =
               link.href === "/"

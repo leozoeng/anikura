@@ -22,7 +22,7 @@ export function ContinueWatching() {
 
   return (
     <section className="space-y-5">
-      <div className="mx-auto flex max-w-[1200px] items-end justify-between gap-4 px-5 sm:px-8">
+      <div className="flex w-full items-end justify-between gap-4 px-3 sm:px-4">
         <div>
           <h2 className="section-title">Continue</h2>
           <p className="section-sub">Pick up where you left off</p>
@@ -39,7 +39,7 @@ export function ContinueWatching() {
         </button>
       </div>
 
-      <div className="fade-x scrollbar-none flex gap-4 overflow-x-auto px-5 pb-2 sm:gap-5 sm:px-8">
+      <div className="fade-x scrollbar-none flex gap-4 overflow-x-auto px-3 pb-2 sm:gap-5 sm:px-4">
         {items.map((item) => (
           <div key={item.id} className="w-[138px] shrink-0 sm:w-[156px]">
             <AnimePoster
