@@ -25,6 +25,7 @@ import {
 import { ProfileBadges } from "@/components/profile/profile-badges";
 import { ProfileEditPanel } from "@/components/profile/profile-edit-panel";
 import { ProfileSearch } from "@/components/profile/profile-search";
+import { CommunityPartnersMarquee } from "@/components/social/community-partners-marquee";
 
 type Props = {
   profile: PublicProfile;
@@ -477,6 +478,8 @@ export function ProfileView({
             </aside>
           ) : null}
         </div>
+
+        {hub ? <CommunityPartnersMarquee /> : null}
       </div>
     </div>
   );

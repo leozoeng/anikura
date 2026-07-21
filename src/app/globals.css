@@ -202,6 +202,49 @@ button {
   animation: sakura-pulse 2.8s ease-in-out infinite;
 }
 
+/* Discord partner communities marquee (Social) */
+@keyframes community-marquee-scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.community-marquee__viewport {
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.community-marquee__track {
+  display: flex;
+  width: max-content;
+  animation: community-marquee-scroll 42s linear infinite;
+  will-change: transform;
+}
+
+.community-marquee__group {
+  display: flex;
+  gap: 0.625rem;
+  padding-right: 0.625rem;
+}
+
+.community-marquee:hover .community-marquee__track,
+.community-marquee:focus-within .community-marquee__track {
+  animation-duration: 96s;
+}
+
+.community-partner-chip {
+  max-width: min(18rem, 78vw);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .community-marquee__track {
+    animation: none !important;
+  }
+}
+
 .genre-tile {
   --genre-tile-accent: #ff8caa;
   animation: rise 0.5s var(--ease-out-soft) both;
@@ -234,7 +277,8 @@ button {
   .footer-petal,
   .footer-petal-slow,
   .sakura-dot,
-  .animate-soft-zoom {
+  .animate-soft-zoom,
+  .community-marquee__track {
     animation: none !important;
   }
 
