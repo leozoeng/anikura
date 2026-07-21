@@ -25,7 +25,7 @@ Pulls the Anikoto catalog (~9k titles), builds genre indexes into `data/`.
 
 **Episodes:** Watch and series pages always fetch the live Anikoto episode list (`cache: no-store`) — new episodes appear as soon as Anikoto lists them.
 
-**Auto catalog sync (Vercel Cron):** every 6 hours `GET /api/cron/catalog-sync` refreshes the newest ~1,000 titles and stores a compact overlay in Supabase (`catalog_live`). Browse/search merge that overlay on top of `data/catalog.json`.
+**Auto catalog sync (Vercel Cron):** once daily at ~06:20 UTC, `GET /api/cron/catalog-sync` refreshes the newest ~1,000 titles and stores a compact overlay in Supabase (`catalog_live`). Browse/search merge that overlay on top of `data/catalog.json`. (Hobby plans only allow one cron run per day.)
 
 Set these on Vercel (Production):
 
