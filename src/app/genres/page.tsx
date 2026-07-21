@@ -97,12 +97,17 @@ export default async function GenresPage() {
 
             <section aria-labelledby="featured-moods">
               <div className="mb-4 flex items-end justify-between gap-3">
-                <h2
-                  id="featured-moods"
-                  className="text-lg font-semibold tracking-[-0.03em] text-snow sm:text-xl"
-                >
-                  Featured
-                </h2>
+                <div>
+                  <h2
+                    id="featured-moods"
+                    className="text-lg font-semibold tracking-[-0.03em] text-snow sm:text-xl"
+                  >
+                    Featured
+                  </h2>
+                  <p className="mt-0.5 text-xs text-mute sm:text-sm">
+                    Cinematic mood mosaics
+                  </p>
+                </div>
                 <p className="text-xs text-mute sm:text-sm">
                   Most watched corners
                 </p>
