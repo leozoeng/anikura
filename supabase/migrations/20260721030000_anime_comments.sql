@@ -3,6 +3,8 @@
 create table if not exists public.anime_comments (
   id uuid primary key default gen_random_uuid(),
   anime_id integer not null,
+  episode integer not null,
+  language text not null,
   user_id uuid not null references public.profiles (id) on delete cascade,
   body text not null,
   created_at timestamptz not null default now(),
@@ -10,11 +12,13 @@ create table if not exists public.anime_comments (
   constraint anime_comments_body_length check (
     char_length(btrim(body)) >= 1
     and char_length(body) <= 2000
-  )
+  ),
+  constraint anime_comments_language_check check (language in ('sub', 'dub')),
+  constraint anime_comments_episode_positive check (episode >= 1)
 );
 
-create index if not exists anime_comments_anime_created_idx
-  on public.anime_comments (anime_id, created_at desc);
+create index if not exists anime_comments_episode_created_idx
+  on public.anime_comments (anime_id, episode, language, created_at desc);
 
 create index if not exists anime_comments_user_id_idx
   on public.anime_comments (user_id);

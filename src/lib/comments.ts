@@ -1,5 +1,7 @@
 export const COMMENT_MAX_LENGTH = 2000;
 
+export type CommentLanguage = "sub" | "dub";
+
 export type CommentAuthor = {
   id: string;
   nickname: string | null;
@@ -10,6 +12,8 @@ export type CommentAuthor = {
 export type AnimeComment = {
   id: string;
   anime_id: number;
+  episode: number;
+  language: CommentLanguage;
   user_id: string;
   body: string;
   created_at: string;
@@ -18,7 +22,7 @@ export type AnimeComment = {
 };
 
 export const COMMENT_SELECT =
-  "id, anime_id, user_id, body, created_at, updated_at, author:profiles!anime_comments_user_id_fkey(id, nickname, avatar_url, email)";
+  "id, anime_id, episode, language, user_id, body, created_at, updated_at, author:profiles!anime_comments_user_id_fkey(id, nickname, avatar_url, email)";
 
 export function validateCommentBody(raw: string): string | null {
   const trimmed = raw.trim();

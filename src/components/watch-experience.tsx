@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { AnimeComments } from "@/components/anime-comments";
 import { AutoplayNext } from "@/components/autoplay-next";
 import { ExpandableText } from "@/components/expandable-text";
 import { MiniPlayer } from "@/components/mini-player";
@@ -387,6 +388,14 @@ export function WatchExperience(props: Props) {
                       textClassName="text-sm leading-relaxed text-cloud"
                     />
                   ) : null}
+
+                  <AnimeComments
+                    animeId={anime.id}
+                    episode={current.number}
+                    language={language}
+                    returnPath={watchHref(anime, current.number, language)}
+                    className="mt-10"
+                  />
                 </div>
               </div>
 

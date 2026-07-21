@@ -18,6 +18,7 @@ import {
   formatCommentTime,
   validateCommentBody,
   type AnimeComment,
+  type CommentLanguage,
 } from "@/lib/comments";
 import { displayName } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/client";
@@ -25,7 +26,10 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 type Props = {
   animeId: number;
+  episode: number;
+  language: CommentLanguage;
   returnPath: string;
+  className?: string;
 };
 
 type ComposerProfile = {
@@ -44,9 +48,16 @@ function normalizeComment(row: Record<string, unknown>): AnimeComment {
         ? (authorRaw[0] as AnimeComment["author"])
         : null;
 
+  const language =
+    row.language === "dub" || row.language === "sub"
+      ? row.language
+      : "sub";
+
   return {
     id: String(row.id),
     anime_id: Number(row.anime_id),
+    episode: Number(row.episode),
+    language,
     user_id: String(row.user_id),
     body: String(row.body ?? ""),
     created_at: String(row.created_at),
@@ -142,7 +153,13 @@ function AuthorHoverName({
   );
 }
 
-export function AnimeComments({ animeId, returnPath }: Props) {
+export function AnimeComments({
+  animeId,
+  episode,
+  language,
+  returnPath,
+  className = "",
+}: Props) {
   const formId = useId();
   const [comments, setComments] = useState<AnimeComment[]>([]);
   const [me, setMe] = useState<ComposerProfile | null>(null);
@@ -170,6 +187,8 @@ export function AnimeComments({ animeId, returnPath }: Props) {
       .from("anime_comments")
       .select(COMMENT_SELECT)
       .eq("anime_id", animeId)
+      .eq("episode", episode)
+      .eq("language", language)
       .order("created_at", { ascending: false });
 
     if (queryError) {
@@ -180,10 +199,16 @@ export function AnimeComments({ animeId, returnPath }: Props) {
       setComments((data ?? []).map((row) => normalizeComment(row as Record<string, unknown>)));
     }
     setLoading(false);
-  }, [animeId, configured]);
+  }, [animeId, episode, language, configured]);
 
   useEffect(() => {
     let cancelled = false;
+
+    setComments([]);
+    setLoading(true);
+    setError(null);
+    setBody("");
+    setFormError(null);
 
     (async () => {
       await loadComments();
@@ -243,6 +268,8 @@ export function AnimeComments({ animeId, returnPath }: Props) {
     const trimmed = body.trim();
     const { error: insertError } = await supabase.from("anime_comments").insert({
       anime_id: animeId,
+      episode,
+      language,
       user_id: me.id,
       body: trimmed,
     });
@@ -280,15 +307,16 @@ export function AnimeComments({ animeId, returnPath }: Props) {
 
   const count = comments.length;
   const remaining = COMMENT_MAX_LENGTH - body.length;
+  const langLabel = language === "dub" ? "Dub" : "Sub";
 
   return (
-    <section className="mt-16 animate-rise">
+    <section className={`animate-rise ${className}`.trim()} id="comments">
       <SectionHeading
         title="Comments"
         subtitle={
           count > 0
-            ? `${count} ${count === 1 ? "voice" : "voices"} on this series — newest first.`
-            : "Share a take, a spoiler warning, or a quiet recommendation."
+            ? `${count} ${count === 1 ? "comment" : "comments"} on episode ${episode} · ${langLabel} — newest first.`
+            : `Episode ${episode} · ${langLabel} — share a take or a spoiler warning.`
         }
       />
 
@@ -402,7 +430,7 @@ export function AnimeComments({ animeId, returnPath }: Props) {
             <div className="py-12 text-center">
               <p className="text-sm font-medium text-[#dbdee1]">No comments yet</p>
               <p className="mt-1.5 text-sm text-[#6d6f78]">
-                Be the first to leave a note on this series.
+                Be the first to leave a note on this episode.
               </p>
             </div>
           ) : (

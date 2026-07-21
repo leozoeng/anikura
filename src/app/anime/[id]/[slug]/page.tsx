@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { AnimeComments } from "@/components/anime-comments";
 import { AnimeDetailHero } from "@/components/anime-detail-hero";
 import { EpisodeList } from "@/components/episode-list";
 import { ExpandableText } from "@/components/expandable-text";
@@ -27,7 +26,7 @@ type Props = {
 };
 
 export default async function AnimeDetailPage({ params }: Props) {
-  const { id, slug } = await params;
+  const { id } = await params;
   const animeId = Number(id);
   if (!Number.isFinite(animeId)) notFound();
 
@@ -213,11 +212,6 @@ export default async function AnimeDetailPage({ params }: Props) {
           subtitle="If this mood worked, try these next."
           items={recommendations}
           maxRows={2}
-        />
-
-        <AnimeComments
-          animeId={anime.id}
-          returnPath={`/anime/${anime.id}/${slug || anime.slug}`}
         />
       </div>
     </div>
