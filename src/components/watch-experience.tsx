@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AnimeComments } from "@/components/anime-comments";
 import { AutoplayNext } from "@/components/autoplay-next";
 import { ExpandableText } from "@/components/expandable-text";
@@ -25,6 +25,20 @@ import type { AnimeSummary, Episode } from "@/lib/types";
 
 const PLAYER_ID = "watch-player";
 const TIP_DISMISS_KEY = "anikura:watch-server-tip-dismissed";
+
+function subscribeLg(cb: () => void) {
+  const mq = window.matchMedia("(min-width: 1024px)");
+  mq.addEventListener("change", cb);
+  return () => mq.removeEventListener("change", cb);
+}
+
+function useIsDesktop() {
+  return useSyncExternalStore(
+    subscribeLg,
+    () => window.matchMedia("(min-width: 1024px)").matches,
+    () => true,
+  );
+}
 
 type Props = {
   anime: AnimeSummary;
@@ -105,11 +119,21 @@ export function WatchExperience(props: Props) {
   const [serverMenuOpen, setServerMenuOpen] = useState(false);
   const [tipVisible, setTipVisible] = useState(true);
   const playerRef = useRef<HTMLDivElement>(null);
+  const isDesktop = useIsDesktop();
 
   const currentArc = getArcForEpisode(arcContext, current.number);
   const displayEpisodeTitle =
     episodeTitle || `Episode ${current.number}`;
 
+  const comments = (
+    <AnimeComments
+      animeId={anime.id}
+      episode={current.number}
+      language={language}
+      returnPath={watchHref(anime, current.number, language)}
+      className="min-w-0"
+    />
+  );
   useEffect(() => {
     try {
       if (localStorage.getItem(TIP_DISMISS_KEY) === "1") setTipVisible(false);
@@ -298,7 +322,7 @@ export function WatchExperience(props: Props) {
               <span className="text-cloud">Episode {current.number}</span>
             </nav>
 
-            {/* Mobile: player → meta → episodes → comments. Desktop: comments under meta; sidebar no longer stretches the left column. */}
+            {/* Desktop: comments nested under description (avoids sidebar-height gap). Mobile: episodes then comments. */}
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
               <div className="min-w-0">
                 <div id={PLAYER_ID} ref={playerRef} className="-mx-4 sm:mx-0">
@@ -390,6 +414,8 @@ export function WatchExperience(props: Props) {
                     />
                   ) : null}
                 </div>
+
+                {isDesktop ? <div className="mt-8">{comments}</div> : null}
               </div>
 
               <WatchSidebar
@@ -407,13 +433,7 @@ export function WatchExperience(props: Props) {
                 className="min-w-0 self-start"
               />
 
-              <AnimeComments
-                animeId={anime.id}
-                episode={current.number}
-                language={language}
-                returnPath={watchHref(anime, current.number, language)}
-                className="min-w-0 lg:col-start-1"
-              />
+              {!isDesktop ? comments : null}
             </div>
           </div>
         )}
