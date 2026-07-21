@@ -18,7 +18,7 @@ export type MoodTeaserProps = {
   priority?: boolean;
 };
 
-/** Ghibli-selection-style mood row — per-mood accent, copy, poster strip. */
+/** Compact themed mood shelf — accent CTA + horizontal poster strip. */
 export function MoodTeaser({
   name,
   slug,
@@ -30,15 +30,16 @@ export function MoodTeaser({
 }: MoodTeaserProps) {
   const copy = moodCopy(slug);
   const accent = moodAccent(slug);
-  const preview = posters.slice(0, 7);
+  const preview = posters.slice(0, 6);
   const href = `/genres/${slug}`;
   const wash = moodVeil(slug);
 
   return (
     <section
-      className="mood-teaser group/mood relative overflow-hidden rounded-[1.6rem]"
+      id={`mood-${slug}`}
+      className="mood-teaser group/mood relative scroll-mt-28 overflow-hidden rounded-[1.25rem] sm:scroll-mt-32"
       style={{
-        border: `1px solid color-mix(in oklab, ${accent.solid} 28%, transparent)`,
+        border: `1px solid color-mix(in oklab, ${accent.solid} 30%, transparent)`,
       }}
     >
       <div aria-hidden className="absolute inset-0">
@@ -47,51 +48,38 @@ export function MoodTeaser({
             src={coverSrc}
             alt=""
             fill
-            className={`object-cover opacity-[0.44] transition duration-700 group-hover/mood:scale-[1.03] group-hover/mood:opacity-[0.5] ${coverPosition ?? "object-center"}`}
+            className={`object-cover opacity-[0.4] transition duration-600 group-hover/mood:scale-[1.025] group-hover/mood:opacity-[0.46] ${coverPosition ?? "object-center"}`}
             sizes="1200px"
             priority={priority}
           />
         ) : null}
         <div className="absolute inset-0" style={{ background: wash }} />
         <div
-          className="mood-cloud absolute -left-[6%] top-[18%] h-24 w-[40%] rounded-full blur-3xl"
-          style={{ background: `${accent.solid}22` }}
-        />
-        <div
-          className="mood-cloud-slow absolute right-[-8%] top-[28%] h-20 w-[34%] rounded-full blur-3xl"
-          style={{ background: `${accent.soft}28` }}
+          className="mood-cloud absolute -left-[8%] top-[20%] h-16 w-[36%] rounded-full blur-3xl"
+          style={{ background: `${accent.solid}20` }}
         />
       </div>
 
       <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px"
-        style={{
-          background: `linear-gradient(to right, transparent, ${accent.soft}66, transparent)`,
-        }}
-      />
-
-      <div className="relative flex flex-col gap-6 p-5 sm:gap-7 sm:p-6 lg:flex-row lg:items-end lg:justify-between lg:gap-8 lg:p-6">
-        <div className="max-w-md shrink-0">
+        className="relative flex flex-col gap-4 p-4 sm:gap-5 sm:p-5 lg:flex-row lg:items-center lg:justify-between lg:gap-6"
+      >
+        <div className="max-w-sm shrink-0 lg:max-w-[16rem]">
           <p
-            className="text-[0.65rem] font-semibold uppercase tracking-[0.26em]"
+            className="text-[0.6rem] font-semibold uppercase tracking-[0.22em]"
             style={{ color: accent.soft }}
           >
             {copy.eyebrow}
           </p>
-          <h2 className="mt-2 text-[clamp(1.55rem,3.2vw,2.15rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-snow">
+          <h2 className="mt-1 text-[clamp(1.35rem,2.8vw,1.75rem)] font-semibold leading-tight tracking-[-0.03em] text-snow">
             {name}
           </h2>
-          <p className="mt-2.5 text-sm leading-relaxed text-cloud">
-            {copy.blurb}{" "}
-            <span className="text-mute">
-              {count.toLocaleString()} titles.
-            </span>
+          <p className="mt-1.5 line-clamp-2 text-[0.8125rem] leading-snug text-cloud">
+            {copy.blurb}
           </p>
-          <div className="mt-5 flex flex-wrap items-center gap-3">
+          <div className="mt-3.5 flex flex-wrap items-center gap-2">
             <Link
               href={href}
-              className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold shadow-[0_10px_28px_rgba(0,0,0,0.35)] transition hover:brightness-110 hover:shadow-[0_14px_36px_rgba(0,0,0,0.4)]"
+              className="pressable inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[0.8125rem] font-semibold shadow-[0_8px_22px_rgba(0,0,0,0.32)] transition hover:brightness-110"
               style={{
                 background: accent.solid,
                 color: accent.ink,
@@ -100,60 +88,49 @@ export function MoodTeaser({
               {copy.cta}
               <span aria-hidden>→</span>
             </Link>
-            <span
-              className="rounded-full border bg-black/30 px-3 py-1.5 text-[0.7rem] tabular-nums text-cloud backdrop-blur-sm"
-              style={{ borderColor: `${accent.solid}40` }}
-            >
-              {count.toLocaleString()} in mood
+            <span className="text-[0.7rem] tabular-nums text-mute">
+              {count.toLocaleString()} titles
             </span>
           </div>
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="scrollbar-none -mx-1 flex snap-x snap-mandatory items-end gap-2.5 overflow-x-auto px-1 pb-1 sm:gap-3">
+          <div className="scrollbar-none -mx-0.5 flex snap-x snap-mandatory items-end gap-2 overflow-x-auto px-0.5 pb-0.5">
             {preview.map((item, i) => (
               <Link
                 key={`${slug}-${item.id}`}
                 href={animeHref(item)}
-                className="group relative w-[5.35rem] shrink-0 snap-start sm:w-[5.5rem] md:w-[5.85rem]"
+                className="group relative w-[4.5rem] shrink-0 snap-start sm:w-[4.85rem]"
                 style={{
-                  transform: `translateY(${(i % 3) * 5}px) rotate(${((i % 2) * 2 - 1) * 1.4}deg)`,
+                  transform: `translateY(${(i % 3) * 3}px)`,
                 }}
-                title={`${item.title}${item.year ? ` (${item.year})` : ""}`}
+                title={item.title}
               >
-                <div className="relative aspect-[2/3] overflow-hidden rounded-[0.95rem] bg-black/40 shadow-[0_14px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/15 transition duration-400 group-hover:-translate-y-1.5 group-hover:rotate-0 group-hover:ring-white/35">
+                <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-black/40 shadow-[0_10px_24px_rgba(0,0,0,0.45)] ring-1 ring-white/12 transition duration-400 group-hover:-translate-y-1 group-hover:ring-white/30">
                   <Image
                     src={item.poster}
-                    alt={item.title}
+                    alt=""
                     fill
-                    className="object-cover transition duration-500 group-hover:scale-[1.05]"
-                    sizes="94px"
+                    className="object-cover transition duration-500 group-hover:scale-[1.04]"
+                    sizes="80px"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-white/5" />
-                  {item.year ? (
-                    <span
-                      className="absolute bottom-1.5 left-1.5 rounded bg-black/40 px-1 py-0.5 text-[0.55rem] font-medium tabular-nums backdrop-blur-[2px]"
-                      style={{ color: accent.mist }}
-                    >
-                      {item.year}
-                    </span>
-                  ) : null}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                 </div>
               </Link>
             ))}
             <Link
               href={href}
-              className="flex w-[4.6rem] shrink-0 snap-start flex-col items-center justify-center gap-1 rounded-[0.95rem] border border-dashed text-center transition hover:brightness-110 sm:w-[5.5rem] md:w-[5.85rem]"
+              className="flex w-[4rem] shrink-0 snap-start flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed text-center transition hover:brightness-110 sm:w-[4.5rem]"
               style={{
                 aspectRatio: "2/3",
-                borderColor: `${accent.solid}55`,
-                background: `${accent.solid}18`,
+                borderColor: `${accent.solid}50`,
+                background: `${accent.solid}14`,
                 color: accent.soft,
               }}
             >
-              <span className="text-xl leading-none opacity-80">+</span>
-              <span className="px-1.5 text-[0.62rem] font-medium leading-tight">
-                All {count.toLocaleString()}
+              <span className="text-lg leading-none opacity-80">+</span>
+              <span className="px-1 text-[0.58rem] font-medium leading-tight">
+                All
               </span>
             </Link>
           </div>
