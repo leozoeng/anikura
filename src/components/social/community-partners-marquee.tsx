@@ -115,9 +115,6 @@ function PartnerChip({ partner }: { partner: DiscordPartner }) {
       </span>
       <span className="min-w-0">
         <span className="flex min-w-0 items-center gap-1.5">
-          <span className="truncate text-[0.8125rem] font-semibold tracking-[-0.02em] text-snow">
-            {partner.name}
-          </span>
           <Image
             src={PARTNER_BADGE}
             alt=""
@@ -126,6 +123,9 @@ function PartnerChip({ partner }: { partner: DiscordPartner }) {
             className="h-4 w-4 shrink-0"
             title="Discord Partner"
           />
+          <span className="truncate text-[0.8125rem] font-semibold tracking-[-0.02em] text-snow">
+            {partner.name}
+          </span>
         </span>
         <span className="mt-0.5 block text-[0.7rem] tabular-nums text-[#949ba4]">
           {formatMemberCount(partner.memberCount)} members
