@@ -75,7 +75,7 @@ export function HeaderAuth({
   if (!email) {
     return (
       <>
-        <div className="flex items-center gap-0.5">
+        <div className="hidden items-center gap-0.5 md:flex">
           <button
             type="button"
             onClick={() => {

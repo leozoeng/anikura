@@ -88,14 +88,20 @@ export function SearchCommand({ open, onOpenChange }: Props) {
   }, [onOpenChange, open]);
 
   useEffect(() => {
+    if (!open) return;
     function onPointer(e: PointerEvent) {
       if (!rootRef.current?.contains(e.target as Node)) {
         onOpenChange(false);
       }
     }
-    if (!open) return;
     document.addEventListener("pointerdown", onPointer);
-    return () => document.removeEventListener("pointerdown", onPointer);
+    const mobile = window.matchMedia("(max-width: 767px)").matches;
+    const prev = document.body.style.overflow;
+    if (mobile) document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.body.style.overflow = prev;
+    };
   }, [open, onOpenChange]);
 
   useEffect(() => {
@@ -237,7 +243,7 @@ export function SearchCommand({ open, onOpenChange }: Props) {
         type="button"
         aria-label="Open search"
         onClick={() => onOpenChange(true)}
-        className="inline-flex h-9 items-center gap-2 rounded-full border border-transparent px-2.5 text-cloud transition hover:border-white/10 hover:bg-white/[0.06] hover:text-snow sm:px-3"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent text-cloud transition hover:border-white/10 hover:bg-white/[0.06] hover:text-snow sm:w-auto sm:gap-2 sm:px-3"
       >
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden>
           <circle cx="7" cy="7" r="5.25" stroke="currentColor" strokeWidth="1.4" />
@@ -261,47 +267,59 @@ export function SearchCommand({ open, onOpenChange }: Props) {
   const showPanel = results.length > 0 || (showLoading && q.trim().length >= 2);
 
   return (
-    <div ref={rootRef} className="relative animate-rise">
-      <form onSubmit={onSubmit}>
-        <label className="relative block">
-          <span className="sr-only">Search anime</span>
-          <input
-            ref={inputRef}
-            value={q}
-            onChange={(e) => onChange(e.target.value)}
-            onKeyDown={onKeyDown}
-            role="combobox"
-            aria-expanded={results.length > 0}
-            aria-controls={listId}
-            aria-activedescendant={
-              results[active] ? `${listId}-${active}` : undefined
-            }
-            aria-autocomplete="list"
-            placeholder="Search anime"
-            autoComplete="off"
-            spellCheck={false}
-            className="w-[min(78vw,320px)] rounded-full border border-white/15 bg-white/8 py-2 pl-4 pr-12 text-sm text-snow outline-none placeholder:text-mute focus:border-white/35 focus:bg-white/10"
-          />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-mute">
-            {showLoading ? (
-              <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border border-mute/40 border-t-snow/80" />
-            ) : (
-              "⌘K"
-            )}
-          </span>
-        </label>
-      </form>
+    <div
+      ref={rootRef}
+      className="fixed inset-0 z-[60] flex flex-col bg-void/98 pt-[env(safe-area-inset-top)] animate-rise md:relative md:inset-auto md:z-auto md:block md:bg-transparent md:pt-0"
+    >
+      <div className="flex items-center gap-2 border-b border-white/[0.08] px-3 py-3 md:border-0 md:p-0">
+        <form onSubmit={onSubmit} className="min-w-0 flex-1 md:flex-none">
+          <label className="relative block">
+            <span className="sr-only">Search anime</span>
+            <input
+              ref={inputRef}
+              value={q}
+              onChange={(e) => onChange(e.target.value)}
+              onKeyDown={onKeyDown}
+              role="combobox"
+              aria-expanded={results.length > 0}
+              aria-controls={listId}
+              aria-activedescendant={
+                results[active] ? `${listId}-${active}` : undefined
+              }
+              aria-autocomplete="list"
+              placeholder="Search anime"
+              autoComplete="off"
+              spellCheck={false}
+              className="w-full rounded-full border border-white/15 bg-white/8 py-2.5 pl-4 pr-12 text-sm text-snow outline-none placeholder:text-mute focus:border-white/35 focus:bg-white/10 md:w-[min(78vw,320px)] md:py-2"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-mute">
+              {showLoading ? (
+                <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border border-mute/40 border-t-snow/80" />
+              ) : (
+                <span className="hidden md:inline">⌘K</span>
+              )}
+            </span>
+          </label>
+        </form>
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          className="shrink-0 rounded-full px-3 py-2 text-sm text-cloud transition hover:bg-white/10 hover:text-snow md:hidden"
+        >
+          Cancel
+        </button>
+      </div>
 
       {showPanel && (
         <div
           id={listId}
           role="listbox"
-          className="absolute right-0 z-50 mt-2 w-[min(92vw,380px)] overflow-hidden rounded-2xl border border-white/10 bg-black/90 shadow-[0_30px_80px_rgba(0,0,0,0.65)] backdrop-blur-2xl"
+          className="min-h-0 flex-1 overflow-y-auto px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:absolute md:right-0 md:z-50 md:mt-2 md:w-[min(92vw,380px)] md:flex-none md:overflow-hidden md:rounded-2xl md:border md:border-white/10 md:bg-black/90 md:p-0 md:pb-0 md:shadow-[0_30px_80px_rgba(0,0,0,0.65)] md:backdrop-blur-2xl"
         >
           {showLoading && results.length === 0 ? (
             <p className="px-4 py-6 text-sm text-mute">Searching…</p>
           ) : (
-            <ul className="max-h-[70vh] overflow-y-auto py-2">
+            <ul className="md:max-h-[70vh] md:overflow-y-auto md:py-2">
               {results.map((hit, index) => (
                 <li key={hit.key}>
                   <Link

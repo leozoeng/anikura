@@ -66,7 +66,7 @@ export function SiteHeader({
   if (hideChrome) {
     return (
       <header className="site-chrome fixed inset-x-0 top-0 z-40 bg-void/90 backdrop-blur-md">
-        <div className="flex h-14 w-full items-center gap-5 px-3 sm:h-16 sm:px-4">
+        <div className="flex h-14 w-full items-center gap-5 px-3 pt-[env(safe-area-inset-top)] sm:h-16 sm:px-4">
           <AnikuraLogo size={28} />
           <span className="text-sm text-mute">Admin</span>
           <div className="ml-auto">
@@ -90,7 +90,7 @@ export function SiteHeader({
           : "bg-gradient-to-b from-black/80 via-black/40 to-transparent"
       }`}
     >
-      <div className="flex h-14 w-full items-center gap-5 px-3 sm:h-16 sm:gap-8 sm:px-4">
+      <div className="flex h-14 w-full items-center gap-3 px-3 pt-[env(safe-area-inset-top)] sm:h-16 sm:gap-8 sm:px-4">
         <AnikuraLogo size={28} />
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
@@ -117,13 +117,13 @@ export function SiteHeader({
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
           <a
             href="https://discord.gg/cm72gXTASn"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Join Anikura Discord"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-cloud transition duration-300 hover:bg-[#ff8caa]/12 hover:text-[#ffb3c7]"
+            className="hidden h-9 w-9 shrink-0 place-items-center rounded-full text-cloud transition duration-300 hover:bg-[#ff8caa]/12 hover:text-[#ffb3c7] sm:grid"
           >
             <svg
               width="16"

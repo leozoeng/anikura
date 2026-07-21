@@ -182,12 +182,12 @@ function FeaturedMoodTile({
 }) {
   const layout =
     index === 0
-      ? "genre-tile sm:col-span-2 lg:col-span-7 lg:row-span-2 min-h-[22rem] lg:min-h-[28rem]"
+      ? "genre-tile sm:col-span-2 lg:col-span-7 lg:row-span-2 min-h-[14rem] sm:min-h-[22rem] lg:min-h-[28rem]"
       : index === 1
-        ? "genre-tile lg:col-span-5 min-h-[13rem]"
+        ? "genre-tile lg:col-span-5 min-h-[10rem] sm:min-h-[13rem]"
         : index === 2
-          ? "genre-tile lg:col-span-5 min-h-[13rem]"
-          : "genre-tile lg:col-span-4 min-h-[11rem]";
+          ? "genre-tile lg:col-span-5 min-h-[10rem] sm:min-h-[13rem]"
+          : "genre-tile lg:col-span-4 min-h-[9rem] sm:min-h-[11rem]";
 
   return (
     <Link

@@ -90,7 +90,7 @@ export function GhibliSelection({ entries }: Props) {
               <Link
                 key={anime.id}
                 href={animeHref(anime)}
-                className="ghibli-poster-tilt group relative w-[4.6rem] shrink-0 sm:w-[5.35rem] md:w-[5.85rem]"
+                className="ghibli-poster-tilt group relative w-[5.5rem] shrink-0 sm:w-[5.35rem] md:w-[5.85rem]"
                 style={{
                   transform: `translateY(${(i % 3) * 5}px) rotate(${((i % 2) * 2 - 1) * 1.4}deg)`,
                 }}

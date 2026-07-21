@@ -219,7 +219,7 @@ export function VideoPlayer({
 
   if (!servers.length) {
     return (
-      <div className="flex aspect-video items-center justify-center rounded-2xl bg-elevated text-mute">
+      <div className="flex aspect-video items-center justify-center rounded-none bg-elevated text-mute sm:rounded-2xl">
         No embed servers available
       </div>
     );
@@ -227,7 +227,7 @@ export function VideoPlayer({
 
   return (
     <div className="group/player relative">
-      <div className="overflow-hidden rounded-2xl bg-black shadow-[0_50px_120px_rgba(0,0,0,0.65)] ring-1 ring-white/10">
+      <div className="overflow-hidden rounded-none bg-black shadow-[0_50px_120px_rgba(0,0,0,0.65)] ring-0 ring-white/10 sm:rounded-2xl sm:ring-1">
         <div className="relative aspect-video w-full bg-black">
           {resolving && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/92">

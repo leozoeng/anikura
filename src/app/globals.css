@@ -421,10 +421,18 @@ button {
   border: none;
   padding: 0;
   cursor: pointer;
+  /* Expand tap target without changing visible size */
+  position: relative;
   transition:
     width 0.35s var(--ease-out-soft),
     background 0.28s ease,
     box-shadow 0.28s ease;
+}
+
+.hero-dot::before {
+  content: "";
+  position: absolute;
+  inset: -0.55rem -0.35rem;
 }
 
 .hero-dot[aria-current="true"] {
@@ -597,8 +605,8 @@ button {
 }
 
 .filter-rail {
-  display: inline-flex;
-  flex-wrap: wrap;
+  display: flex;
+  flex-wrap: nowrap;
   gap: 0.35rem;
   padding: 0.35rem;
   border-radius: 999px;
@@ -610,12 +618,30 @@ button {
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.06) inset,
     0 12px 32px rgba(0, 0, 0, 0.22);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-rail::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .filter-rail {
+    display: inline-flex;
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
 }
 
 .filter-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   border-radius: 999px;
   padding: 0.55rem 1.05rem;
   font-size: 0.8125rem;

@@ -283,7 +283,7 @@ export function WatchExperience(props: Props) {
               <Link
                 href="/"
                 aria-label="Home"
-                className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/8 hover:text-snow"
+                className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/8 hover:text-snow"
               >
                 <HomeIcon />
               </Link>
@@ -298,9 +298,10 @@ export function WatchExperience(props: Props) {
               <span className="text-cloud">Episode {current.number}</span>
             </nav>
 
+            {/* Mobile: player → meta → episodes → comments. Desktop: comments under player, sidebar right. */}
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
               <div className="min-w-0">
-                <div id={PLAYER_ID} ref={playerRef}>
+                <div id={PLAYER_ID} ref={playerRef} className="-mx-4 sm:mx-0">
                   <VideoPlayer
                     title={`${showTitle} episode ${current.number}`}
                     servers={servers}
@@ -325,7 +326,7 @@ export function WatchExperience(props: Props) {
                       type="button"
                       aria-label="Dismiss tip"
                       onClick={dismissTip}
-                      className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-mute transition hover:bg-white/10 hover:text-snow"
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-mute transition hover:bg-white/10 hover:text-snow"
                     >
                       ×
                     </button>
@@ -388,14 +389,6 @@ export function WatchExperience(props: Props) {
                       textClassName="text-sm leading-relaxed text-cloud"
                     />
                   ) : null}
-
-                  <AnimeComments
-                    animeId={anime.id}
-                    episode={current.number}
-                    language={language}
-                    returnPath={watchHref(anime, current.number, language)}
-                    className="mt-10"
-                  />
                 </div>
               </div>
 
@@ -411,6 +404,15 @@ export function WatchExperience(props: Props) {
                 related={related}
                 seasons={seasons}
                 nextAirLabel={nextAirLabel}
+                className="lg:row-span-2"
+              />
+
+              <AnimeComments
+                animeId={anime.id}
+                episode={current.number}
+                language={language}
+                returnPath={watchHref(anime, current.number, language)}
+                className="min-w-0 mt-2 lg:col-start-1 lg:mt-0"
               />
             </div>
           </div>

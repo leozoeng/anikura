@@ -16,7 +16,7 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="site-chrome relative z-10 mt-12 sm:mt-14">
+    <footer className="site-chrome relative z-10 mt-12 pb-[calc(4.25rem+env(safe-area-inset-bottom))] sm:mt-14 md:pb-0">
       <div className="relative border-t border-white/[0.07]">
         <div
           aria-hidden

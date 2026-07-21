@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP, Outfit } from "next/font/google";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { PresenceTracker } from "@/components/presence-tracker";
 import { SiteAtmosphere } from "@/components/site-atmosphere";
 import { SiteFooter } from "@/components/site-footer";
@@ -35,6 +36,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: "#000000",
   colorScheme: "dark",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -53,6 +55,7 @@ export default function RootLayout({
         <PresenceTracker />
         <main className="relative z-10 min-h-screen">{children}</main>
         <SiteFooter />
+        <MobileBottomNav />
       </body>
     </html>
   );

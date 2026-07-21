@@ -262,7 +262,7 @@ export function ProfileView({
                     <button
                       type="button"
                       onClick={() => setEditing(true)}
-                      className="mt-1 shrink-0 rounded-md px-1.5 py-0.5 text-[0.7rem] font-medium text-[#949ba4] transition hover:bg-white/[0.06] hover:text-[#dbdee1]"
+                      className="mt-1 shrink-0 rounded-lg px-2.5 py-1.5 text-[0.8rem] font-medium text-[#949ba4] transition hover:bg-white/[0.06] hover:text-[#dbdee1]"
                     >
                       Edit Profile
                     </button>
@@ -303,7 +303,7 @@ export function ProfileView({
                         <Link
                           key={`${item.id}-${item.episode}-${item.language}`}
                           href={`/watch/${item.id}/${item.slug}?ep=${item.episode}&lang=${item.language}`}
-                          className="group w-[3.25rem] shrink-0 sm:w-[3.5rem]"
+                          className="group w-[4.25rem] shrink-0 sm:w-[3.5rem]"
                           title={`${item.title} · Episode ${item.episode}`}
                         >
                           <div className="relative aspect-[2/3] overflow-hidden rounded-md bg-[#111214] ring-1 ring-white/8 transition group-hover:ring-white/25">

@@ -38,7 +38,7 @@ export function MiniPlayer({
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[110] border-t border-white/10 bg-black/90 backdrop-blur-xl animate-rise">
+    <div className="fixed inset-x-0 bottom-0 z-[110] border-t border-white/10 bg-black/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl animate-rise">
       <div className="mx-auto flex max-w-[1100px] items-center gap-3 px-4 py-3 sm:px-8">
         <Link
           href={`#${playerAnchorId}`}
@@ -57,7 +57,7 @@ export function MiniPlayer({
         </div>
         <Link
           href={watchHref}
-          className="shrink-0 rounded-full bg-white px-4 py-1.5 text-xs font-semibold !text-black"
+          className="shrink-0 rounded-full bg-white px-4 py-2 text-xs font-semibold !text-black"
         >
           <span className="text-black">Back to player</span>
         </Link>

@@ -29,6 +29,7 @@ type Props = {
   seasons?: SeasonEntry[];
   recommendations: RelatedMediaCard[];
   nextAirLabel?: string | null;
+  className?: string;
 };
 
 export function WatchSidebar({
@@ -43,6 +44,7 @@ export function WatchSidebar({
   seasons = [],
   recommendations,
   nextAirLabel,
+  className = "",
 }: Props) {
   const [query, setQuery] = useState("");
   const [reversed, setReversed] = useState(false);
@@ -74,7 +76,7 @@ export function WatchSidebar({
   }, [episodes, query, reversed]);
 
   return (
-    <aside className="flex flex-col gap-5">
+    <aside className={`flex flex-col gap-5 ${className}`.trim()}>
       <div className="overflow-hidden rounded-2xl border border-white/10 bg-elevated/60">
         <button
           type="button"
