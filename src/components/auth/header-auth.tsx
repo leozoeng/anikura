@@ -14,6 +14,9 @@ type HeaderAuthProps = {
   initialNickname?: string | null;
 };
 
+const accountChipClass =
+  "group inline-flex h-9 items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] pl-1.5 pr-3 text-[0.8125rem] tracking-[-0.01em] text-cloud transition duration-300 hover:border-white/25 hover:bg-white/[0.08] hover:text-snow";
+
 export function HeaderAuth({
   initialEmail = null,
   isAdmin = false,
@@ -71,6 +74,8 @@ export function HeaderAuth({
   }
 
   const authReady = isSupabaseConfigured();
+  const label = nickname?.trim() || email?.split("@")[0] || "Account";
+  const initial = label.slice(0, 1).toUpperCase();
 
   if (!email) {
     return (
@@ -81,12 +86,10 @@ export function HeaderAuth({
             setMode("signin");
             setModalOpen(true);
           }}
-          className="group inline-flex h-9 items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] pl-1.5 pr-3 text-[0.8125rem] tracking-[-0.01em] text-cloud transition duration-300 hover:border-white/25 hover:bg-white/[0.08] hover:text-snow"
+          className={accountChipClass}
           aria-label="Open account"
         >
-          <span className="grid h-6 w-6 place-items-center rounded-full bg-white/[0.08] text-snow ring-1 ring-white/12 transition group-hover:bg-white/[0.14]">
-            <UserIcon />
-          </span>
+          <ChipFace />
           <span className="font-medium">Account</span>
         </button>
         <AuthModal
@@ -99,10 +102,6 @@ export function HeaderAuth({
     );
   }
 
-  const label =
-    nickname?.trim() || email.split("@")[0] || "Account";
-  const initial = label.slice(0, 1).toUpperCase();
-
   return (
     <div className="relative">
       <button
@@ -111,32 +110,10 @@ export function HeaderAuth({
         aria-label={`Account menu for ${label}`}
         aria-expanded={menuOpen}
         aria-haspopup="menu"
-        className="group flex items-center gap-2 rounded-full py-0.5 pl-0.5 pr-1 transition duration-300 hover:bg-white/[0.06] sm:pr-2.5"
+        className={accountChipClass}
       >
-        <span className="relative h-9 w-9 overflow-hidden rounded-full bg-gradient-to-b from-[#2a2a30] to-[#141416] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/20 transition duration-300 group-hover:ring-white/40">
-        {avatarUrl ? (
-          <Image
-            src={avatarUrl}
-            alt=""
-            fill
-            className="object-cover"
-            sizes="36px"
-          />
-        ) : (
-          <span className="grid h-full w-full place-items-center text-[0.8rem] font-semibold tracking-[-0.02em] text-snow">
-            {initial}
-          </span>
-        )}
-      </span>
-        <span className="hidden max-w-[7.5rem] truncate text-[0.8125rem] font-medium tracking-[-0.02em] text-cloud transition group-hover:text-snow sm:inline">
-          {label}
-        </span>
-        <span
-          aria-hidden
-          className="hidden text-[0.65rem] text-mute transition group-hover:text-cloud sm:inline"
-        >
-          ▾
-        </span>
+        <ChipFace avatarUrl={avatarUrl} initial={initial} />
+        <span className="font-medium">Account</span>
       </button>
 
       {menuOpen ? (
@@ -187,6 +164,34 @@ export function HeaderAuth({
         </>
       ) : null}
     </div>
+  );
+}
+
+function ChipFace({
+  avatarUrl,
+  initial,
+}: {
+  avatarUrl?: string | null;
+  initial?: string;
+}) {
+  return (
+    <span className="relative grid h-6 w-6 place-items-center overflow-hidden rounded-full bg-white/[0.08] text-snow ring-1 ring-white/12 transition group-hover:bg-white/[0.14]">
+      {avatarUrl ? (
+        <Image
+          src={avatarUrl}
+          alt=""
+          fill
+          className="object-cover"
+          sizes="24px"
+        />
+      ) : initial ? (
+        <span className="text-[0.68rem] font-semibold tracking-[-0.02em]">
+          {initial}
+        </span>
+      ) : (
+        <UserIcon />
+      )}
+    </span>
   );
 }
 
