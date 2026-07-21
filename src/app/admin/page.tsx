@@ -94,7 +94,7 @@ export default async function AdminPage() {
 
   return (
     <>
-      <AdminRefresh intervalMs={30_000} />
+      <AdminRefresh intervalMs={45_000} />
       <AdminDashboard
         adminEmail={profile.email}
         moodOverrides={moodOverrides}

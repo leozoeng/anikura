@@ -3,13 +3,16 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-export function AdminRefresh({ intervalMs = 30_000 }: { intervalMs?: number }) {
+/** Soft refresh while the admin tab is visible — skips hidden tabs to avoid jank. */
+export function AdminRefresh({ intervalMs = 45_000 }: { intervalMs?: number }) {
   const router = useRouter();
 
   useEffect(() => {
-    const id = setInterval(() => {
+    const tick = () => {
+      if (document.visibilityState !== "visible") return;
       router.refresh();
-    }, intervalMs);
+    };
+    const id = setInterval(tick, intervalMs);
     return () => clearInterval(id);
   }, [intervalMs, router]);
 

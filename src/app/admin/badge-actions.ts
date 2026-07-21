@@ -20,7 +20,7 @@ export type AdminBadgeUser = {
 };
 
 function isKnownBadge(value: string): value is ProfileBadgeId {
-  return value === "dev" || value === "vip";
+  return value === "dev" || value === "vip" || value === "og";
 }
 
 function normalizeBadges(raw: unknown): ProfileBadgeId[] {
@@ -84,9 +84,27 @@ export async function listBadgedProfiles(): Promise<AdminBadgeUser[]> {
   const { data, error } = await supabase
     .from("profiles")
     .select("id, email, nickname, avatar_url, role, badges, created_at")
-    .or("badges.cs.{dev},badges.cs.{vip}")
+    .or("badges.cs.{dev},badges.cs.{vip},badges.cs.{og}")
     .order("created_at", { ascending: false })
     .limit(40);
+
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((row) => mapRow(row as Record<string, unknown>));
+}
+
+export async function listRecentSignups(
+  limit = 40,
+): Promise<AdminBadgeUser[]> {
+  await requireAdmin();
+  const supabase = await createClient();
+  const take = Math.min(Math.max(limit, 1), 100);
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, email, nickname, avatar_url, role, badges, created_at")
+    .order("created_at", { ascending: false })
+    .limit(take);
 
   if (error) throw new Error(error.message);
 

@@ -1,4 +1,4 @@
-export type ProfileBadgeId = "dev" | "vip";
+export type ProfileBadgeId = "dev" | "vip" | "og";
 
 export type PublicProfile = {
   id: string;
@@ -23,7 +23,7 @@ export const PROFILE_SELECT =
   "id, email, nickname, bio, avatar_url, banner_url, created_at, role, accent_hex, accent_ambient, badges";
 
 /** Known badge ids, display order. */
-export const PROFILE_BADGE_ORDER: ProfileBadgeId[] = ["dev", "vip"];
+export const PROFILE_BADGE_ORDER: ProfileBadgeId[] = ["og", "dev", "vip"];
 
 /**
  * Email → badges allowlist (reliable for staff even before DB seed).
@@ -34,7 +34,7 @@ const BADGE_EMAIL_ALLOWLIST: Record<string, ProfileBadgeId[]> = {
 };
 
 function isKnownBadge(value: string): value is ProfileBadgeId {
-  return value === "dev" || value === "vip";
+  return value === "dev" || value === "vip" || value === "og";
 }
 
 /** Merge DB badges + email allowlist + admin role → ordered unique list. */

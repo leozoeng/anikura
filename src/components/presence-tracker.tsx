@@ -41,7 +41,10 @@ export function PresenceTracker() {
     lastPath.current = pathname ?? "/";
     void beat(isNewPath);
 
-    timer = setInterval(() => void beat(false), HEARTBEAT_MS);
+    timer = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      void beat(false);
+    }, HEARTBEAT_MS);
 
     const onVisibility = () => {
       if (document.visibilityState === "visible") void beat(false);

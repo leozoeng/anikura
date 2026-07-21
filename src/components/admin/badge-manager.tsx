@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import {
   listBadgedProfiles,
+  listRecentSignups,
   searchProfilesForBadges,
   setProfileBadges,
   type AdminBadgeUser,
@@ -13,6 +14,7 @@ import { ProfileBadges } from "@/components/profile/profile-badges";
 import {
   PROFILE_BADGE_ORDER,
   displayName,
+  formatMemberSince,
   handleFromProfile,
   type ProfileBadgeId,
 } from "@/lib/profile";
@@ -21,18 +23,39 @@ const BADGE_OPTIONS: {
   id: ProfileBadgeId;
   label: string;
   hint: string;
+  activeClass: string;
 }[] = [
-  { id: "dev", label: "Dev", hint: "Staff / developer" },
-  { id: "vip", label: "VIP", hint: "VIP member" },
+  {
+    id: "og",
+    label: "OG",
+    hint: "Original / early member",
+    activeClass: "border-white/30 bg-white/[0.12] text-snow",
+  },
+  {
+    id: "dev",
+    label: "Dev",
+    hint: "Staff / developer",
+    activeClass: "border-sky-400/35 bg-sky-400/15 text-sky-100",
+  },
+  {
+    id: "vip",
+    label: "VIP",
+    hint: "VIP member",
+    activeClass: "border-amber-400/35 bg-amber-400/15 text-amber-100",
+  },
 ];
+
+type ListTab = "signups" | "badged";
 
 function UserRow({
   user,
   busy,
+  showJoined,
   onToggle,
 }: {
   user: AdminBadgeUser;
   busy: boolean;
+  showJoined?: boolean;
   onToggle: (userId: string, badge: ProfileBadgeId, next: boolean) => void;
 }) {
   const name = displayName(user);
@@ -71,10 +94,21 @@ function UserRow({
             {user.email ? ` · ${user.email}` : ""}
             {user.role === "admin" ? " · admin" : ""}
           </p>
+          {showJoined && user.created_at ? (
+            <p className="mt-0.5 text-[0.68rem] text-mute/80">
+              Joined {formatMemberSince(user.created_at)}
+            </p>
+          ) : null}
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+        <Link
+          href={`/u/${user.id}`}
+          className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-cloud transition hover:border-white/25 hover:text-snow"
+        >
+          Profile
+        </Link>
         {BADGE_OPTIONS.map((opt) => {
           const on = user.badges.includes(opt.id);
           return (
@@ -86,9 +120,7 @@ function UserRow({
               onClick={() => onToggle(user.id, opt.id, !on)}
               className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.06em] transition disabled:opacity-50 ${
                 on
-                  ? opt.id === "dev"
-                    ? "border-sky-400/35 bg-sky-400/15 text-sky-100"
-                    : "border-amber-400/35 bg-amber-400/15 text-amber-100"
+                  ? opt.activeClass
                   : "border-white/10 bg-white/[0.03] text-mute hover:border-white/20 hover:text-cloud"
               }`}
             >
@@ -103,7 +135,9 @@ function UserRow({
 
 export function BadgeManager() {
   const [query, setQuery] = useState("");
+  const [tab, setTab] = useState<ListTab>("signups");
   const [results, setResults] = useState<AdminBadgeUser[]>([]);
+  const [signups, setSignups] = useState<AdminBadgeUser[]>([]);
   const [badged, setBadged] = useState<AdminBadgeUser[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -111,20 +145,24 @@ export function BadgeManager() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const refreshBadged = useCallback(() => {
+  const refreshLists = useCallback(() => {
     startTransition(async () => {
       try {
-        const rows = await listBadgedProfiles();
-        setBadged(rows);
+        const [signupRows, badgedRows] = await Promise.all([
+          listRecentSignups(50),
+          listBadgedProfiles(),
+        ]);
+        setSignups(signupRows);
+        setBadged(badgedRows);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Couldn’t load badges");
+        setError(err instanceof Error ? err.message : "Couldn’t load users");
       }
     });
   }, []);
 
   useEffect(() => {
-    refreshBadged();
-  }, [refreshBadged]);
+    refreshLists();
+  }, [refreshLists]);
 
   useEffect(() => {
     const q = query.trim();
@@ -157,6 +195,9 @@ export function BadgeManager() {
     setResults((prev) =>
       prev.map((u) => (u.id === updated.id ? updated : u)),
     );
+    setSignups((prev) =>
+      prev.map((u) => (u.id === updated.id ? updated : u)),
+    );
     setBadged((prev) => {
       const without = prev.filter((u) => u.id !== updated.id);
       if (updated.badges.length === 0) return without;
@@ -171,6 +212,7 @@ export function BadgeManager() {
   ) {
     const current =
       results.find((u) => u.id === userId) ??
+      signups.find((u) => u.id === userId) ??
       badged.find((u) => u.id === userId);
     if (!current) return;
 
@@ -200,14 +242,15 @@ export function BadgeManager() {
   }
 
   const showResults = query.trim().length > 0;
+  const list = tab === "signups" ? signups : badged;
 
   return (
     <section className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
       <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-lg tracking-[-0.02em] text-snow">Badges</h2>
+          <h2 className="text-lg tracking-[-0.02em] text-snow">Members</h2>
           <p className="text-sm text-mute">
-            Search profiles and assign Dev or VIP.
+            Browse signups, open profiles, assign OG / Dev / VIP.
           </p>
         </div>
         <p className="text-xs text-mute">
@@ -250,6 +293,7 @@ export function BadgeManager() {
                   key={user.id}
                   user={user}
                   busy={busyId === user.id}
+                  showJoined
                   onToggle={onToggle}
                 />
               ))}
@@ -258,30 +302,56 @@ export function BadgeManager() {
         </div>
       ) : (
         <div className="mt-4">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <p className="text-[0.7rem] uppercase tracking-[0.14em] text-mute">
-              Currently badged
-              {pending ? " · loading…" : ` · ${badged.length}`}
-            </p>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex rounded-full border border-white/10 p-0.5">
+              {(
+                [
+                  ["signups", "Recent signups"],
+                  ["badged", "Badged"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setTab(key)}
+                  className={`rounded-full px-3 py-1.5 text-xs transition ${
+                    tab === key
+                      ? "bg-snow text-void"
+                      : "text-mute hover:text-snow"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <button
               type="button"
-              onClick={refreshBadged}
+              onClick={refreshLists}
               className="text-xs text-mute transition hover:text-cloud"
             >
               Refresh
             </button>
           </div>
-          {badged.length === 0 ? (
+
+          <p className="mb-2 text-[0.7rem] uppercase tracking-[0.14em] text-mute">
+            {tab === "signups" ? "Newest accounts" : "Currently badged"}
+            {pending ? " · loading…" : ` · ${list.length}`}
+          </p>
+
+          {list.length === 0 ? (
             <p className="text-sm text-mute">
-              No badges assigned yet. Search a user to grant Dev or VIP.
+              {tab === "signups"
+                ? "No signups yet."
+                : "No badges assigned yet. Open Recent signups or search a user."}
             </p>
           ) : (
-            <ul className="space-y-2">
-              {badged.map((user) => (
+            <ul className="max-h-[28rem] space-y-2 overflow-y-auto pr-1">
+              {list.map((user) => (
                 <UserRow
                   key={user.id}
                   user={user}
                   busy={busyId === user.id}
+                  showJoined={tab === "signups"}
                   onToggle={onToggle}
                 />
               ))}

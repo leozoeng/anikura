@@ -7,6 +7,27 @@ const BADGE_META: Record<
   ProfileBadgeId,
   { label: string; title: string; className: string; icon: ReactNode }
 > = {
+  og: {
+    label: "OG",
+    title: "Original member",
+    className:
+      "border-white/25 bg-[#1c1c1e] text-snow/90 ring-white/10",
+    icon: (
+      <svg
+        width="11"
+        height="11"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <path d="M12 3l2.2 6.7H21l-5.4 3.9 2.1 6.4L12 16.6 6.3 20l2.1-6.4L3 9.7h6.8L12 3z" />
+      </svg>
+    ),
+  },
   dev: {
     label: "Dev",
     title: "Developer",
