@@ -81,11 +81,6 @@ export function GhibliHero({
             <span className="rounded-full border border-[#9ec0d8]/30 bg-[#9ec0d8]/12 px-3 py-1.5 font-medium text-[#d0e6f2] backdrop-blur-sm">
               {miyazakiCount} by Hayao Miyazaki
             </span>
-            {trailerId ? (
-              <span className="rounded-full border border-white/15 bg-black/30 px-3 py-1.5 font-medium text-white/70 backdrop-blur-sm">
-                Trailer · {title}
-              </span>
-            ) : null}
           </div>
         </div>
       </div>

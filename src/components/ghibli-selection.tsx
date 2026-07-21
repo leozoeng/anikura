@@ -81,9 +81,6 @@ export function GhibliSelection({ entries }: Props) {
               Enter the collection
               <span aria-hidden>→</span>
             </Link>
-            <span className="text-xs text-[#8fa888]">
-              Trailer · posters · Miyazaki filter
-            </span>
           </div>
         </div>
 
