@@ -3,16 +3,16 @@
 import type { ReactNode } from "react";
 import { type ProfileBadgeId } from "@/lib/profile";
 
-/** Shared glyph metrics — sized for crisp chips at ~12px. */
+/** Shared glyph metrics — sized for crisp icon chips. */
 function BadgeIcon({ children }: { children: ReactNode }) {
   return (
     <svg
-      width="12"
-      height="12"
+      width="14"
+      height="14"
       viewBox="0 0 16 16"
       fill="none"
       aria-hidden
-      className="shrink-0 translate-y-px"
+      className="shrink-0"
     >
       {children}
     </svg>
@@ -146,12 +146,13 @@ export function ProfileBadges({
 }: Props) {
   if (!badges.length) return null;
 
-  const pad =
+  const chip =
     size === "sm"
-      ? "gap-0.5 px-1.5 py-0.5 text-[0.58rem]"
-      : "gap-[0.3rem] px-2 py-[0.2rem] text-[0.62rem]";
+      ? "h-[1.25rem] w-[1.25rem] rounded-[0.3rem]"
+      : "h-[1.4rem] w-[1.4rem] rounded-[0.35rem]";
   const gap = size === "sm" ? "gap-1" : "gap-1.5";
-  const iconScale = size === "sm" ? "[&_svg]:h-[11px] [&_svg]:w-[11px]" : "";
+  const iconScale =
+    size === "sm" ? "[&_svg]:h-[11px] [&_svg]:w-[11px]" : "[&_svg]:h-[13px] [&_svg]:w-[13px]";
 
   return (
     <span
@@ -164,11 +165,27 @@ export function ProfileBadges({
         return (
           <span
             key={id}
-            title={meta.title}
-            className={`inline-flex items-center rounded-md border font-semibold uppercase tracking-[0.06em] ring-1 ${pad} ${iconScale} ${meta.className}`}
+            className="group relative inline-flex"
           >
-            {meta.icon}
-            <span>{meta.label}</span>
+            <span
+              tabIndex={0}
+              title={meta.title}
+              aria-label={meta.title}
+              className={`inline-flex items-center justify-center border ring-1 outline-none transition focus-visible:ring-2 focus-visible:ring-white/35 ${chip} ${iconScale} ${meta.className}`}
+            >
+              {meta.icon}
+            </span>
+            {/* Discord-like tooltip: dark, rounded, caret — hover + keyboard focus */}
+            <span
+              role="tooltip"
+              className="pointer-events-none absolute bottom-[calc(100%+6px)] left-1/2 z-50 -translate-x-1/2 scale-95 whitespace-nowrap rounded-[5px] bg-[#111214] px-2 py-[5px] text-[11px] font-medium leading-none tracking-[-0.01em] text-[#f2f3f5] opacity-0 shadow-[0_4px_12px_rgba(0,0,0,0.45)] transition duration-100 ease-out group-hover:scale-100 group-hover:opacity-100 group-focus-within:scale-100 group-focus-within:opacity-100"
+            >
+              {meta.title}
+              <span
+                aria-hidden
+                className="absolute left-1/2 top-full -translate-x-1/2 border-[5px] border-transparent border-t-[#111214]"
+              />
+            </span>
           </span>
         );
       })}
