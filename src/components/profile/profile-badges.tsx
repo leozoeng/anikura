@@ -28,6 +28,30 @@ const BADGE_META: Record<
       </svg>
     ),
   },
+  partner: {
+    label: "Partner",
+    title: "Official partner",
+    className:
+      "border-emerald-400/30 bg-[#14201a] text-emerald-100/90 ring-emerald-400/10",
+    icon: (
+      <svg
+        width="11"
+        height="11"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <path d="M8 12h8" />
+        <path d="M9.5 8.5 7 12l2.5 3.5" />
+        <path d="M14.5 8.5 17 12l-2.5 3.5" />
+        <circle cx="12" cy="12" r="9" />
+      </svg>
+    ),
+  },
   dev: {
     label: "Dev",
     title: "Developer",

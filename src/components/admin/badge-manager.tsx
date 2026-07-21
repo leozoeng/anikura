@@ -33,6 +33,12 @@ const BADGE_OPTIONS: {
     activeClass: "border-white/30 bg-white/[0.12] text-snow",
   },
   {
+    id: "partner",
+    label: "Partner",
+    hint: "Official partner",
+    activeClass: "border-emerald-400/35 bg-emerald-400/15 text-emerald-100",
+  },
+  {
     id: "dev",
     label: "Dev",
     hint: "Staff / developer",
@@ -251,7 +257,7 @@ export function BadgeManager() {
         <div>
           <h2 className="text-lg tracking-[-0.02em] text-snow">Members</h2>
           <p className="text-sm text-mute">
-            Browse signups, open profiles, assign OG / Dev / VIP.
+            Browse signups, open profiles, assign OG / Partner / Dev / VIP.
           </p>
         </div>
         <p className="text-xs text-mute">
