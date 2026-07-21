@@ -13,7 +13,11 @@ const items = [
   {
     href: "/browse",
     label: "Browse",
-    match: (p: string) => p.startsWith("/browse") || p.startsWith("/ghibli"),
+    match: (p: string) =>
+      p.startsWith("/browse") ||
+      p.startsWith("/ghibli") ||
+      p.startsWith("/one-piece") ||
+      p.startsWith("/shinkai"),
     icon: BrowseIcon,
   },
   {

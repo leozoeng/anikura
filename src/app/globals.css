@@ -916,3 +916,71 @@ body[data-theater="true"] .site-atmosphere {
   }
 }
 
+/* —— Browse featured collections (Ghibli / One Piece / Shinkai) —— */
+@keyframes featured-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(3%, -2%, 0);
+  }
+}
+
+@keyframes featured-drift-slow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-4%, 1.5%, 0);
+  }
+}
+
+@keyframes featured-wave {
+  0%,
+  100% {
+    transform: translateX(0) scaleX(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateX(4%) scaleX(1.04);
+    opacity: 0.8;
+  }
+}
+
+.featured-cloud {
+  animation: featured-drift 18s ease-in-out infinite;
+}
+
+.featured-cloud-slow {
+  animation: featured-drift-slow 26s ease-in-out infinite;
+}
+
+.featured-wave {
+  animation: featured-wave 9s ease-in-out infinite;
+}
+
+.featured-wave-slow {
+  animation: featured-wave 12s ease-in-out infinite reverse;
+}
+
+.featured-ray {
+  animation: featured-drift-slow 22s ease-in-out infinite;
+}
+
+.featured-card {
+  animation: ghibli-rise 0.55s var(--ease-out-soft) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .featured-cloud,
+  .featured-cloud-slow,
+  .featured-wave,
+  .featured-wave-slow,
+  .featured-ray,
+  .featured-card {
+    animation: none;
+  }
+}
+

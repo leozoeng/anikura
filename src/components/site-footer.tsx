@@ -9,6 +9,8 @@ const links = [
   { href: "/genres", label: "Genres" },
   { href: "/search", label: "Search" },
   { href: "/ghibli", label: "Ghibli" },
+  { href: "/one-piece", label: "One Piece" },
+  { href: "/shinkai", label: "Shinkai" },
 ];
 
 const DISCORD = "https://discord.gg/cm72gXTASn";

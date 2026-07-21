@@ -1,7 +1,9 @@
 import { AnimePoster } from "@/components/anime-poster";
-import { GhibliSelection } from "@/components/ghibli-selection";
+import { BrowseFeatured, type FeaturedSlide } from "@/components/browse-featured";
 import { getCatalog, getSyncMeta } from "@/lib/catalog";
-import { getGhibliCollection } from "@/lib/ghibli";
+import { getGhibliCollection, ghibliMiyazakiCount } from "@/lib/ghibli";
+import { getOnePieceCollection, onePieceFilmCount } from "@/lib/one-piece";
+import { getShinkaiCollection } from "@/lib/shinkai";
 import type { CatalogAnime } from "@/lib/types";
 import Link from "next/link";
 
@@ -11,6 +13,20 @@ type Props = {
   searchParams: Promise<{ sort?: string; page?: string }>;
 };
 
+function toPosters(
+  entries: { anime: CatalogAnime; def: { title: string; year: number } }[],
+) {
+  return entries
+    .filter((e) => e.anime.poster)
+    .map((e) => ({
+      id: e.anime.id,
+      slug: e.anime.slug,
+      title: e.def.title,
+      year: e.def.year || e.anime.year || 0,
+      poster: e.anime.poster,
+    }));
+}
+
 export default async function BrowsePage({ searchParams }: Props) {
   const params = await searchParams;
   const sort = params.sort || "recent";
@@ -19,6 +35,8 @@ export default async function BrowsePage({ searchParams }: Props) {
 
   const [catalog, meta] = await Promise.all([getCatalog(), getSyncMeta()]);
   const ghibli = getGhibliCollection(catalog);
+  const onePiece = getOnePieceCollection(catalog);
+  const shinkai = getShinkaiCollection(catalog);
 
   let sorted: CatalogAnime[] = [...catalog];
   if (sort === "score") {
@@ -38,6 +56,64 @@ export default async function BrowsePage({ searchParams }: Props) {
     { id: "year", label: "Newest" },
     { id: "title", label: "A–Z" },
   ];
+
+  const featuredSlides: FeaturedSlide[] = [];
+
+  if (ghibli.length) {
+    const miyazaki = ghibliMiyazakiCount(ghibli);
+    const hero =
+      ghibli.find((e) => /spirited away/i.test(e.def.title)) ??
+      ghibli.find((e) => /totoro/i.test(e.def.title)) ??
+      ghibli[0];
+    featuredSlides.push({
+      id: "ghibli",
+      eyebrow: "Studio Ghibli",
+      title: "Ghibli Selection",
+      body: `Soft meadows & quiet skies — ${ghibli.length} films, ${miyazaki} by Miyazaki. Step into the full collection with a trailer in the clouds.`,
+      href: "/ghibli",
+      cta: "Enter the collection",
+      heroSrc: hero?.anime.background_image || hero?.anime.poster || null,
+      posters: toPosters(ghibli),
+      totalLabel: `All ${ghibli.length}`,
+    });
+  }
+
+  if (onePiece.length) {
+    const films = onePieceFilmCount(onePiece);
+    const hero =
+      onePiece.find((e) => /film red/i.test(e.def.title)) ??
+      onePiece.find((e) => e.def.series) ??
+      onePiece[0];
+    featuredSlides.push({
+      id: "onepiece",
+      eyebrow: "Grand Line",
+      title: "One Piece Voyage",
+      body: `Sail the seas with the Straw Hats — ${onePiece.length} titles, ${films} films. Adventure, found family, and the next island ahead.`,
+      href: "/one-piece",
+      cta: "Set sail",
+      heroSrc: hero?.anime.background_image || hero?.anime.poster || null,
+      posters: toPosters(onePiece),
+      totalLabel: `All ${onePiece.length}`,
+    });
+  }
+
+  if (shinkai.length) {
+    const hero =
+      shinkai.find((e) => /your name/i.test(e.def.title)) ??
+      shinkai.find((e) => /suzume/i.test(e.def.title)) ??
+      shinkai[0];
+    featuredSlides.push({
+      id: "shinkai",
+      eyebrow: "Makoto Shinkai",
+      title: "Skies & Soft Light",
+      body: `${shinkai.length} films of rain-washed cities and quiet longing — from Distant Star to Suzume.`,
+      href: "/shinkai",
+      cta: "Enter the sky",
+      heroSrc: hero?.anime.background_image || hero?.anime.poster || null,
+      posters: toPosters(shinkai),
+      totalLabel: `All ${shinkai.length}`,
+    });
+  }
 
   return (
     <div className="page-enter relative mx-auto max-w-[1200px] px-5 pb-16 pt-28 sm:px-8">
@@ -62,7 +138,7 @@ export default async function BrowsePage({ searchParams }: Props) {
           : "Run a catalog sync to fill this shelf."}
       </p>
 
-      {page === 1 ? <GhibliSelection entries={ghibli} /> : null}
+      {page === 1 ? <BrowseFeatured slides={featuredSlides} /> : null}
 
       <div
         className="filter-rail mt-9"
@@ -89,6 +165,22 @@ export default async function BrowsePage({ searchParams }: Props) {
             className="filter-pill !border-[#c5d4b8]/25 !text-[#c5d4b8]"
           >
             Ghibli
+          </Link>
+        ) : null}
+        {onePiece.length > 0 ? (
+          <Link
+            href="/one-piece"
+            className="filter-pill !border-[#f0a35a]/30 !text-[#ffd28a]"
+          >
+            One Piece
+          </Link>
+        ) : null}
+        {shinkai.length > 0 ? (
+          <Link
+            href="/shinkai"
+            className="filter-pill !border-[#8bb4e8]/30 !text-[#a8c8ff]"
+          >
+            Shinkai
           </Link>
         ) : null}
       </div>
