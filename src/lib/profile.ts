@@ -26,11 +26,11 @@ export const PROFILE_SELECT =
 export const PROFILE_BADGE_ORDER: ProfileBadgeId[] = ["dev", "vip"];
 
 /**
- * Email → badges allowlist (reliable for staff/VIP even before DB seed).
+ * Email → badges allowlist (reliable for staff even before DB seed).
  * Dev is also inferred from `role === "admin"`.
  */
 const BADGE_EMAIL_ALLOWLIST: Record<string, ProfileBadgeId[]> = {
-  "leozoeng@icloud.com": ["dev", "vip"],
+  "leozoeng@icloud.com": ["dev"],
 };
 
 function isKnownBadge(value: string): value is ProfileBadgeId {
