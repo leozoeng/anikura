@@ -22,7 +22,7 @@ export default async function GenresPage() {
   const genres = visibleGenres(genresRaw);
   const featured = genres.slice(0, 6);
   const rest = genres.slice(6);
-  const covers = pickGenreCovers(catalog, featured, moodOverrides);
+  const covers = pickGenreCovers(catalog, genres, moodOverrides);
 
   return (
     <div className="relative pb-16">
@@ -130,37 +130,64 @@ export default async function GenresPage() {
                 </div>
 
                 <div className="mt-8 grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-5">
-                  {rest.map((genre, i) => (
-                    <Link
-                      key={genre.slug}
-                      href={`/genres/${genre.slug}`}
-                      className="genre-tile group relative flex min-h-[7.25rem] flex-col justify-between overflow-hidden rounded-[1.15rem] px-4 py-4 transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5"
-                      style={{
-                        animationDelay: `${Math.min(i, 14) * 18}ms`,
-                        background: `linear-gradient(155deg, ${genreWash(genre.slug)} 0%, rgba(12,12,16,0.92) 55%, rgba(0,0,0,0.96) 100%)`,
-                      }}
-                    >
-                      <span
-                        aria-hidden
-                        className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full opacity-0 blur-2xl transition duration-300 group-hover:opacity-100"
-                        style={{ background: genreWash(genre.slug) }}
-                      />
-                      <span className="relative text-[0.68rem] tracking-[0.14em] text-mute uppercase transition group-hover:text-sakura-soft/80">
-                        {String(i + 7).padStart(2, "0")}
-                      </span>
-                      <div className="relative">
-                        <span className="block text-[1.05rem] font-medium leading-tight tracking-[-0.03em] text-snow transition duration-300 group-hover:text-sakura-mist">
-                          {genre.name}
+                  {rest.map((genre, i) => {
+                    const cover = covers.get(genre.slug);
+                    return (
+                      <Link
+                        key={genre.slug}
+                        href={`/genres/${genre.slug}`}
+                        className="genre-tile group relative flex min-h-[8.5rem] flex-col justify-between overflow-hidden rounded-[1.15rem] px-4 py-4 transition duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:min-h-[9.25rem]"
+                        style={{
+                          animationDelay: `${Math.min(i, 14) * 18}ms`,
+                          background: cover
+                            ? undefined
+                            : `linear-gradient(155deg, ${genreWash(genre.slug)} 0%, rgba(12,12,16,0.92) 55%, rgba(0,0,0,0.96) 100%)`,
+                        }}
+                      >
+                        {cover ? (
+                          <>
+                            <div className="absolute inset-0 bg-elevated" />
+                            <Image
+                              src={cover.src}
+                              alt=""
+                              fill
+                              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                              className={`object-cover transition duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05] ${cover.position ?? "object-center"}`}
+                            />
+                            <div
+                              className="absolute inset-0 transition duration-300"
+                              style={{
+                                background: `
+                                  linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.55) 42%, rgba(0,0,0,0.92) 100%),
+                                  linear-gradient(145deg, ${genreWash(genre.slug)} 0%, transparent 58%)
+                                `,
+                              }}
+                            />
+                          </>
+                        ) : (
+                          <span
+                            aria-hidden
+                            className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full opacity-0 blur-2xl transition duration-300 group-hover:opacity-100"
+                            style={{ background: genreWash(genre.slug) }}
+                          />
+                        )}
+                        <span className="relative text-[0.68rem] tracking-[0.14em] text-mute uppercase transition group-hover:text-sakura-soft/80">
+                          {String(i + 7).padStart(2, "0")}
                         </span>
-                        <span className="mt-1.5 flex items-center justify-between text-[0.75rem] text-mute">
-                          <span>{genre.count.toLocaleString()}</span>
-                          <span className="translate-x-0 text-cloud transition duration-300 group-hover:translate-x-0.5 group-hover:text-sakura-soft">
-                            →
+                        <div className="relative">
+                          <span className="block text-[1.05rem] font-medium leading-tight tracking-[-0.03em] text-snow transition duration-300 group-hover:text-sakura-mist">
+                            {genre.name}
                           </span>
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
+                          <span className="mt-1.5 flex items-center justify-between text-[0.75rem] text-mute">
+                            <span>{genre.count.toLocaleString()}</span>
+                            <span className="translate-x-0 text-cloud transition duration-300 group-hover:translate-x-0.5 group-hover:text-sakura-soft">
+                              →
+                            </span>
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               </section>
             ) : null}

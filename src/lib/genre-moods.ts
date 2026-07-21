@@ -22,6 +22,25 @@ export const GENRE_WASH: Record<string, string> = {
   music: "rgba(255, 170, 200, 0.2)",
   sports: "rgba(255, 140, 100, 0.2)",
   psychological: "rgba(130, 120, 140, 0.22)",
+  magic: "rgba(190, 160, 210, 0.16)",
+  seinen: "rgba(160, 150, 140, 0.2)",
+  shoujo: "rgba(255, 160, 190, 0.22)",
+  ecchi: "rgba(255, 130, 150, 0.18)",
+  "super-power": "rgba(255, 150, 110, 0.2)",
+  "martial-arts": "rgba(220, 140, 100, 0.2)",
+  military: "rgba(140, 155, 140, 0.2)",
+  harem: "rgba(255, 150, 170, 0.18)",
+  kids: "rgba(255, 200, 140, 0.18)",
+  space: "rgba(120, 140, 190, 0.22)",
+  thriller: "rgba(130, 110, 130, 0.24)",
+  samurai: "rgba(190, 140, 110, 0.2)",
+  police: "rgba(140, 160, 180, 0.18)",
+  vampire: "rgba(150, 100, 120, 0.24)",
+  demonia: "rgba(160, 110, 130, 0.2)",
+  demons: "rgba(160, 110, 130, 0.2)",
+  game: "rgba(140, 180, 160, 0.18)",
+  parody: "rgba(255, 190, 140, 0.18)",
+  josei: "rgba(200, 160, 180, 0.18)",
 };
 
 export function genreWash(slug: string) {
@@ -150,7 +169,25 @@ export function pickGenreCovers(
   const remaining = genres.filter((g) => !out.has(g.slug));
   if (!remaining.length) return out;
 
-  const wanted = new Set(remaining.map((g) => g.slug));
+  assignBestCovers(catalog, remaining, out, used, { unique: true });
+
+  const stillMissing = genres.filter((g) => !out.has(g.slug));
+  if (stillMissing.length) {
+    // Second pass: fill gaps even if art was already used elsewhere.
+    assignBestCovers(catalog, stillMissing, out, used, { unique: false });
+  }
+
+  return out;
+}
+
+function assignBestCovers(
+  catalog: CatalogAnime[],
+  genres: GenreStat[],
+  out: Map<string, { src: string; position?: string }>,
+  used: Set<string>,
+  opts: { unique: boolean },
+) {
+  const wanted = new Set(genres.map((g) => g.slug));
   const best = new Map<
     string,
     { src: string; score: number; hasBanner: boolean }
@@ -159,7 +196,8 @@ export function pickGenreCovers(
   for (const anime of catalog) {
     const banner = anime.background_image?.trim();
     const src = banner || anime.poster;
-    if (!src || used.has(src)) continue;
+    if (!src) continue;
+    if (opts.unique && used.has(src)) continue;
     const score = Number(anime.score) || 0;
     const hasBanner = Boolean(banner);
 
@@ -178,12 +216,10 @@ export function pickGenreCovers(
   }
 
   for (const [slug, entry] of best) {
-    if (used.has(entry.src)) continue;
+    if (opts.unique && used.has(entry.src)) continue;
     out.set(slug, { src: entry.src, position: "object-center" });
     used.add(entry.src);
   }
-
-  return out;
 }
 
 export function visibleGenres(genres: GenreStat[]) {
