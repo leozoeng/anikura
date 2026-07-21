@@ -47,6 +47,249 @@ export function genreWash(slug: string) {
   return GENRE_WASH[slug] ?? "rgba(255, 140, 170, 0.14)";
 }
 
+/**
+ * Solid accents per mood — CTAs, eyebrows, rings.
+ * Distinct hues so shelves don't all read as sakura pink.
+ */
+export const MOOD_ACCENT: Record<
+  string,
+  { solid: string; soft: string; mist: string; ink: string }
+> = {
+  action: {
+    solid: "#ff5c6e",
+    soft: "#ff8a96",
+    mist: "#ffc4cb",
+    ink: "#1a0a0e",
+  },
+  comedy: {
+    solid: "#ffc857",
+    soft: "#ffe09a",
+    mist: "#fff0c8",
+    ink: "#1a1408",
+  },
+  adventure: {
+    solid: "#ff8a4c",
+    soft: "#ffb088",
+    mist: "#ffd8c2",
+    ink: "#1a1008",
+  },
+  fantasy: {
+    solid: "#7eb8ff",
+    soft: "#a8d0ff",
+    mist: "#d6e8ff",
+    ink: "#0a1018",
+  },
+  drama: {
+    solid: "#c4a4b0",
+    soft: "#dfc4ce",
+    mist: "#f0e0e6",
+    ink: "#120e10",
+  },
+  romance: {
+    solid: "#ff8caa",
+    soft: "#ffb3c7",
+    mist: "#ffe0e8",
+    ink: "#1a0a10",
+  },
+  shounen: {
+    solid: "#ff6b4a",
+    soft: "#ff9a82",
+    mist: "#ffd0c4",
+    ink: "#1a0c08",
+  },
+  supernatural: {
+    solid: "#9aa8c8",
+    soft: "#c0c8dc",
+    mist: "#e4e8f0",
+    ink: "#0c0e14",
+  },
+  "sci-fi": {
+    solid: "#5ec8e8",
+    soft: "#9adcf0",
+    mist: "#d0f0f8",
+    ink: "#061418",
+  },
+  "slice-of-life": {
+    solid: "#e8a878",
+    soft: "#f0c8a8",
+    mist: "#f8e4d4",
+    ink: "#161008",
+  },
+  school: {
+    solid: "#f0a060",
+    soft: "#f8c498",
+    mist: "#fce8d4",
+    ink: "#181008",
+  },
+  historical: {
+    solid: "#d4a574",
+    soft: "#e8c49a",
+    mist: "#f4e4cc",
+    ink: "#141008",
+  },
+  mystery: {
+    solid: "#7a8aaa",
+    soft: "#a8b4c8",
+    mist: "#d8dee8",
+    ink: "#0a0c12",
+  },
+  horror: {
+    solid: "#c06070",
+    soft: "#d89098",
+    mist: "#ecc8cc",
+    ink: "#14080a",
+  },
+  isekai: {
+    solid: "#ff7a9a",
+    soft: "#ffabc0",
+    mist: "#ffd6e0",
+    ink: "#180a10",
+  },
+  mecha: {
+    solid: "#7890a8",
+    soft: "#a8b8c8",
+    mist: "#d8e0e8",
+    ink: "#0a0e12",
+  },
+  music: {
+    solid: "#ff7ab8",
+    soft: "#ffabd4",
+    mist: "#ffd6ea",
+    ink: "#180a12",
+  },
+  sports: {
+    solid: "#ff7840",
+    soft: "#ffa878",
+    mist: "#ffd4bc",
+    ink: "#180c08",
+  },
+  psychological: {
+    solid: "#9080a0",
+    soft: "#b8a8c4",
+    mist: "#e0d8e8",
+    ink: "#100c14",
+  },
+  magic: {
+    solid: "#a888d0",
+    soft: "#c8b0e0",
+    mist: "#e8dcf0",
+    ink: "#100c16",
+  },
+  seinen: {
+    solid: "#a89888",
+    soft: "#c8bcb0",
+    mist: "#e8e0d8",
+    ink: "#12100c",
+  },
+  shoujo: {
+    solid: "#ff90b8",
+    soft: "#ffb8d0",
+    mist: "#ffe0ec",
+    ink: "#180a12",
+  },
+  ecchi: {
+    solid: "#ff7090",
+    soft: "#ffa0b4",
+    mist: "#ffd0dc",
+    ink: "#18080e",
+  },
+  "super-power": {
+    solid: "#ff8a40",
+    soft: "#ffb078",
+    mist: "#ffd8bc",
+    ink: "#180c08",
+  },
+  "martial-arts": {
+    solid: "#e07840",
+    soft: "#f0a878",
+    mist: "#f8d8c0",
+    ink: "#160c08",
+  },
+  military: {
+    solid: "#7a9078",
+    soft: "#a8b8a4",
+    mist: "#d8e0d4",
+    ink: "#0c100c",
+  },
+  harem: {
+    solid: "#ff80a0",
+    soft: "#ffb0c4",
+    mist: "#ffdce6",
+    ink: "#180a10",
+  },
+  kids: {
+    solid: "#ffb860",
+    soft: "#ffd498",
+    mist: "#ffecc8",
+    ink: "#181208",
+  },
+  space: {
+    solid: "#6080c8",
+    soft: "#98aee0",
+    mist: "#d0daf0",
+    ink: "#080c18",
+  },
+  thriller: {
+    solid: "#a07088",
+    soft: "#c4a0b0",
+    mist: "#e8d4dc",
+    ink: "#120810",
+  },
+  samurai: {
+    solid: "#c89060",
+    soft: "#e0b890",
+    mist: "#f0e0cc",
+    ink: "#141008",
+  },
+  police: {
+    solid: "#6888a8",
+    soft: "#98b0c8",
+    mist: "#d0dce8",
+    ink: "#080e14",
+  },
+  vampire: {
+    solid: "#b05070",
+    soft: "#d088a0",
+    mist: "#ecc8d4",
+    ink: "#14080c",
+  },
+  demons: {
+    solid: "#b06878",
+    soft: "#d098a4",
+    mist: "#ecd0d6",
+    ink: "#14080c",
+  },
+  game: {
+    solid: "#60a888",
+    soft: "#98c8b0",
+    mist: "#d0e8dc",
+    ink: "#081410",
+  },
+  parody: {
+    solid: "#ffb060",
+    soft: "#ffd098",
+    mist: "#ffe8cc",
+    ink: "#181208",
+  },
+  josei: {
+    solid: "#d090b0",
+    soft: "#e8b8d0",
+    mist: "#f4e0ec",
+    ink: "#140c12",
+  },
+};
+
+const DEFAULT_MOOD_ACCENT = {
+  solid: "#ff8caa",
+  soft: "#ffb3c7",
+  mist: "#ffe0e8",
+  ink: "#1a0a10",
+};
+
+export function moodAccent(slug: string) {
+  return MOOD_ACCENT[slug] ?? DEFAULT_MOOD_ACCENT;
+}
+
 /** Short shelf copy for mood teasers + detail heroes. */
 export const MOOD_COPY: Record<
   string,
@@ -296,10 +539,11 @@ export function moodCopy(slug: string) {
 /** Cinematic veil for mood teasers/heroes from the genre wash tint. */
 export function moodVeil(slug: string) {
   const wash = genreWash(slug);
+  const accent = moodAccent(slug);
   return `
-    linear-gradient(115deg, rgba(8,10,14,0.96) 0%, rgba(10,12,18,0.88) 38%, rgba(8,10,14,0.58) 100%),
-    radial-gradient(520px 260px at 85% 35%, ${wash}, transparent 62%),
-    radial-gradient(420px 220px at 12% 80%, rgba(255,140,170,0.1), transparent 60%)
+    linear-gradient(115deg, rgba(8,10,14,0.96) 0%, rgba(10,12,18,0.88) 38%, rgba(8,10,14,0.55) 100%),
+    radial-gradient(560px 280px at 88% 32%, ${wash}, transparent 64%),
+    radial-gradient(440px 240px at 10% 78%, ${accent.solid}22, transparent 62%)
   `;
 }
 

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { moodCopy, moodVeil } from "@/lib/genre-moods";
+import { moodAccent, moodCopy, moodVeil } from "@/lib/genre-moods";
 
 type Props = {
   name: string;
@@ -11,7 +11,7 @@ type Props = {
   credit?: string;
 };
 
-/** Cinematic mood detail hero — Ghibli-page energy, sakura language. */
+/** Cinematic mood detail hero — per-mood accent, Ghibli-page energy. */
 export function MoodHero({
   name,
   slug,
@@ -21,9 +21,13 @@ export function MoodHero({
   credit,
 }: Props) {
   const copy = moodCopy(slug);
+  const accent = moodAccent(slug);
 
   return (
-    <header className="mood-hero relative overflow-hidden border-b border-white/[0.08]">
+    <header
+      className="mood-hero relative overflow-hidden border-b"
+      style={{ borderColor: `${accent.solid}28` }}
+    >
       <div aria-hidden className="absolute inset-0">
         {coverSrc ? (
           <>
@@ -54,8 +58,14 @@ export function MoodHero({
             `,
           }}
         />
-        <div className="mood-cloud absolute -left-[8%] top-[14%] h-28 w-[42%] rounded-full bg-sakura/12 blur-3xl" />
-        <div className="mood-cloud-slow absolute right-[-4%] top-[24%] h-24 w-[36%] rounded-full bg-white/10 blur-3xl" />
+        <div
+          className="mood-cloud absolute -left-[8%] top-[14%] h-28 w-[42%] rounded-full blur-3xl"
+          style={{ background: `${accent.solid}28` }}
+        />
+        <div
+          className="mood-cloud-slow absolute right-[-4%] top-[24%] h-24 w-[36%] rounded-full blur-3xl"
+          style={{ background: `${accent.soft}22` }}
+        />
       </div>
 
       <div className="relative z-[2] mx-auto flex min-h-[min(62svh,560px)] max-w-[1200px] flex-col justify-end px-5 pb-12 pt-28 sm:min-h-[min(68svh,620px)] sm:px-8 sm:pb-14 sm:pt-32">
@@ -75,7 +85,10 @@ export function MoodHero({
         </div>
 
         <div className="mt-10 max-w-2xl">
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-sakura-soft">
+          <p
+            className="text-[0.7rem] font-semibold uppercase tracking-[0.28em]"
+            style={{ color: accent.soft }}
+          >
             {copy.eyebrow}
           </p>
           <h1 className="mt-3 text-[clamp(2.6rem,7vw,4.25rem)] font-semibold leading-[1.02] tracking-[-0.045em] text-snow">
@@ -85,7 +98,14 @@ export function MoodHero({
             {copy.hero}
           </p>
           <div className="mt-6 flex flex-wrap gap-2 text-[0.75rem]">
-            <span className="rounded-full border border-sakura/30 bg-sakura/12 px-3 py-1.5 font-medium text-sakura-mist backdrop-blur-sm">
+            <span
+              className="rounded-full border px-3 py-1.5 font-medium backdrop-blur-sm"
+              style={{
+                borderColor: `${accent.solid}50`,
+                background: `${accent.solid}22`,
+                color: accent.mist,
+              }}
+            >
               {count.toLocaleString()} titles
             </span>
             <span className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-1.5 font-medium text-cloud backdrop-blur-sm">

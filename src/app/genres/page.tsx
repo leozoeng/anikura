@@ -1,3 +1,4 @@
+import { FeaturedMoodTile } from "@/components/featured-mood-tile";
 import { MoodTeaser } from "@/components/mood-teaser";
 import { getCatalog, getGenreStats, getSyncMeta } from "@/lib/catalog";
 import {
@@ -15,7 +16,7 @@ export const metadata = {
     "Browse Anikura by mood — cinematic shelves of comedy, romance, action, and more.",
 };
 
-const FEATURED_COUNT = 4;
+const FEATURED_COUNT = 6;
 
 export default async function GenresPage() {
   const [genresRaw, meta, catalog, moodOverrides] = await Promise.all([
@@ -52,7 +53,7 @@ export default async function GenresPage() {
               </h1>
               <p className="mt-4 max-w-lg text-[1.05rem] leading-relaxed text-cloud">
                 {meta
-                  ? `Netflix-style mood shelves from ${meta.totalAnime.toLocaleString()} indexed titles — pick a vibe and disappear into the night.`
+                  ? `Big featured moods up top — then themed shelves from ${meta.totalAnime.toLocaleString()} titles.`
                   : "Sync the catalog to unlock genre browsing."}
               </p>
             </div>
@@ -89,33 +90,46 @@ export default async function GenresPage() {
             No genres yet. Run <code className="text-snow">npm run sync</code>.
           </p>
         ) : (
-          <div className="flex flex-col gap-5 sm:gap-6">
-            {featured.map((genre, i) => {
-              const cover = covers.get(genre.slug);
-              return (
-                <MoodTeaser
-                  key={genre.slug}
-                  name={genre.name}
-                  slug={genre.slug}
-                  count={genre.count}
-                  coverSrc={cover?.src}
-                  coverPosition={cover?.position}
-                  posters={previews.get(genre.slug) ?? []}
-                  featured
-                  priority={i < 2}
-                />
-              );
-            })}
+          <>
+            <section aria-labelledby="featured-moods">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <h2
+                    id="featured-moods"
+                    className="text-[clamp(1.5rem,3vw,2rem)] font-semibold tracking-[-0.04em] text-snow"
+                  >
+                    Featured moods
+                  </h2>
+                  <p className="mt-1 text-sm text-mute">
+                    Most watched corners of the catalog
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-12 lg:gap-4">
+                {featured.map((genre, i) => (
+                  <FeaturedMoodTile
+                    key={genre.slug}
+                    genre={genre}
+                    cover={covers.get(genre.slug)}
+                    index={i}
+                  />
+                ))}
+              </div>
+            </section>
 
             {rest.length > 0 ? (
-              <>
-                <div className="flex items-end justify-between gap-4 pt-4 sm:pt-6">
+              <section aria-labelledby="more-moods" className="mt-12 sm:mt-14">
+                <div className="flex items-end justify-between gap-4">
                   <div>
-                    <h2 className="text-[clamp(1.35rem,2.8vw,1.75rem)] font-semibold tracking-[-0.04em] text-snow">
+                    <h2
+                      id="more-moods"
+                      className="text-[clamp(1.5rem,3vw,2rem)] font-semibold tracking-[-0.04em] text-snow"
+                    >
                       More moods
                     </h2>
                     <p className="mt-1 text-sm text-mute">
-                      Same cinematic shelves — keep scrolling the night
+                      Themed shelves — each with its own color and vibe
                     </p>
                   </div>
                   <p className="hidden text-sm tabular-nums text-mute sm:block">
@@ -123,23 +137,26 @@ export default async function GenresPage() {
                   </p>
                 </div>
 
-                {rest.map((genre) => {
-                  const cover = covers.get(genre.slug);
-                  return (
-                    <MoodTeaser
-                      key={genre.slug}
-                      name={genre.name}
-                      slug={genre.slug}
-                      count={genre.count}
-                      coverSrc={cover?.src}
-                      coverPosition={cover?.position}
-                      posters={previews.get(genre.slug) ?? []}
-                    />
-                  );
-                })}
-              </>
+                <div className="mt-8 flex flex-col gap-5 sm:gap-6">
+                  {rest.map((genre, i) => {
+                    const cover = covers.get(genre.slug);
+                    return (
+                      <MoodTeaser
+                        key={genre.slug}
+                        name={genre.name}
+                        slug={genre.slug}
+                        count={genre.count}
+                        coverSrc={cover?.src}
+                        coverPosition={cover?.position}
+                        posters={previews.get(genre.slug) ?? []}
+                        priority={i < 2}
+                      />
+                    );
+                  })}
+                </div>
+              </section>
             ) : null}
-          </div>
+          </>
         )}
       </div>
     </div>
