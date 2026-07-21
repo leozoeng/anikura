@@ -45,29 +45,33 @@ export function SiteFooter() {
                 href={DISCORD}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group footer-discord-invite relative inline-flex min-h-[3.35rem] shrink-0 items-center gap-3 overflow-hidden rounded-2xl px-3 py-2.5 sm:min-w-[15.5rem]"
+                className="group footer-discord-invite pressable relative inline-flex min-h-[3.5rem] shrink-0 items-center gap-3 overflow-hidden rounded-2xl px-3 py-2.5 sm:min-w-[17.5rem]"
               >
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent_28%,rgba(255,140,170,0.18)_48%,transparent_68%)] opacity-0 transition duration-500 group-hover:translate-x-1 group-hover:opacity-100"
+                  className="footer-discord-glow pointer-events-none absolute inset-0"
                 />
-                <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#5865F2] text-white shadow-[0_6px_16px_rgba(88,101,242,0.35)] ring-1 ring-[#5865F2]/40 transition duration-300 group-hover:scale-[1.05] group-hover:shadow-[0_10px_22px_rgba(88,101,242,0.45)]">
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_22%,rgba(255,179,199,0.16)_48%,transparent_72%)] opacity-0 transition duration-500 group-hover:translate-x-1 group-hover:opacity-100"
+                />
+                <span className="footer-discord-badge relative grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#ffe8ee] transition duration-300 group-hover:scale-[1.05]">
                   <DiscordIcon />
-                  <span className="sakura-dot absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#57F287] ring-2 ring-white" />
+                  <span className="sakura-dot absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#57F287] ring-2 ring-[#1a1014]" />
                 </span>
                 <span className="relative min-w-0 flex-1 leading-tight">
-                  <span className="block text-sm font-semibold tracking-[-0.02em] text-[#1a1a22]">
-                    Join Discord
+                  <span className="block text-sm font-semibold tracking-[-0.02em] text-sakura-mist">
+                    Soft nights, together
                   </span>
-                  <span className="block text-[0.68rem] text-[#5c5f72]">
-                    Say hi · share finds · report bugs
+                  <span className="block text-[0.68rem] text-[#ffb3c7]/85">
+                    Share finds · say hi · report bugs
                   </span>
                 </span>
-                <span className="relative inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-[#1a1a22] px-3 text-[0.78rem] font-semibold tracking-[-0.02em] text-white shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition duration-300 group-hover:-translate-y-0.5 group-hover:bg-[#2a2a34] group-hover:shadow-[0_8px_18px_rgba(0,0,0,0.22)]">
-                  Open
+                <span className="footer-discord-cta relative inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-3.5 text-[0.78rem] font-semibold tracking-[-0.02em] transition duration-300 group-hover:-translate-y-0.5">
+                  Come in
                   <span
                     aria-hidden
-                    className="text-white/70 transition duration-300 group-hover:translate-x-0.5 group-hover:text-white"
+                    className="opacity-80 transition duration-300 group-hover:translate-x-0.5 group-hover:opacity-100"
                   >
                     →
                   </span>

@@ -21,10 +21,12 @@ import {
 } from "@/lib/catalog";
 import {
   genreWash,
+  moodAccent,
   pickGenreCovers,
   visibleGenres,
 } from "@/lib/genre-moods";
 import { fetchMoodArtOverrides } from "@/lib/mood-art";
+import type { CSSProperties } from "react";
 
 /** Cache the home shell so refresh isn't blocked on cold API waits. */
 export const revalidate = 120;
@@ -201,12 +203,19 @@ async function HomeRows() {
         <div className="fade-x scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:gap-3.5">
           {genreList.map((g, i) => {
             const cover = genreCovers.get(g.slug);
+            const accent = moodAccent(g.slug);
+            const wash = genreWash(g.slug);
             return (
               <Link
                 key={g.slug}
                 href={`/genres/${g.slug}`}
                 className="genre-tile pressable group relative h-[9.5rem] w-[9.75rem] shrink-0 snap-start overflow-hidden rounded-[1.2rem] sm:h-[10.5rem] sm:w-[11rem]"
-                style={{ animationDelay: `${Math.min(i, 9) * 28}ms` }}
+                style={
+                  {
+                    animationDelay: `${Math.min(i, 9) * 28}ms`,
+                    "--genre-tile-accent": accent.solid,
+                  } as CSSProperties
+                }
               >
                 <div className="absolute inset-0 bg-elevated" />
                 {cover ? (
@@ -215,28 +224,70 @@ async function HomeRows() {
                     alt=""
                     fill
                     sizes="180px"
-                    className={`object-cover transition duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04] ${cover.position ?? "object-center"}`}
+                    className={`object-cover transition duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05] ${cover.position ?? "object-center"}`}
                   />
                 ) : null}
                 <div
-                  className="absolute inset-0 transition duration-300"
+                  className="absolute inset-0 transition duration-500"
                   style={{
                     background: `
-                      linear-gradient(180deg, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.55) 48%, rgba(0,0,0,0.92) 100%),
-                      linear-gradient(145deg, ${genreWash(g.slug)} 0%, transparent 58%)
+                      linear-gradient(180deg, rgba(0,0,0,0.14) 0%, rgba(0,0,0,0.38) 40%, rgba(0,0,0,0.88) 78%, rgba(0,0,0,0.96) 100%),
+                      linear-gradient(135deg, ${wash} 0%, transparent 54%),
+                      radial-gradient(ellipse 90% 48% at 50% 110%, ${accent.solid}28, transparent 68%)
                     `,
+                  }}
+                />
+                <div
+                  aria-hidden
+                  className="mood-cloud pointer-events-none absolute -left-[18%] top-[8%] h-12 w-[55%] rounded-full blur-3xl opacity-55 transition duration-500 group-hover:opacity-90"
+                  style={{ background: `${accent.solid}2e` }}
+                />
+                <div
+                  aria-hidden
+                  className="mood-cloud-slow pointer-events-none absolute -right-[14%] bottom-[12%] h-10 w-[48%] rounded-full blur-3xl opacity-40 transition duration-500 group-hover:opacity-70"
+                  style={{ background: `${accent.soft}24` }}
+                />
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 opacity-0 transition duration-500 group-hover:opacity-100"
+                  style={{
+                    background: `radial-gradient(420px 220px at 20% 92%, ${accent.solid}42, transparent 70%)`,
+                  }}
+                />
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 top-0 h-px opacity-50 transition duration-500 group-hover:opacity-100"
+                  style={{
+                    background: `linear-gradient(90deg, transparent 6%, ${accent.soft}55 50%, transparent 94%)`,
                   }}
                 />
                 <div className="relative z-10 flex h-full flex-col justify-end p-3.5 sm:p-4">
                   <div>
-                    <span className="block text-[1.05rem] font-medium leading-tight tracking-[-0.03em] text-snow transition duration-300 group-hover:text-sakura-mist">
+                    <span
+                      aria-hidden
+                      className="sakura-dot mb-1.5 block h-1.5 w-1.5 rounded-full"
+                      style={{ background: accent.solid }}
+                    />
+                    <span
+                      className="block text-[1.05rem] font-medium leading-tight tracking-[-0.03em] text-snow transition duration-300"
+                      style={{
+                        textShadow: `0 2px 22px color-mix(in oklab, ${accent.solid} 38%, transparent), 0 1px 2px rgba(0,0,0,0.6)`,
+                      }}
+                    >
                       {g.name}
                     </span>
-                    <span className="mt-1 flex items-center justify-between text-[0.72rem] text-mute">
-                      <span>
+                    <span className="mt-1 flex items-center justify-between text-[0.72rem]">
+                      <span
+                        className="tabular-nums transition duration-300"
+                        style={{ color: accent.mist }}
+                      >
                         {g.count > 0 ? g.count.toLocaleString() : "Explore"}
                       </span>
-                      <span className="translate-x-0 text-cloud transition duration-300 group-hover:translate-x-0.5 group-hover:text-sakura-soft">
+                      <span
+                        aria-hidden
+                        className="translate-x-0 transition duration-300 group-hover:translate-x-0.5"
+                        style={{ color: accent.soft }}
+                      >
                         →
                       </span>
                     </span>

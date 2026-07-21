@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 
 const DONATIONS = [
   {
@@ -8,12 +8,24 @@ const DONATIONS = [
     label: "Solana",
     address: "41MB8nvY2FXsVDdvoZduzu9LPBCSBWK2kgF2pdyPPRNQ",
     href: "https://solscan.io/account/41MB8nvY2FXsVDdvoZduzu9LPBCSBWK2kgF2pdyPPRNQ",
+    accent: {
+      border: "rgba(0, 255, 163, 0.22)",
+      hoverBorder: "rgba(0, 255, 163, 0.4)",
+      ring: "rgba(0, 255, 163, 0.28)",
+      glow: "rgba(0, 255, 163, 0.1)",
+    },
   },
   {
     id: "eth",
     label: "Ethereum",
     address: "0x19847Db64d929E711597195c8756e68FD4348Ff2",
     href: "https://etherscan.io/address/0x19847Db64d929E711597195c8756e68FD4348Ff2",
+    accent: {
+      border: "rgba(138, 146, 178, 0.28)",
+      hoverBorder: "rgba(138, 146, 178, 0.48)",
+      ring: "rgba(138, 146, 178, 0.32)",
+      glow: "rgba(138, 146, 178, 0.12)",
+    },
   },
 ] as const;
 
@@ -82,10 +94,20 @@ export function FooterDonations() {
           return (
             <div
               key={d.id}
-              className="footer-tip-chip group inline-flex h-10 items-center gap-2 rounded-xl border border-white/[0.1] bg-black/30 py-1 pl-2 pr-1 backdrop-blur-sm"
+              className="footer-tip-chip group inline-flex h-10 items-center gap-2 rounded-xl border bg-black/30 py-1 pl-2 pr-1 backdrop-blur-sm"
+              style={
+                {
+                  borderColor: d.accent.border,
+                  "--tip-hover-border": d.accent.hoverBorder,
+                  "--tip-glow": d.accent.glow,
+                } as CSSProperties
+              }
               title={`${d.label}: ${d.address}`}
             >
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-black/45 ring-1 ring-white/12 transition group-hover:ring-[#ff8caa]/35">
+              <span
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-black/45 transition group-hover:brightness-110"
+                style={{ boxShadow: `0 0 0 1px ${d.accent.ring}` }}
+              >
                 {d.id === "sol" ? <SolanaIcon /> : <EthereumIcon />}
               </span>
               <a
