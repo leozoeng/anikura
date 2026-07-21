@@ -23,7 +23,14 @@ type SearchHit = {
   created_at: string;
 };
 
-export function ProfileSearch({ className = "" }: { className?: string }) {
+export function ProfileSearch({
+  className = "",
+  compact = false,
+}: {
+  className?: string;
+  /** Slimmer chrome for the Social side rail */
+  compact?: boolean;
+}) {
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [busy, setBusy] = useState(false);
@@ -65,16 +72,28 @@ export function ProfileSearch({ className = "" }: { className?: string }) {
 
   return (
     <section
-      className={`rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3.5 sm:p-5 ${className}`.trim()}
+      className={`rounded-2xl border border-white/[0.08] bg-white/[0.03] ${
+        compact ? "p-3" : "p-3.5 sm:p-5"
+      } ${className}`.trim()}
     >
-      <div className="mb-2.5 flex items-end justify-between gap-3 sm:mb-3">
+      <div
+        className={`flex items-end justify-between gap-3 ${
+          compact ? "mb-2" : "mb-2.5 sm:mb-3"
+        }`}
+      >
         <div className="min-w-0">
-          <h2 className="text-[0.95rem] font-semibold tracking-[-0.02em] text-snow sm:text-lg">
+          <h2
+            className={`font-semibold tracking-[-0.02em] text-snow ${
+              compact ? "text-sm" : "text-[0.95rem] sm:text-lg"
+            }`}
+          >
             Find people
           </h2>
-          <p className="mt-0.5 text-xs text-mute sm:text-sm">
-            Search by @username or display name
-          </p>
+          {!compact ? (
+            <p className="mt-0.5 text-xs text-mute sm:text-sm">
+              Search by @username or display name
+            </p>
+          ) : null}
         </div>
         {busy ? (
           <span className="shrink-0 text-xs text-mute">Searching…</span>
@@ -102,7 +121,11 @@ export function ProfileSearch({ className = "" }: { className?: string }) {
           autoComplete="off"
           spellCheck={false}
           enterKeyHint="search"
-          className="w-full rounded-[14px] border border-white/[0.1] bg-black/40 py-3 pl-10 pr-3.5 text-[0.9375rem] text-snow outline-none transition placeholder:text-mute focus:border-white/25 focus:bg-black/55 sm:rounded-xl sm:py-2.5 sm:text-sm"
+          className={`w-full border border-white/[0.1] bg-black/40 pl-10 pr-3.5 text-snow outline-none transition placeholder:text-mute focus:border-white/25 focus:bg-black/55 ${
+            compact
+              ? "rounded-xl py-2.5 text-sm"
+              : "rounded-[14px] py-3 text-[0.9375rem] sm:rounded-xl sm:py-2.5 sm:text-sm"
+          }`}
         />
       </label>
 
@@ -113,7 +136,7 @@ export function ProfileSearch({ className = "" }: { className?: string }) {
       ) : null}
 
       {query.trim() ? (
-        <ul className="mt-3 max-h-[min(22rem,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-0.5">
+        <ul className="mt-3 max-h-[min(16rem,40vh)] space-y-2 overflow-y-auto overscroll-contain pr-0.5">
           {hits.length === 0 && !busy ? (
             <li className="rounded-xl border border-dashed border-white/10 px-3 py-6 text-center text-sm text-mute">
               No profiles matched
@@ -177,7 +200,7 @@ export function ProfileSearch({ className = "" }: { className?: string }) {
             })
           )}
         </ul>
-      ) : (
+      ) : compact ? null : (
         <p className="mt-2.5 text-[0.7rem] leading-relaxed text-mute sm:mt-3 sm:text-xs">
           Usernames are unique — once claimed, that @handle is yours.
         </p>

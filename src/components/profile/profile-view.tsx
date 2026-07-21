@@ -33,7 +33,7 @@ type Props = {
   isOwner: boolean;
   /** Signed-in viewer looking at someone else — show Quit → /profile */
   showQuitProfile?: boolean;
-  /** Social hub blocks (announcements, recent comments) above the profile card */
+  /** Social hub (announcements, recent comments) — secondary rail beside/below profile */
   hub?: ReactNode;
 };
 
@@ -187,7 +187,11 @@ export function ProfileView({
         />
       ) : null}
 
-      <div className="relative mx-auto w-full max-w-[1080px]">
+      <div
+        className={`relative mx-auto w-full ${
+          hub ? "max-w-[1280px]" : "max-w-[1080px]"
+        }`}
+      >
         {showQuitProfile ? (
           <div className="sticky top-14 z-30 mx-3 mb-3 flex items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-void/85 px-3.5 py-2.5 backdrop-blur-md sm:top-16 sm:mx-0 sm:px-4">
             <p className="min-w-0 truncate text-sm text-[#b5bac1]">
@@ -203,22 +207,25 @@ export function ProfileView({
           </div>
         ) : null}
 
-        <div className="px-3 sm:px-0">
-          {hub ? <div className="mb-4 space-y-4">{hub}</div> : null}
-          <ProfileSearch className="mb-3 sm:mb-4" />
-        </div>
-
         <div
-          className="overflow-hidden border-y border-white/[0.08] shadow-[0_40px_100px_rgba(0,0,0,0.55)] sm:rounded-[28px] sm:border"
-          style={{
-            background: ambient
-              ? `linear-gradient(165deg, rgba(${rgb}, 0.14) 0%, #111214 28%, #0e0f12 100%)`
-              : "#111214",
-            boxShadow: ambient
-              ? `0 40px 100px rgba(0,0,0,0.55), 0 0 80px rgba(${rgb}, 0.12)`
-              : undefined,
-          }}
+          className={
+            hub
+              ? "lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:items-start lg:gap-5"
+              : undefined
+          }
         >
+          <div className="min-w-0">
+            <div
+              className="overflow-hidden border-y border-white/[0.08] shadow-[0_40px_100px_rgba(0,0,0,0.55)] sm:rounded-[28px] sm:border"
+              style={{
+                background: ambient
+                  ? `linear-gradient(165deg, rgba(${rgb}, 0.14) 0%, #111214 28%, #0e0f12 100%)`
+                  : "#111214",
+                boxShadow: ambient
+                  ? `0 40px 100px rgba(0,0,0,0.55), 0 0 80px rgba(${rgb}, 0.12)`
+                  : undefined,
+              }}
+            >
           <div className="grid lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)]">
             <aside className="relative border-b border-white/[0.06] lg:border-b-0 lg:border-r lg:border-white/[0.06]">
               <div className="relative h-[128px] sm:h-[160px]">
@@ -459,6 +466,21 @@ export function ProfileView({
             />
           </div>
         ) : null}
+
+        {!hub ? (
+          <div className="mt-4 px-3 sm:px-0">
+            <ProfileSearch />
+          </div>
+        ) : null}
+          </div>
+
+          {hub ? (
+            <aside className="mt-4 space-y-3 px-3 sm:px-0 lg:mt-0 lg:sticky lg:top-[4.75rem] lg:self-start">
+              <ProfileSearch compact />
+              {hub}
+            </aside>
+          ) : null}
+        </div>
       </div>
     </div>
   );
