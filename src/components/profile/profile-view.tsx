@@ -148,7 +148,7 @@ export function ProfileView({
   );
 
   return (
-    <div className="relative px-3 pb-24 pt-12 sm:px-4 sm:pt-16">
+    <div className="relative px-3 pb-24 pt-16 sm:px-4 sm:pt-20">
       {ambient ? (
         <div
           aria-hidden
