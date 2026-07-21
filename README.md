@@ -23,7 +23,9 @@ npm run sync:check    # exit 0 if local matches Anikoto totals
 
 Pulls the Anikoto catalog (~9k titles), builds genre indexes into `data/`.
 
-**Auto-sync:** GitHub Action `.github/workflows/sync-catalog.yml` runs twice daily (06:15 & 18:15 UTC) and on manual **Actions → Sync catalog → Run workflow**. If the catalog files change, it commits and pushes so Vercel redeploys with a fresh library.
+**Auto-sync:** GitHub Action `.github/workflows/sync-catalog.yml` runs every 6 hours and on manual **Actions → Sync catalog → Run workflow**. Light syncs refresh the newest ~1,000 titles (episode counts, scores, new entries). If totals drift, it does a full scrape. Changed catalog files are committed so Vercel redeploys with a fresh library.
+
+**Episodes:** Watch and series pages always fetch the live Anikoto episode list (`cache: no-store`) — new episodes appear as soon as Anikoto lists them, without waiting for a catalog sync.
 
 ## Auth & admin (Supabase)
 

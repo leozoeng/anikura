@@ -84,7 +84,7 @@ export async function getRecentAnime(
 
 export async function getSeries(
   id: number,
-  options: FetchOptions = { revalidate: 120 },
+  options: FetchOptions = { cache: "no-store" },
 ) {
   const url = `${BASE}/series/${id}`;
   const json = await fetchJson<SeriesApiResponse>(url, options);
