@@ -1,5 +1,7 @@
 import { AnimePoster } from "@/components/anime-poster";
+import { GhibliSelection } from "@/components/ghibli-selection";
 import { getCatalog, getSyncMeta } from "@/lib/catalog";
+import { getGhibliCollection } from "@/lib/ghibli";
 import type { CatalogAnime } from "@/lib/types";
 import Link from "next/link";
 
@@ -16,6 +18,7 @@ export default async function BrowsePage({ searchParams }: Props) {
   const perPage = 48;
 
   const [catalog, meta] = await Promise.all([getCatalog(), getSyncMeta()]);
+  const ghibli = getGhibliCollection(catalog);
 
   let sorted: CatalogAnime[] = [...catalog];
   if (sort === "score") {
@@ -59,6 +62,8 @@ export default async function BrowsePage({ searchParams }: Props) {
           : "Run a catalog sync to fill this shelf."}
       </p>
 
+      {page === 1 ? <GhibliSelection entries={ghibli} /> : null}
+
       <div
         className="filter-rail mt-9"
         role="tablist"
@@ -78,6 +83,14 @@ export default async function BrowsePage({ searchParams }: Props) {
             </Link>
           );
         })}
+        {ghibli.length > 0 ? (
+          <a
+            href="#ghibli"
+            className="filter-pill !border-[#c5d4b8]/25 !text-[#c5d4b8]"
+          >
+            Ghibli
+          </a>
+        ) : null}
       </div>
 
       {slice.length === 0 ? (
