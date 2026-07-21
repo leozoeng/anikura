@@ -320,6 +320,43 @@ button {
   flex-shrink: 0;
 }
 
+/* Compact header “Create account” — same metal white language as .btn-primary */
+.header-auth-cta {
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  background: linear-gradient(180deg, #ffffff 0%, #f4f4f6 48%, #e8e8ec 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.08) inset,
+    0 4px 12px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.header-auth-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    closest-side at 50% 0%,
+    rgba(255, 255, 255, 0.55),
+    transparent 75%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.header-auth-cta:hover::before {
+  opacity: 1;
+}
+
+.header-auth-cta:hover {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 1) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.06) inset,
+    0 8px 20px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
 .btn-ghost {
   position: relative;
   display: inline-flex;

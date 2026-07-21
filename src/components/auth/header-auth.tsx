@@ -75,14 +75,14 @@ export function HeaderAuth({
   if (!email) {
     return (
       <>
-        <div className="hidden items-center gap-0.5 md:flex">
+        <div className="hidden items-center gap-2 md:flex">
           <button
             type="button"
             onClick={() => {
               setMode("signin");
               setModalOpen(true);
             }}
-            className="rounded-full px-2.5 py-1 text-[0.75rem] tracking-[-0.01em] text-mute transition hover:text-snow"
+            className="group relative inline-flex h-9 items-center rounded-full px-3.5 text-[0.8125rem] font-medium tracking-[-0.02em] text-cloud transition duration-300 hover:bg-white/[0.06] hover:text-snow"
           >
             Sign in
           </button>
@@ -92,9 +92,15 @@ export function HeaderAuth({
               setMode("signup");
               setModalOpen(true);
             }}
-            className="rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-1 text-[0.75rem] tracking-[-0.01em] text-cloud transition hover:border-white/25 hover:bg-white/[0.07] hover:text-snow"
+            className="header-auth-cta group relative inline-flex h-9 items-center gap-1.5 overflow-hidden rounded-full px-4 text-[0.8125rem] font-semibold tracking-[-0.02em] text-[#0a0a0c] transition duration-300 hover:brightness-[1.04] active:scale-[0.98]"
           >
-            Create account
+            <span className="relative z-[1]">Create account</span>
+            <span
+              aria-hidden
+              className="relative z-[1] text-[0.95em] text-black/35 transition duration-300 group-hover:translate-x-0.5 group-hover:text-black/55"
+            >
+              →
+            </span>
           </button>
         </div>
         <AuthModal
@@ -119,21 +125,32 @@ export function HeaderAuth({
         aria-label={`Account menu for ${label}`}
         aria-expanded={menuOpen}
         aria-haspopup="menu"
-        className="relative h-9 w-9 overflow-hidden rounded-full bg-raised ring-1 ring-white/15 transition hover:ring-white/35"
+        className="group flex items-center gap-2 rounded-full py-0.5 pl-0.5 pr-1 transition duration-300 hover:bg-white/[0.06] sm:pr-2.5"
       >
-        {avatarUrl ? (
-          <Image
-            src={avatarUrl}
-            alt=""
-            fill
-            className="object-cover"
-            sizes="36px"
-          />
-        ) : (
-          <span className="grid h-full w-full place-items-center text-[0.8rem] font-medium text-sakura-soft">
-            {initial}
-          </span>
-        )}
+        <span className="relative h-9 w-9 overflow-hidden rounded-full bg-gradient-to-b from-[#2a2a30] to-[#141416] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/20 transition duration-300 group-hover:ring-[#ffb3c7]/45">
+          {avatarUrl ? (
+            <Image
+              src={avatarUrl}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="36px"
+            />
+          ) : (
+            <span className="grid h-full w-full place-items-center text-[0.8rem] font-semibold tracking-[-0.02em] text-sakura-soft">
+              {initial}
+            </span>
+          )}
+        </span>
+        <span className="hidden max-w-[7.5rem] truncate text-[0.8125rem] font-medium tracking-[-0.02em] text-cloud transition group-hover:text-snow sm:inline">
+          {label}
+        </span>
+        <span
+          aria-hidden
+          className="hidden text-[0.65rem] text-mute transition group-hover:text-cloud sm:inline"
+        >
+          ▾
+        </span>
       </button>
 
       {menuOpen ? (
@@ -146,14 +163,27 @@ export function HeaderAuth({
           />
           <div
             role="menu"
-            className="absolute right-0 top-[calc(100%+8px)] z-50 min-w-[11rem] overflow-hidden rounded-xl border border-white/[0.1] bg-[#0c0c0e] py-1 shadow-[0_20px_50px_rgba(0,0,0,0.55)]"
+            className="absolute right-0 top-[calc(100%+10px)] z-50 min-w-[13.5rem] overflow-hidden rounded-2xl border border-white/[0.1] bg-[#0c0c0e]/95 py-1.5 shadow-[0_24px_60px_rgba(0,0,0,0.65)] backdrop-blur-xl"
           >
-            <p className="truncate px-3 py-2 text-[0.7rem] text-mute">{email}</p>
+            <div className="border-b border-white/[0.06] px-3.5 pb-2.5 pt-2">
+              <p className="truncate text-[0.8125rem] font-medium tracking-[-0.02em] text-snow">
+                {label}
+              </p>
+              <p className="mt-0.5 truncate text-[0.7rem] text-mute">{email}</p>
+            </div>
+            <Link
+              href="/profile"
+              role="menuitem"
+              className="mt-1 block px-3.5 py-2.5 text-sm tracking-[-0.01em] text-cloud transition hover:bg-white/[0.06] hover:text-snow"
+              onClick={() => setMenuOpen(false)}
+            >
+              Profile
+            </Link>
             {isAdmin ? (
               <Link
                 href="/admin"
                 role="menuitem"
-                className="block px-3 py-2 text-sm text-snow transition hover:bg-white/[0.06]"
+                className="block px-3.5 py-2.5 text-sm tracking-[-0.01em] text-cloud transition hover:bg-white/[0.06] hover:text-snow"
                 onClick={() => setMenuOpen(false)}
               >
                 Admin
@@ -163,7 +193,7 @@ export function HeaderAuth({
               type="button"
               role="menuitem"
               onClick={signOut}
-              className="block w-full px-3 py-2 text-left text-sm text-cloud transition hover:bg-white/[0.06] hover:text-snow"
+              className="block w-full px-3.5 py-2.5 text-left text-sm tracking-[-0.01em] text-cloud transition hover:bg-white/[0.06] hover:text-snow"
             >
               Sign out
             </button>

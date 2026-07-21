@@ -202,7 +202,7 @@ export function AuthModal({
             <button
               type="submit"
               disabled={busy}
-              className="flex w-full items-center justify-center rounded-full bg-snow px-4 py-2.5 text-sm font-medium text-void transition hover:bg-white disabled:opacity-60"
+              className="header-auth-cta flex w-full items-center justify-center rounded-full px-4 py-3 text-sm font-semibold tracking-[-0.02em] text-[#0a0a0c] transition hover:brightness-[1.04] disabled:opacity-60"
             >
               {busy
                 ? "Please wait…"

@@ -220,13 +220,13 @@ export function SiteHeader({
             <>
               <Link
                 href="/login"
-                className="rounded-xl px-4 py-3 text-[0.95rem] tracking-[-0.02em] text-cloud transition hover:bg-white/[0.05] hover:text-snow"
+                className="rounded-xl px-4 py-3 text-[0.95rem] font-medium tracking-[-0.02em] text-cloud transition hover:bg-white/[0.05] hover:text-snow"
               >
                 Sign in
               </Link>
               <Link
                 href="/login?mode=signup"
-                className="rounded-xl bg-snow px-4 py-3 text-center text-[0.95rem] font-medium tracking-[-0.02em] text-void transition hover:bg-white"
+                className="header-auth-cta mt-1 rounded-full px-4 py-3 text-center text-[0.95rem] font-semibold tracking-[-0.02em] text-[#0a0a0c] transition hover:brightness-[1.04]"
               >
                 Create account
               </Link>
