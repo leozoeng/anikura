@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { getAuthCallbackUrl } from "@/lib/site-url";
 
 export function LoginForm({
   nextPath = "/",
@@ -39,6 +40,9 @@ export function LoginForm({
       const { data, error: err } = await supabase.auth.signUp({
         email: email.trim(),
         password,
+        options: {
+          emailRedirectTo: getAuthCallbackUrl(nextPath),
+        },
       });
       if (err) throw err;
 

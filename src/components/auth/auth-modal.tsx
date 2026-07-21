@@ -5,7 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { AnikuraMark } from "@/components/anikura-logo";
 import { MOOD_ART } from "@/lib/genre-moods";
 import { createClient } from "@/lib/supabase/client";
+import { getAuthCallbackUrl } from "@/lib/site-url";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+
 
 type Mode = "signin" | "signup";
 
@@ -101,6 +103,9 @@ export function AuthModal({
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
+        options: {
+          emailRedirectTo: getAuthCallbackUrl("/"),
+        },
       });
       if (signUpError) throw signUpError;
 
