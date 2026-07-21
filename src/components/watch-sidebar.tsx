@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RelatedAnimeList } from "@/components/related-anime";
 import { decodeEntities } from "@/lib/anilist";
 import { watchHref } from "@/lib/anikoto";
@@ -53,6 +53,7 @@ export function WatchSidebar({
   const [progressMap, setProgressMap] = useState<Map<number, number>>(
     () => new Map(),
   );
+  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setProgressMap(getProgressMapForAnime(anime.id, language));
@@ -61,6 +62,17 @@ export function WatchSidebar({
     window.addEventListener("anikura:progress", sync);
     return () => window.removeEventListener("anikura:progress", sync);
   }, [anime.id, language]);
+
+  useEffect(() => {
+    setCollapsed(false);
+    const root = listRef.current;
+    if (!root) return;
+    const active = root.querySelector<HTMLElement>("[data-active-episode='1']");
+    if (!active) return;
+    const top =
+      active.offsetTop - root.clientHeight / 2 + active.clientHeight / 2;
+    root.scrollTop = Math.max(0, top);
+  }, [anime.id, current, language]);
 
   const visible = useMemo(() => {
     let list = [...episodes];
@@ -143,7 +155,10 @@ export function WatchSidebar({
               </UtilButton>
             </div>
 
-            <div className="mt-3 max-h-[min(52vh,520px)] space-y-1 overflow-y-auto pr-1">
+            <div
+              ref={listRef}
+              className="mt-3 max-h-[min(52vh,520px)] space-y-1 overflow-y-auto overscroll-contain pr-1"
+            >
               {visible.length === 0 ? (
                 <p className="px-2 py-8 text-center text-sm text-mute">
                   No Episodes Found :(
@@ -160,6 +175,7 @@ export function WatchSidebar({
                     <Link
                       key={ep.id}
                       href={watchHref(anime, ep.number, language)}
+                      data-active-episode={isActive ? "1" : undefined}
                       className={`flex gap-3 rounded-xl p-2 transition ${
                         isActive
                           ? "bg-white/[0.08] ring-1 ring-white/12"

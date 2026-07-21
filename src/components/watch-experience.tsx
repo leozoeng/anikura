@@ -404,7 +404,7 @@ export function WatchExperience(props: Props) {
                 related={related}
                 seasons={seasons}
                 nextAirLabel={nextAirLabel}
-                className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:overscroll-contain"
+                className="lg:sticky lg:top-20 lg:self-start"
               />
 
               <AnimeComments
