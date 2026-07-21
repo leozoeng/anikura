@@ -574,8 +574,8 @@ export const MOOD_ART: Record<
   },
   adventure: {
     src: "/moods/adventure.jpg",
-    credit: "Fullmetal Alchemist: Brotherhood",
-    position: "object-[center_38%]",
+    credit: "Made in Abyss",
+    position: "object-[center_42%]",
   },
   drama: {
     src: "/moods/drama.jpg",
@@ -596,6 +596,16 @@ export const MOOD_ART: Record<
     src: "/moods/shounen.jpg",
     credit: "Demon Slayer: Kimetsu no Yaiba",
     position: "object-[42%_center]",
+  },
+  school: {
+    src: "/moods/school.jpg",
+    credit: "School hallway",
+    position: "object-center",
+  },
+  "slice-of-life": {
+    src: "/moods/slice-of-life.jpg",
+    credit: "Laid-Back Camp",
+    position: "object-[center_55%]",
   },
 };
 
