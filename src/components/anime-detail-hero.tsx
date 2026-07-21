@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CinematicBackdrop } from "@/components/cinematic-backdrop";
 import { ListStatusButton } from "@/components/list-status-button";
+import { formatMediaStatus } from "@/lib/anilist";
 import { slugifyGenre, watchHref } from "@/lib/anikoto";
 import type { AnimeSummary, Episode } from "@/lib/types";
 
@@ -64,13 +65,15 @@ export function AnimeDetailHero({
         </div>
 
         <div className="min-w-0 flex-1 animate-rise pb-1">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-mute uppercase backdrop-blur-md">
-            <span className="sakura-dot h-1.5 w-1.5 rounded-full bg-sakura" />
-            {status || "Series"}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h1 className="text-[clamp(2.2rem,5vw,3.75rem)] font-semibold leading-[1.02] tracking-[-0.045em]">
+              {title}
+            </h1>
+            <span className="inline-flex shrink-0 items-center gap-2 self-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium tracking-[0.16em] text-mute uppercase backdrop-blur-md">
+              <span className="sakura-dot h-1.5 w-1.5 rounded-full bg-sakura" />
+              {formatMediaStatus(status) || "Series"}
+            </span>
           </div>
-          <h1 className="mt-4 text-[clamp(2.2rem,5vw,3.75rem)] font-semibold leading-[1.02] tracking-[-0.045em]">
-            {title}
-          </h1>
           {native && (
             <p className="mt-2 font-[family-name:var(--font-jp)] text-[1.05rem] text-sakura-soft/80">
               {native}

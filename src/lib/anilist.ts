@@ -28,6 +28,26 @@ export type AniListRelationNode = {
   averageScore?: number | null;
 };
 
+export type AniListCharacterEdge = {
+  role?: string | null;
+  node?: {
+    id: number;
+    name?: {
+      full?: string | null;
+      native?: string | null;
+    } | null;
+    image?: { large?: string | null } | null;
+  } | null;
+  voiceActors?: {
+    id: number;
+    name?: {
+      full?: string | null;
+      native?: string | null;
+    } | null;
+    image?: { large?: string | null } | null;
+  }[] | null;
+};
+
 export type AniListMedia = {
   id: number;
   idMal?: number | null;
@@ -35,9 +55,21 @@ export type AniListMedia = {
   description?: string | null;
   episodes?: number | null;
   status?: string | null;
+  season?: string | null;
   seasonYear?: number | null;
   averageScore?: number | null;
   genres?: string[];
+  source?: string | null;
+  startDate?: {
+    year?: number | null;
+    month?: number | null;
+    day?: number | null;
+  } | null;
+  endDate?: {
+    year?: number | null;
+    month?: number | null;
+    day?: number | null;
+  } | null;
   bannerImage?: string | null;
   coverImage?: {
     extraLarge?: string | null;
@@ -50,6 +82,9 @@ export type AniListMedia = {
     nodes?: { name: string }[];
   } | null;
   format?: string | null;
+  characters?: {
+    edges?: AniListCharacterEdge[] | null;
+  } | null;
   recommendations?: {
     nodes?: {
       mediaRecommendation?: {
@@ -110,15 +145,108 @@ const MEDIA_FIELDS = `
   description(asHtml: false)
   episodes
   status
+  season
   seasonYear
   averageScore
   genres
+  source
+  startDate { year month day }
+  endDate { year month day }
   bannerImage
   coverImage { extraLarge large color }
   trailer { id site thumbnail }
   streamingEpisodes { title thumbnail url site }
   studios(isMain: true) { nodes { name } }
 `;
+
+const CHARACTER_FIELDS = `
+  characters(page: 1, perPage: 18, sort: ROLE) {
+    edges {
+      role
+      node {
+        id
+        name { full native }
+        image { large }
+      }
+      voiceActors(language: JAPANESE, sort: RELEVANCE) {
+        id
+        name { full native }
+        image { large }
+      }
+    }
+  }
+`;
+
+/** Humanize AniList / catalog status strings for UI pills. */
+export function formatMediaStatus(status?: string | null) {
+  if (!status) return null;
+  const key = status.trim().toUpperCase().replace(/[\s-]+/g, "_");
+  const labels: Record<string, string> = {
+    FINISHED: "Finished Airing",
+    FINISHED_AIRING: "Finished Airing",
+    RELEASING: "Currently Airing",
+    CURRENTLY_AIRING: "Currently Airing",
+    NOT_YET_RELEASED: "Not Yet Aired",
+    NOT_YET_AIRED: "Not Yet Aired",
+    CANCELLED: "Cancelled",
+    HIATUS: "Hiatus",
+  };
+  if (labels[key]) return labels[key];
+  return status
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
+
+function formatFuzzyDate(date?: {
+  year?: number | null;
+  month?: number | null;
+  day?: number | null;
+} | null) {
+  if (!date?.year) return null;
+  const month = date.month ? MONTHS[date.month - 1] : null;
+  if (month && date.day) return `${month} ${date.day}, ${date.year}`;
+  if (month) return `${month} ${date.year}`;
+  return String(date.year);
+}
+
+/** Compact aired range from catalog string or AniList start/end dates. */
+export function formatAiredRange(
+  catalogAired?: string | null,
+  media?: Pick<AniListMedia, "startDate" | "endDate"> | null,
+) {
+  const fromCatalog = catalogAired?.replace(/&nbsp;?/gi, " ").trim();
+  if (fromCatalog && fromCatalog !== "&nbsp") {
+    return fromCatalog.replace(/\s+to\s+/i, " – ");
+  }
+  const start = formatFuzzyDate(media?.startDate);
+  const end = formatFuzzyDate(media?.endDate);
+  if (start && end && start !== end) return `${start} – ${end}`;
+  return start || end || null;
+}
+
+export function formatMediaLabel(value?: string | null) {
+  if (!value) return null;
+  return value
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 export function stripHtml(html?: string | null) {
   if (!html) return "";
@@ -191,6 +319,7 @@ export async function getAniListMedia(id: number) {
       Media(id: $id, type: ANIME) {
         ${MEDIA_FIELDS}
         format
+        ${CHARACTER_FIELDS}
         relations {
           edges {
             relationType
@@ -234,6 +363,7 @@ export async function getAniListMediaByMal(malId: number) {
       Media(idMal: $idMal, type: ANIME) {
         ${MEDIA_FIELDS}
         format
+        ${CHARACTER_FIELDS}
         relations {
           edges {
             relationType

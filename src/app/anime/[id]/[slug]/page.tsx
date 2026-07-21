@@ -1,11 +1,20 @@
 import { notFound } from "next/navigation";
+import {
+  AnimeCharacters,
+  charactersFromAniList,
+} from "@/components/anime-characters";
 import { AnimeDetailHero } from "@/components/anime-detail-hero";
 import { EpisodeList } from "@/components/episode-list";
 import { ExpandableText } from "@/components/expandable-text";
 import { RelatedAnimeGrid } from "@/components/related-anime";
 import { SeasonsSection } from "@/components/seasons-section";
 import { SectionHeading } from "@/components/section-heading";
-import { resolveAniListForAnime, stripHtml } from "@/lib/anilist";
+import {
+  formatAiredRange,
+  formatMediaLabel,
+  resolveAniListForAnime,
+  stripHtml,
+} from "@/lib/anilist";
 import { getGenres, getSeries } from "@/lib/anikoto";
 import { findAnimeById, getCatalog } from "@/lib/catalog";
 import {
@@ -108,6 +117,12 @@ export default async function AnimeDetailPage({ params }: Props) {
   const episodeThumbnails = episodeMeta.thumbnails;
   const episodeFallbackImage = bg || poster;
   const aniId = anilist?.id || Number(anime.ani_id) || 0;
+  const characters = charactersFromAniList(anilist?.characters?.edges);
+  const aired = formatAiredRange(anime.aired, anilist);
+  const seasonLabel =
+    anilist?.season && anilist.seasonYear
+      ? `${formatMediaLabel(anilist.season)} ${anilist.seasonYear}`
+      : anime.season || null;
 
   return (
     <div className="relative pb-28">
@@ -149,8 +164,9 @@ export default async function AnimeDetailPage({ params }: Props) {
                 Details
               </h3>
             </div>
-            <dl className="space-y-4 text-sm">
-              <Info label="Aired" value={anime.aired} />
+            <dl className="space-y-3 text-sm">
+              <Info label="Aired" value={aired} />
+              <Info label="Season" value={seasonLabel} />
               <Info
                 label="Studios"
                 value={
@@ -160,13 +176,32 @@ export default async function AnimeDetailPage({ params }: Props) {
               />
               <Info
                 label="Type"
-                value={anime.terms_by_type?.type?.join(", ")}
+                value={
+                  formatMediaLabel(anilist?.format) ||
+                  anime.terms_by_type?.type?.join(", ")
+                }
               />
-              <Info label="Source" value={anime.source?.replace("_", " ")} />
+              <Info
+                label="Source"
+                value={
+                  formatMediaLabel(anilist?.source) ||
+                  formatMediaLabel(anime.source)
+                }
+              />
+              <Info
+                label="Episodes"
+                value={
+                  anilist?.episodes != null
+                    ? String(anilist.episodes)
+                    : anime.episodes
+                }
+              />
               {aniId > 0 && (
-                <div>
-                  <dt className="text-mute">AniList</dt>
-                  <dd className="mt-1">
+                <div className="flex items-baseline gap-3 pt-1">
+                  <dt className="w-[4.75rem] shrink-0 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-mute">
+                    AniList
+                  </dt>
+                  <dd className="min-w-0">
                     <a
                       href={`https://anilist.co/anime/${aniId}`}
                       target="_blank"
@@ -181,6 +216,8 @@ export default async function AnimeDetailPage({ params }: Props) {
             </dl>
           </aside>
         </div>
+
+        <AnimeCharacters characters={characters} />
 
         <SeasonsSection seasons={seasons} className="mt-16" />
 
@@ -218,14 +255,16 @@ export default async function AnimeDetailPage({ params }: Props) {
   );
 }
 
-function Info({ label, value }: { label: string; value?: string }) {
+function Info({ label, value }: { label: string; value?: string | null }) {
   if (!value || value === "&nbsp") return null;
   return (
-    <div>
-      <dt className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-mute">
+    <div className="flex items-baseline gap-3">
+      <dt className="w-[4.75rem] shrink-0 text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-mute">
         {label}
       </dt>
-      <dd className="mt-1.5 capitalize tracking-[-0.01em] text-cloud">{value}</dd>
+      <dd className="min-w-0 tracking-[-0.01em] text-cloud capitalize">
+        {value}
+      </dd>
     </div>
   );
 }
