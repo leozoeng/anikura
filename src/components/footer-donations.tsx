@@ -35,29 +35,40 @@ export function FooterDonations() {
   }
 
   return (
-    <div className="footer-cozy relative inline-flex w-full max-w-full flex-col gap-2 overflow-hidden rounded-2xl p-2.5 sm:w-auto sm:flex-row sm:items-center sm:gap-2.5 sm:py-1.5 sm:pl-2.5 sm:pr-1.5">
+    <div className="footer-cozy group/cozy relative inline-flex w-full max-w-full flex-col gap-2 overflow-hidden rounded-2xl p-2.5 sm:w-auto sm:flex-row sm:items-center sm:gap-2.5 sm:py-1.5 sm:pl-2.5 sm:pr-1.5">
       <span
         aria-hidden
-        className="footer-petal pointer-events-none absolute -right-1 top-1 text-[0.85rem] text-[#ffb3c7]/50"
+        className="footer-cozy-glow pointer-events-none absolute inset-0"
+      />
+      <span
+        aria-hidden
+        className="footer-petal pointer-events-none absolute -right-1 top-1 text-[0.85rem] text-[#ffb3c7]/55"
       >
         ✿
       </span>
       <span
         aria-hidden
-        className="footer-petal-slow pointer-events-none absolute bottom-1 left-[42%] text-[0.7rem] text-[#ff8caa]/35"
+        className="footer-petal-slow pointer-events-none absolute bottom-1 left-[42%] text-[0.7rem] text-[#ff8caa]/40"
       >
         ✿
+      </span>
+      <span
+        aria-hidden
+        className="footer-petal pointer-events-none absolute -left-0.5 top-[42%] text-[0.55rem] text-[#ffe8ee]/35"
+        style={{ animationDelay: "1.4s" }}
+      >
+        ♡
       </span>
 
       <div className="relative inline-flex min-w-0 items-center gap-2.5 px-0.5 sm:pr-1">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#ff8caa]/18 ring-1 ring-[#ff8caa]/35">
+        <span className="footer-heart-badge grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#ff8caa]/20 ring-1 ring-[#ff8caa]/40">
           <HeartPetal />
         </span>
         <span className="min-w-0 leading-tight">
           <span className="block text-[0.72rem] font-semibold tracking-[-0.02em] text-sakura-mist">
             Keep Anikura cozy
           </span>
-          <span className="block text-[0.62rem] tracking-[-0.01em] text-[#ffb3c7]/85">
+          <span className="block text-[0.62rem] tracking-[-0.01em] text-[#ffb3c7]/90">
             Tips keep the lights soft ♡
           </span>
         </span>
@@ -65,7 +76,7 @@ export function FooterDonations() {
 
       <span
         aria-hidden
-        className="relative hidden h-7 w-px shrink-0 bg-[#ff8caa]/22 sm:block"
+        className="relative hidden h-7 w-px shrink-0 bg-[#ff8caa]/25 sm:block"
       />
 
       <div className="relative flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-1.5">
@@ -74,10 +85,10 @@ export function FooterDonations() {
           return (
             <div
               key={d.id}
-              className="group inline-flex h-10 items-center gap-2 rounded-xl border border-white/[0.08] bg-black/25 py-1 pl-2 pr-1 transition duration-300 hover:-translate-y-0.5 hover:border-[#ff8caa]/30 hover:bg-black/40"
+              className="footer-tip-chip group inline-flex h-10 items-center gap-2 rounded-xl border border-white/[0.1] bg-black/30 py-1 pl-2 pr-1"
               title={`${d.label}: ${d.address}`}
             >
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-black/40 ring-1 ring-white/10 transition group-hover:ring-[#ff8caa]/25">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-black/45 ring-1 ring-white/12 transition duration-300 group-hover:ring-[#ff8caa]/35">
                 {d.id === "sol" ? <SolanaIcon /> : <EthereumIcon />}
               </span>
               <a
@@ -101,8 +112,8 @@ export function FooterDonations() {
                 }
                 className={`rounded-lg px-2 py-1 text-[0.68rem] font-medium transition duration-300 ${
                   isCopied
-                    ? "bg-[#ff8caa]/22 text-sakura-mist"
-                    : "text-mute hover:bg-white/[0.08] hover:text-snow"
+                    ? "footer-copied bg-[#ff8caa]/28 text-sakura-mist"
+                    : "text-mute hover:bg-white/[0.1] hover:text-snow"
                 }`}
               >
                 {isCopied ? "Copied ♡" : "Copy"}
