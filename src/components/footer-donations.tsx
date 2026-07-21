@@ -18,7 +18,7 @@ const DONATIONS = [
 ] as const;
 
 function shortAddress(address: string) {
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
+  return `${address.slice(0, 4)}…${address.slice(-3)}`;
 }
 
 export function FooterDonations() {
@@ -28,56 +28,102 @@ export function FooterDonations() {
     try {
       await navigator.clipboard.writeText(address);
       setCopied(id);
-      window.setTimeout(() => setCopied(null), 1800);
+      window.setTimeout(() => setCopied(null), 1600);
     } catch {
       // ignore
     }
   }
 
   return (
-    <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
-      {DONATIONS.map((d) => {
-        const isCopied = copied === d.id;
-        return (
-          <div
-            key={d.id}
-            className="footer-donate-row group flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2.5 py-2 sm:min-w-[14rem]"
-            title={`${d.label}: ${d.address}`}
-          >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-black/35 ring-1 ring-white/10 transition duration-300 group-hover:ring-white/20">
-              {d.id === "sol" ? <SolanaIcon /> : <EthereumIcon />}
-            </span>
+    <div className="footer-cozy relative inline-flex w-full max-w-full flex-col gap-2 overflow-hidden rounded-2xl p-2.5 sm:w-auto sm:flex-row sm:items-center sm:gap-2.5 sm:py-1.5 sm:pl-2.5 sm:pr-1.5">
+      <span
+        aria-hidden
+        className="footer-petal pointer-events-none absolute -right-1 top-1 text-[0.85rem] text-[#ffb3c7]/50"
+      >
+        ✿
+      </span>
+      <span
+        aria-hidden
+        className="footer-petal-slow pointer-events-none absolute bottom-1 left-[42%] text-[0.7rem] text-[#ff8caa]/35"
+      >
+        ✿
+      </span>
 
-            <a
-              href={d.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="min-w-0 flex-1 leading-tight"
-            >
-              <span className="block text-[0.78rem] font-semibold tracking-[-0.02em] text-snow transition group-hover:text-white">
-                {d.label}
-              </span>
-              <span className="block font-mono text-[0.68rem] text-mute transition group-hover:text-cloud">
-                {shortAddress(d.address)}
-              </span>
-            </a>
+      <div className="relative inline-flex min-w-0 items-center gap-2.5 px-0.5 sm:pr-1">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#ff8caa]/18 ring-1 ring-[#ff8caa]/35">
+          <HeartPetal />
+        </span>
+        <span className="min-w-0 leading-tight">
+          <span className="block text-[0.72rem] font-semibold tracking-[-0.02em] text-sakura-mist">
+            Keep Anikura cozy
+          </span>
+          <span className="block text-[0.62rem] tracking-[-0.01em] text-[#ffb3c7]/85">
+            Tips keep the lights soft ♡
+          </span>
+        </span>
+      </div>
 
-            <button
-              type="button"
-              onClick={() => void copy(d.id, d.address)}
-              aria-label={isCopied ? `${d.label} copied` : `Copy ${d.label} address`}
-              className={`inline-flex h-9 min-w-[4.25rem] shrink-0 items-center justify-center rounded-lg text-[0.72rem] font-semibold tracking-[-0.01em] transition duration-300 ${
-                isCopied
-                  ? "bg-[#ff8caa]/22 text-sakura-mist ring-1 ring-[#ff8caa]/35"
-                  : "bg-white/[0.06] text-cloud ring-1 ring-white/10 hover:bg-white/[0.1] hover:text-snow"
-              }`}
+      <span
+        aria-hidden
+        className="relative hidden h-7 w-px shrink-0 bg-[#ff8caa]/22 sm:block"
+      />
+
+      <div className="relative flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-1.5">
+        {DONATIONS.map((d) => {
+          const isCopied = copied === d.id;
+          return (
+            <div
+              key={d.id}
+              className="group inline-flex h-10 items-center gap-2 rounded-xl border border-white/[0.08] bg-black/25 py-1 pl-2 pr-1 transition duration-300 hover:-translate-y-0.5 hover:border-[#ff8caa]/30 hover:bg-black/40"
+              title={`${d.label}: ${d.address}`}
             >
-              {isCopied ? "Copied ✓" : "Copy"}
-            </button>
-          </div>
-        );
-      })}
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-black/40 ring-1 ring-white/10 transition group-hover:ring-[#ff8caa]/25">
+                {d.id === "sol" ? <SolanaIcon /> : <EthereumIcon />}
+              </span>
+              <a
+                href={d.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="min-w-0 leading-tight"
+              >
+                <span className="block text-[0.68rem] font-medium tracking-[-0.01em] text-snow">
+                  {d.label}
+                </span>
+                <span className="block font-mono text-[0.62rem] text-mute">
+                  {shortAddress(d.address)}
+                </span>
+              </a>
+              <button
+                type="button"
+                onClick={() => void copy(d.id, d.address)}
+                aria-label={
+                  isCopied ? `${d.label} copied` : `Copy ${d.label} address`
+                }
+                className={`rounded-lg px-2 py-1 text-[0.68rem] font-medium transition duration-300 ${
+                  isCopied
+                    ? "bg-[#ff8caa]/22 text-sakura-mist"
+                    : "text-mute hover:bg-white/[0.08] hover:text-snow"
+                }`}
+              >
+                {isCopied ? "Copied ♡" : "Copy"}
+              </button>
+            </div>
+          );
+        })}
+      </div>
     </div>
+  );
+}
+
+function HeartPetal() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden>
+      <path
+        fill="#ffb3c7"
+        d="M12 20.4c-.4 0-.7-.1-1-.4C7.2 16.4 4 13.5 4 10.1 4 7.5 6 5.6 8.5 5.6c1.4 0 2.6.6 3.5 1.7.9-1.1 2.1-1.7 3.5-1.7C17.9 5.6 20 7.5 20 10.1c0 3.4-3.2 6.3-7 9.9-.3.3-.6.4-1 .4Z"
+      />
+      <circle cx="9.2" cy="9.4" r="0.9" fill="#ffe8ee" opacity="0.85" />
+    </svg>
   );
 }
 

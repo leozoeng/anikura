@@ -75,14 +75,14 @@ export function HeaderAuth({
   if (!email) {
     return (
       <>
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-1 md:flex">
           <button
             type="button"
             onClick={() => {
               setMode("signin");
               setModalOpen(true);
             }}
-            className="group relative inline-flex h-9 items-center rounded-full px-3.5 text-[0.8125rem] font-medium tracking-[-0.02em] text-cloud transition duration-300 hover:bg-white/[0.06] hover:text-snow"
+            className="rounded-full px-3.5 py-1.5 text-[0.8125rem] tracking-[-0.01em] text-mute transition duration-300 hover:bg-white/[0.05] hover:text-snow"
           >
             Sign in
           </button>
@@ -92,15 +92,9 @@ export function HeaderAuth({
               setMode("signup");
               setModalOpen(true);
             }}
-            className="header-auth-cta group relative inline-flex h-9 items-center gap-1.5 overflow-hidden rounded-full px-4 text-[0.8125rem] font-semibold tracking-[-0.02em] text-[#0a0a0c] transition duration-300 hover:brightness-[1.04] active:scale-[0.98]"
+            className="rounded-full bg-white/[0.08] px-3.5 py-1.5 text-[0.8125rem] tracking-[-0.01em] text-snow shadow-[inset_0_0_0_1px_rgba(255,140,170,0.22)] transition duration-300 hover:bg-white/[0.12] hover:shadow-[inset_0_0_0_1px_rgba(255,140,170,0.35)]"
           >
-            <span className="relative z-[1]">Create account</span>
-            <span
-              aria-hidden
-              className="relative z-[1] text-[0.95em] text-black/35 transition duration-300 group-hover:translate-x-0.5 group-hover:text-black/55"
-            >
-              →
-            </span>
+            Create account
           </button>
         </div>
         <AuthModal

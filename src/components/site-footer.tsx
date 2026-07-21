@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AnikuraLogo } from "@/components/anikura-logo";
 import { FooterDonations } from "@/components/footer-donations";
 
-const explore = [
+const links = [
   { href: "/", label: "Home" },
   { href: "/browse", label: "Browse" },
   { href: "/browse?sort=score", label: "Top rated" },
@@ -17,106 +17,84 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="site-chrome site-footer relative z-10 mt-14 pb-[calc(4.25rem+env(safe-area-inset-bottom))] sm:mt-16 md:pb-0">
+    <footer className="site-chrome site-footer relative z-10 mt-12 pb-[calc(4.25rem+env(safe-area-inset-bottom))] sm:mt-14 md:pb-0">
       <div className="relative overflow-hidden border-t border-white/[0.07]">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-        >
-          <div className="absolute -left-[8%] top-[-40%] h-[18rem] w-[18rem] rounded-full bg-[radial-gradient(circle,rgba(255,140,170,0.12),transparent_68%)] blur-3xl" />
-          <div className="absolute -right-[6%] bottom-[-35%] h-[16rem] w-[16rem] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.05),transparent_70%)] blur-3xl" />
-          <div className="site-footer-sheen absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ffb3c7]/35 to-transparent" />
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-10 bottom-0 h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(255,140,170,0.12),transparent_70%)] blur-2xl" />
+          <div className="absolute right-[12%] top-[-20%] h-28 w-28 rounded-full bg-[radial-gradient(circle,rgba(88,101,242,0.1),transparent_70%)] blur-2xl" />
+          <div className="site-footer-sheen absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ffb3c7]/30 to-transparent" />
         </div>
 
-        <div className="relative mx-auto max-w-[1400px] px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-          {/* Brand */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="max-w-md">
-              <AnikuraLogo size={30} withWordmark href="/" />
-              <p className="mt-3 text-[1.05rem] font-medium tracking-[-0.03em] text-snow/90">
+        <div className="relative mx-auto max-w-[1400px] px-4 py-7 sm:px-6 sm:py-8 lg:px-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+            <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+              <AnikuraLogo size={26} withWordmark href="/" />
+              <span
+                aria-hidden
+                className="hidden h-3 w-px bg-white/15 sm:block"
+              />
+              <p className="text-sm tracking-[-0.02em] text-mute">
                 Quiet nights. Loud stories.
-              </p>
-              <p className="mt-1.5 text-sm leading-relaxed text-cloud/80">
-                A soft theater for the next episode — settle in, stay a while.
               </p>
             </div>
 
+            <div className="flex w-full flex-col gap-2.5 sm:flex-row sm:items-stretch lg:w-auto lg:justify-end">
+              <FooterDonations />
+              <a
+                href={DISCORD}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group footer-discord-invite relative inline-flex min-h-[3.35rem] shrink-0 items-center gap-3 overflow-hidden rounded-2xl px-3 py-2.5 sm:min-w-[15.5rem]"
+              >
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent_30%,rgba(255,255,255,0.08)_48%,transparent_62%)] opacity-0 transition duration-500 group-hover:translate-x-1 group-hover:opacity-100"
+                />
+                <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#5865F2]/22 text-[#c5caff] ring-1 ring-[#5865F2]/35 transition duration-300 group-hover:scale-[1.04] group-hover:bg-[#5865F2]/32 group-hover:text-white">
+                  <DiscordIcon />
+                  <span className="sakura-dot absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#57F287] ring-2 ring-[#0c0c10]" />
+                </span>
+                <span className="relative min-w-0 flex-1 leading-tight">
+                  <span className="block text-sm font-semibold tracking-[-0.02em] text-snow">
+                    Join Discord
+                  </span>
+                  <span className="block text-[0.68rem] text-[#aab0ff]/90">
+                    Say hi · share finds · report bugs
+                  </span>
+                </span>
+                <span className="relative inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-white/[0.1] px-3 text-[0.78rem] font-semibold tracking-[-0.02em] text-snow ring-1 ring-white/15 transition duration-300 group-hover:bg-white/[0.16] group-hover:ring-[#aab0ff]/35">
+                  Open
+                  <span
+                    aria-hidden
+                    className="text-mute transition duration-300 group-hover:translate-x-0.5 group-hover:text-snow"
+                  >
+                    →
+                  </span>
+                </span>
+              </a>
+            </div>
+          </div>
+
+          <nav
+            aria-label="Footer"
+            className="mt-5 flex flex-wrap items-center gap-x-1 gap-y-1 border-t border-white/[0.06] pt-4"
+          >
+            {links.map((item) => (
+              <Link key={item.label} href={item.href} className="footer-nav-link">
+                {item.label}
+              </Link>
+            ))}
             <a
               href={DISCORD}
               target="_blank"
               rel="noopener noreferrer"
-              className="group footer-discord inline-flex w-full items-center justify-between gap-4 rounded-2xl px-4 py-3.5 sm:w-auto sm:min-w-[17rem]"
+              className="footer-nav-link"
             >
-              <span className="flex min-w-0 items-center gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#5865F2]/18 text-[#aab0ff] ring-1 ring-[#5865F2]/30 transition duration-300 group-hover:bg-[#5865F2]/28 group-hover:text-[#c5caff]">
-                  <DiscordIcon />
-                </span>
-                <span className="min-w-0 leading-tight">
-                  <span className="block text-sm font-semibold tracking-[-0.02em] text-snow">
-                    Join the lobby
-                  </span>
-                  <span className="block text-[0.72rem] text-mute">
-                    Feedback, bugs & cozy chat
-                  </span>
-                </span>
-              </span>
-              <span className="header-auth-cta inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold tracking-[-0.02em] text-[#0a0a0c] transition duration-300 group-hover:brightness-[1.04]">
-                Open
-                <span
-                  aria-hidden
-                  className="text-black/35 transition duration-300 group-hover:translate-x-0.5 group-hover:text-black/55"
-                >
-                  →
-                </span>
-              </span>
+              Community
             </a>
-          </div>
+          </nav>
 
-          {/* Interactive strips */}
-          <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
-            <nav
-              aria-label="Footer"
-              className="footer-panel rounded-2xl p-4 sm:p-5"
-            >
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-mute">
-                Explore
-              </p>
-              <ul className="mt-3 flex flex-wrap gap-2">
-                {explore.map((item) => (
-                  <li key={item.label}>
-                    <Link href={item.href} className="footer-chip">
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-                <li>
-                  <a
-                    href={DISCORD}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="footer-chip"
-                  >
-                    Community
-                  </a>
-                </li>
-              </ul>
-            </nav>
-
-            <div className="footer-panel rounded-2xl p-4 sm:p-5">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-mute">
-                Keep the lights on
-              </p>
-              <p className="mt-1.5 text-sm tracking-[-0.02em] text-cloud/85">
-                Optional tips help Anikura stay cozy — thank you.
-              </p>
-              <div className="mt-3.5">
-                <FooterDonations />
-              </div>
-            </div>
-          </div>
-
-          {/* Legal */}
-          <div className="mt-8 flex flex-col gap-3 border-t border-white/[0.06] pt-5 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
+          <div className="mt-4 flex flex-col gap-2 border-t border-white/[0.06] pt-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
             <p className="max-w-2xl text-[0.75rem] leading-relaxed text-mute/90">
               Anikura aggregates listings and does not host media. Streams are
               from third parties — DMCA and copyright requests go to those
@@ -135,8 +113,8 @@ export function SiteFooter() {
 function DiscordIcon() {
   return (
     <svg
-      width="18"
-      height="18"
+      width="17"
+      height="17"
       viewBox="0 0 24 24"
       fill="currentColor"
       aria-hidden
