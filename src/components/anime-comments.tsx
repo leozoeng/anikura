@@ -6,10 +6,12 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type FormEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { ProfilePeekCard } from "@/components/profile/profile-peek-card";
 import { SectionHeading } from "@/components/section-heading";
 import {
@@ -98,6 +100,8 @@ function AuthorAvatar({
   );
 }
 
+const PEEK_CARD_WIDTH = 288; // w-72
+
 function AuthorHoverName({
   userId,
   name,
@@ -106,7 +110,47 @@ function AuthorHoverName({
   name: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const triggerRef = useRef<HTMLSpanElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPos(null);
+      return;
+    }
+
+    const place = () => {
+      const el = triggerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      let left = rect.left;
+      left = Math.max(
+        8,
+        Math.min(left, window.innerWidth - PEEK_CARD_WIDTH - 8),
+      );
+      setPos({ top: rect.bottom, left });
+    };
+
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open]);
 
   function clearClose() {
     if (closeTimer.current) {
@@ -120,8 +164,28 @@ function AuthorHoverName({
     closeTimer.current = setTimeout(() => setOpen(false), 140);
   }
 
+  const peek =
+    open && mounted
+      ? createPortal(
+          <div
+            className="fixed z-[220] pt-2"
+            style={{
+              top: pos?.top ?? -9999,
+              left: pos?.left ?? -9999,
+              visibility: pos ? "visible" : "hidden",
+            }}
+            onMouseEnter={clearClose}
+            onMouseLeave={scheduleClose}
+          >
+            <ProfilePeekCard userId={userId} />
+          </div>,
+          document.body,
+        )
+      : null;
+
   return (
     <span
+      ref={triggerRef}
       className="relative inline-block"
       onMouseEnter={() => {
         clearClose();
@@ -140,15 +204,7 @@ function AuthorHoverName({
       >
         {name}
       </Link>
-      {open ? (
-        <span
-          className="absolute left-0 top-full z-30 pt-2"
-          onMouseEnter={clearClose}
-          onMouseLeave={scheduleClose}
-        >
-          <ProfilePeekCard userId={userId} />
-        </span>
-      ) : null}
+      {peek}
     </span>
   );
 }
