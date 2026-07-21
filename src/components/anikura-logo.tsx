@@ -24,7 +24,7 @@ export function AnikuraMark({
       height={size}
       sizes={`${size}px`}
       quality={100}
-      className={`rounded-[0.45rem] object-cover ${className}`}
+      className={`object-contain ${className}`}
       style={{ width: size, height: size }}
       priority
     />
