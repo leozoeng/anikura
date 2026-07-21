@@ -1,14 +1,10 @@
 import { getGenres, getRecentAnime } from "../src/lib/anikoto";
 import { getCatalog, getSyncMeta, saveCatalog } from "../src/lib/catalog";
+import { LIGHT_REFRESH_PAGES } from "../src/lib/catalog-sync";
 import type { CatalogAnime } from "../src/lib/types";
 
 const PER_PAGE = 50;
 const DELAY_MS = 400;
-/**
- * When Anikoto totals match, still refresh this many leading pages.
- * Recent / airing titles (and their episode counts) live near the front.
- */
-const LIGHT_REFRESH_PAGES = 20;
 
 function parsePagesArg(): number | null {
   const arg = process.argv.find((a) => a.startsWith("--pages="));

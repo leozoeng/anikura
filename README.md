@@ -23,9 +23,18 @@ npm run sync:check    # exit 0 if local matches Anikoto totals
 
 Pulls the Anikoto catalog (~9k titles), builds genre indexes into `data/`.
 
-**Auto-sync:** GitHub Action `.github/workflows/sync-catalog.yml` runs every 6 hours and on manual **Actions → Sync catalog → Run workflow**. Light syncs refresh the newest ~1,000 titles (episode counts, scores, new entries). If totals drift, it does a full scrape. Changed catalog files are committed so Vercel redeploys with a fresh library.
+**Episodes:** Watch and series pages always fetch the live Anikoto episode list (`cache: no-store`) — new episodes appear as soon as Anikoto lists them.
 
-**Episodes:** Watch and series pages always fetch the live Anikoto episode list (`cache: no-store`) — new episodes appear as soon as Anikoto lists them, without waiting for a catalog sync.
+**Auto catalog sync (Vercel Cron):** every 6 hours `GET /api/cron/catalog-sync` refreshes the newest ~1,000 titles and stores a compact overlay in Supabase (`catalog_live`). Browse/search merge that overlay on top of `data/catalog.json`.
+
+Set these on Vercel (Production):
+
+| Variable | Purpose |
+|---|---|
+| `SUPABASE_SERVICE_ROLE_KEY` | Writes the live overlay (server-only) |
+| `CRON_SECRET` | Bearer token Vercel Cron sends as `Authorization` |
+
+**Optional GitHub Action:** `.github/workflows/sync-catalog.yml` can also commit full `data/catalog.json` refreshes (needs a GitHub token with the `workflow` scope to push the workflow file). Manual: **Actions → Sync catalog → Run workflow**.
 
 ## Auth & admin (Supabase)
 

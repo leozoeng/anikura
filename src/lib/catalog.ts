@@ -1,5 +1,9 @@
 import { promises as fs } from "fs";
 import path from "path";
+import {
+  fetchCatalogLive,
+  mergeCatalogWithOverlay,
+} from "./catalog-live";
 import type { CatalogAnime, GenreStat, SyncMeta } from "./types";
 import { slugifyGenre } from "./anikoto";
 
@@ -29,16 +33,36 @@ export async function getCatalog(): Promise<CatalogAnime[]> {
   if (catalogMem && now - catalogMem.at < CATALOG_MEM_TTL_MS) {
     return catalogMem.data;
   }
-  const data = (await readJson<CatalogAnime[]>(CATALOG_PATH)) ?? [];
+  const base = (await readJson<CatalogAnime[]>(CATALOG_PATH)) ?? [];
+  const live = await fetchCatalogLive();
+  const data = mergeCatalogWithOverlay(base, live?.overlay);
   catalogMem = { data, at: now };
   return data;
 }
 
 export async function getGenreStats(): Promise<GenreStat[]> {
-  return (await readJson<GenreStat[]>(GENRES_PATH)) ?? [];
+  const catalog = await getCatalog();
+  const genreMap = new Map<string, number>();
+  for (const anime of catalog) {
+    for (const genre of anime.genres ?? []) {
+      genreMap.set(genre, (genreMap.get(genre) ?? 0) + 1);
+    }
+  }
+  if (genreMap.size === 0) {
+    return (await readJson<GenreStat[]>(GENRES_PATH)) ?? [];
+  }
+  return [...genreMap.entries()]
+    .map(([name, count]) => ({
+      name,
+      slug: slugifyGenre(name),
+      count,
+    }))
+    .sort((a, b) => b.count - a.count);
 }
 
 export async function getSyncMeta(): Promise<SyncMeta | null> {
+  const live = await fetchCatalogLive();
+  if (live?.meta?.syncedAt) return live.meta;
   return readJson<SyncMeta>(META_PATH);
 }
 
