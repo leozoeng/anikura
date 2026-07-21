@@ -67,11 +67,11 @@ export function AnimeCharacters({
         subtitle="Main cast and Japanese voice actors."
       />
 
-      <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <ul className="fade-x scrollbar-none mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:gap-3.5">
         {characters.map((c) => (
           <li
             key={c.id}
-            className="panel-soft flex items-center gap-3 p-3 sm:gap-3.5 sm:p-3.5"
+            className="panel-soft flex w-[240px] shrink-0 snap-start items-center gap-3 p-3 sm:w-[260px] sm:gap-3.5 sm:p-3.5"
           >
             <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl ring-1 ring-white/10 sm:h-[4.5rem] sm:w-[4.5rem]">
               {c.image ? (
