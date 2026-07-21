@@ -1,3 +1,5 @@
+export type ProfileBadgeId = "dev" | "vip";
+
 export type PublicProfile = {
   id: string;
   email: string | null;
@@ -11,12 +13,50 @@ export type PublicProfile = {
   accent_hex?: string | null;
   /** Soft ambient wash derived from accent_hex */
   accent_ambient?: boolean | null;
+  /** Persisted public badges (e.g. dev, vip) */
+  badges?: string[] | null;
 };
 
 export const DEFAULT_ACCENT_HEX = "#5865F2";
 
 export const PROFILE_SELECT =
-  "id, email, nickname, bio, avatar_url, banner_url, created_at, role, accent_hex, accent_ambient";
+  "id, email, nickname, bio, avatar_url, banner_url, created_at, role, accent_hex, accent_ambient, badges";
+
+/** Known badge ids, display order. */
+export const PROFILE_BADGE_ORDER: ProfileBadgeId[] = ["dev", "vip"];
+
+/**
+ * Email → badges allowlist (reliable for staff/VIP even before DB seed).
+ * Dev is also inferred from `role === "admin"`.
+ */
+const BADGE_EMAIL_ALLOWLIST: Record<string, ProfileBadgeId[]> = {
+  "leozoeng@icloud.com": ["dev", "vip"],
+};
+
+function isKnownBadge(value: string): value is ProfileBadgeId {
+  return value === "dev" || value === "vip";
+}
+
+/** Merge DB badges + email allowlist + admin role → ordered unique list. */
+export function resolveProfileBadges(
+  profile: Pick<PublicProfile, "email" | "role" | "badges">,
+): ProfileBadgeId[] {
+  const set = new Set<ProfileBadgeId>();
+
+  for (const raw of profile.badges ?? []) {
+    const id = String(raw).trim().toLowerCase();
+    if (isKnownBadge(id)) set.add(id);
+  }
+
+  const email = profile.email?.trim().toLowerCase() ?? "";
+  if (email && BADGE_EMAIL_ALLOWLIST[email]) {
+    for (const id of BADGE_EMAIL_ALLOWLIST[email]) set.add(id);
+  }
+
+  if (profile.role === "admin") set.add("dev");
+
+  return PROFILE_BADGE_ORDER.filter((id) => set.has(id));
+}
 
 export function displayName(
   profile: Pick<PublicProfile, "nickname" | "email">,

@@ -11,18 +11,22 @@ import {
   handleFromProfile,
   hexToRgbChannels,
   resolveAccentHex,
+  resolveProfileBadges,
   type PublicProfile,
 } from "@/lib/profile";
 import {
   getContinueWatching,
   type WatchProgress,
 } from "@/lib/progress";
+import { ProfileBadges } from "@/components/profile/profile-badges";
 import { ProfileEditPanel } from "@/components/profile/profile-edit-panel";
 
 type Props = {
   profile: PublicProfile;
   list: AnimeListEntry[];
   isOwner: boolean;
+  /** Signed-in viewer looking at someone else — show Quit → /profile */
+  showQuitProfile?: boolean;
 };
 
 type ProfileTab = "board" | "activity" | "watch";
@@ -56,7 +60,12 @@ function relativeTime(ms: number) {
   return formatMemberSince(new Date(ms).toISOString());
 }
 
-export function ProfileView({ profile, list, isOwner }: Props) {
+export function ProfileView({
+  profile,
+  list,
+  isOwner,
+  showQuitProfile = false,
+}: Props) {
   const [editing, setEditing] = useState(false);
   const [tab, setTab] = useState<ProfileTab>("board");
   const [live, setLive] = useState(profile);
@@ -68,6 +77,7 @@ export function ProfileView({ profile, list, isOwner }: Props) {
   const ambient = accentAmbientEnabled(live);
   const rgb = hexToRgbChannels(accent);
   const memberSince = formatMemberSince(live.created_at);
+  const badges = resolveProfileBadges(live);
 
   useEffect(() => {
     if (!isOwner) {
@@ -154,6 +164,21 @@ export function ProfileView({ profile, list, isOwner }: Props) {
       ) : null}
 
       <div className="relative mx-auto w-full max-w-[1080px]">
+        {showQuitProfile ? (
+          <div className="sticky top-14 z-30 mb-3 flex items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-void/85 px-3.5 py-2.5 backdrop-blur-md sm:top-16 sm:px-4">
+            <p className="min-w-0 truncate text-sm text-[#b5bac1]">
+              Viewing{" "}
+              <span className="font-medium text-snow">{name}</span>
+            </p>
+            <Link
+              href="/profile"
+              className="shrink-0 rounded-full bg-white/[0.08] px-3.5 py-1.5 text-[0.8125rem] font-medium text-snow transition hover:bg-white/[0.12]"
+            >
+              Quit profile
+            </Link>
+          </div>
+        ) : null}
+
         <div
           className="overflow-hidden rounded-[28px] border border-white/[0.08] shadow-[0_40px_100px_rgba(0,0,0,0.55)]"
           style={{
@@ -220,9 +245,12 @@ export function ProfileView({ profile, list, isOwner }: Props) {
 
                 <div className="mt-3 flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h1 className="truncate text-[1.55rem] font-bold leading-tight tracking-[-0.03em] text-snow">
-                      {name}
-                    </h1>
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
+                      <h1 className="truncate text-[1.55rem] font-bold leading-tight tracking-[-0.03em] text-snow">
+                        {name}
+                      </h1>
+                      <ProfileBadges badges={badges} />
+                    </div>
                     <p className="mt-0.5 truncate text-sm text-[#b5bac1]">
                       {handle}
                     </p>

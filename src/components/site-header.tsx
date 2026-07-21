@@ -98,7 +98,9 @@ export function SiteHeader({
             const active =
               link.href === "/"
                 ? pathname === "/"
-                : pathname.startsWith(link.href);
+                : link.href === "/profile"
+                  ? pathname === "/profile" || pathname.startsWith("/u/")
+                  : pathname.startsWith(link.href);
             return (
               <Link
                 key={link.href}
@@ -183,7 +185,9 @@ export function SiteHeader({
             const active =
               link.href === "/"
                 ? pathname === "/"
-                : pathname.startsWith(link.href);
+                : link.href === "/profile"
+                  ? pathname === "/profile" || pathname.startsWith("/u/")
+                  : pathname.startsWith(link.href);
             return (
               <Link
                 key={link.href}

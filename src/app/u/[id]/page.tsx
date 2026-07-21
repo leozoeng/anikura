@@ -45,11 +45,14 @@ export default async function PublicProfilePage({ params }: Props) {
 
   if (!profile) notFound();
 
+  const isOwner = me?.id === id;
+
   return (
     <ProfileView
       profile={profile as PublicProfile}
       list={(list ?? []) as AnimeListEntry[]}
-      isOwner={me?.id === id}
+      isOwner={isOwner}
+      showQuitProfile={Boolean(me) && !isOwner}
     />
   );
 }
