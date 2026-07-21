@@ -76,7 +76,8 @@ type Props = {
   prevHref?: string;
   nextHref?: string;
   nextTitle?: string;
-  nextAirLabel?: string | null;
+  nextAirAt?: number | null;
+  nextAirEp?: number | null;
   hasSub: boolean;
   hasDub: boolean;
   durationMin?: number;
@@ -108,7 +109,8 @@ export function WatchExperience(props: Props) {
     prevHref,
     nextHref,
     nextTitle,
-    nextAirLabel,
+    nextAirAt,
+    nextAirEp,
     hasSub,
     hasDub,
     durationMin,
@@ -429,7 +431,8 @@ export function WatchExperience(props: Props) {
                 recommendations={recommendations}
                 related={related}
                 seasons={seasons}
-                nextAirLabel={nextAirLabel}
+                nextAirAt={nextAirAt}
+                nextAirEp={nextAirEp}
                 className="min-w-0 self-start"
               />
 

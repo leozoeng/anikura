@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { NextAirCountdown } from "@/components/next-air-countdown";
 import { RelatedAnimeList } from "@/components/related-anime";
 import { decodeEntities } from "@/lib/anilist";
 import { watchHref } from "@/lib/anikoto";
@@ -33,7 +34,8 @@ type Props = {
   related: RelatedEntry[];
   seasons?: SeasonEntry[];
   recommendations: RelatedMediaCard[];
-  nextAirLabel?: string | null;
+  nextAirAt?: number | null;
+  nextAirEp?: number | null;
   className?: string;
 };
 
@@ -48,7 +50,8 @@ export function WatchSidebar({
   related,
   seasons = [],
   recommendations,
-  nextAirLabel,
+  nextAirAt = null,
+  nextAirEp = null,
   className = "",
 }: Props) {
   const [query, setQuery] = useState("");
@@ -301,11 +304,8 @@ export function WatchSidebar({
         ) : null}
       </div>
 
-      {nextAirLabel ? (
-        <div className="inline-flex items-center gap-2 self-start rounded-full bg-raised px-3.5 py-2 text-xs font-medium text-cloud ring-1 ring-white/10">
-          <span aria-hidden>🔔</span>
-          {nextAirLabel}
-        </div>
+      {nextAirAt ? (
+        <NextAirCountdown airsAt={nextAirAt} episode={nextAirEp} />
       ) : null}
 
       <RelatedAnimeList

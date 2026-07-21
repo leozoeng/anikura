@@ -121,18 +121,12 @@ export default async function WatchPage({ params, searchParams }: Props) {
 
   const nextTitle = next ? episodeDisplayTitle(next) : undefined;
 
-  let nextAirLabel: string | null = null;
-  if (anime.next_air_schedule_time) {
-    const ms = anime.next_air_schedule_time * 1000 - Date.now();
-    if (ms > 0) {
-      const days = Math.ceil(ms / (1000 * 60 * 60 * 24));
-      const epLabel = anime.next_air_ep ? ` ep ${anime.next_air_ep}` : "";
-      nextAirLabel =
-        days <= 1
-          ? `Next${epLabel} airing soon`
-          : `Next${epLabel} airing in ${days} days`;
-    }
-  }
+  const nextAirAt =
+    anime.next_air_schedule_time &&
+    anime.next_air_schedule_time * 1000 > Date.now()
+      ? anime.next_air_schedule_time
+      : null;
+  const nextAirEp = anime.next_air_ep ?? null;
 
   return (
     <WatchExperience
@@ -176,7 +170,8 @@ export default async function WatchPage({ params, searchParams }: Props) {
       prevHref={prevHref}
       nextHref={nextHref}
       nextTitle={nextTitle}
-      nextAirLabel={nextAirLabel}
+      nextAirAt={nextAirAt}
+      nextAirEp={nextAirEp}
       hasSub={hasSub}
       hasDub={hasDub}
       durationMin={24}
