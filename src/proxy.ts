@@ -2,6 +2,24 @@ import { type NextRequest, NextResponse } from "next/server";
 import { vanityUsernameFromParam } from "@/lib/profile";
 import { updateSession } from "@/lib/supabase/middleware";
 
+/**
+ * Normalize vanity pathnames. Some clients / CDNs send `/%40user` instead of `/@user`.
+ * `nextUrl.pathname` may leave `%40` encoded — decode so the `/@…` rewrite still runs.
+ */
+export function vanityPathname(pathname: string): string {
+  let path = pathname;
+  try {
+    path = decodeURIComponent(pathname);
+  } catch {
+    path = pathname;
+  }
+  // Literal "%40" that survived decoding (double-encoded or partial).
+  if (path.startsWith("/%40")) {
+    path = `/@${path.slice(4)}`;
+  }
+  return path;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
@@ -19,7 +37,8 @@ export async function proxy(request: NextRequest) {
 
   // solo.to-style vanity: `/@username` → internal `/u/username`.
   // Do not use `app/@…` folders — those are Next.js parallel routes.
-  const atMatch = /^\/@([^/]+)$/.exec(pathname);
+  // next.config.ts also rewrites these as a Vercel-safe backup.
+  const atMatch = /^\/@([^/]+)$/.exec(vanityPathname(pathname));
   if (atMatch) {
     const handle = vanityUsernameFromParam(atMatch[1]);
     if (!handle) {
@@ -43,6 +62,12 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    /*
+     * Explicit vanity matchers first — `@` / `%40` paths must always hit proxy
+     * even if the catch-all matcher semantics change across Next.js versions.
+     */
+    "/@:path*",
+    "/%40:path*",
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

@@ -24,6 +24,26 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  /**
+   * solo.to-style bio links: `/@username` → `/u/username`.
+   * Proxy (`src/proxy.ts`) also rewrites these (and refreshes the auth session).
+   * Config rewrites are a Vercel/CDN-safe backup so vanity URLs still resolve
+   * if the proxy matcher misses an edge case (e.g. encoded `%40`).
+   * Never use `app/@…` folders — those are parallel routes.
+   */
+  async rewrites() {
+    return [
+      {
+        source: "/@:username",
+        destination: "/u/:username",
+      },
+      {
+        source: "/%40:username",
+        destination: "/u/:username",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
