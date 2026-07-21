@@ -140,7 +140,7 @@ export function HeaderAuth({
               className="mt-1 block px-3.5 py-2.5 text-sm tracking-[-0.01em] text-cloud transition hover:bg-white/[0.06] hover:text-snow"
               onClick={() => setMenuOpen(false)}
             >
-              Profile
+              Social
             </Link>
             {isAdmin ? (
               <Link

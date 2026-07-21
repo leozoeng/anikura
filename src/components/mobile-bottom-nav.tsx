@@ -30,7 +30,7 @@ const items = [
   },
   {
     href: "/profile",
-    label: "Profile",
+    label: "Social",
     match: (p: string) =>
       p.startsWith("/profile") || p.startsWith("/u/") || p.startsWith("/@"),
     icon: ProfileIcon,

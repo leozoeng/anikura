@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export const metadata = {
-  title: "Profile",
+  title: "Social",
 };
 
 export default async function ProfilePage() {
