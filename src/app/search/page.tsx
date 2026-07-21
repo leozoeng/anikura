@@ -40,18 +40,13 @@ export default async function SearchPage({ searchParams }: Props) {
       <h1 className="mt-2 text-[clamp(1.85rem,7vw,4rem)] font-semibold tracking-[-0.05em]">
         {query || "Find a title"}
       </h1>
-      <SearchPageForm initialQuery={query} />
-      <p className="mt-3 text-sm text-cloud sm:text-base">
-        {query
-          ? `${results.length} result${results.length === 1 ? "" : "s"}`
-          : "Type a title, studio, or vibe."}
-      </p>
-
-      <div className="mt-8 grid grid-cols-2 gap-x-3 gap-y-6 sm:mt-12 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-        {results.map((anime) => (
-          <AnimePoster key={anime.id} anime={anime} />
-        ))}
-      </div>
+      <SearchPageForm initialQuery={query} serverResultCount={results.length}>
+        <div className="mt-8 grid grid-cols-2 gap-x-3 gap-y-6 sm:mt-12 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          {results.map((anime) => (
+            <AnimePoster key={anime.id} anime={anime} />
+          ))}
+        </div>
+      </SearchPageForm>
     </div>
   );
 }
