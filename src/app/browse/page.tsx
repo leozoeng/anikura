@@ -84,12 +84,12 @@ export default async function BrowsePage({ searchParams }: Props) {
           );
         })}
         {ghibli.length > 0 ? (
-          <a
-            href="#ghibli"
+          <Link
+            href="/ghibli"
             className="filter-pill !border-[#c5d4b8]/25 !text-[#c5d4b8]"
           >
             Ghibli
-          </a>
+          </Link>
         ) : null}
       </div>
 

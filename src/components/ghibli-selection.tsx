@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { AnimePoster } from "@/components/anime-poster";
 import {
   ghibliMiyazakiCount,
   type GhibliCatalogEntry,
@@ -11,114 +10,112 @@ type Props = {
   entries: GhibliCatalogEntry[];
 };
 
+/** Compact Browse teaser — full collection lives on /ghibli */
 export function GhibliSelection({ entries }: Props) {
   if (!entries.length) return null;
 
   const miyazaki = ghibliMiyazakiCount(entries);
-  const hero = entries.find((e) => /totoro|spirited|mononoke|heron/i.test(e.def.title))
-    ?? entries[Math.min(3, entries.length - 1)];
+  const preview = entries.slice(0, 8);
+  const hero =
+    entries.find((e) => /spirited away/i.test(e.def.title)) ??
+    entries.find((e) => /totoro/i.test(e.def.title)) ??
+    entries[0];
 
   return (
     <section
       id="ghibli"
-      className="ghibli-selection relative mt-12 overflow-hidden rounded-[1.75rem] border border-[#c5d4b8]/20"
+      className="relative mt-10 overflow-hidden rounded-[1.5rem] border border-[#c5d4b8]/18"
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background: `
-            radial-gradient(900px 420px at 12% 0%, rgba(168, 210, 170, 0.22), transparent 55%),
-            radial-gradient(700px 380px at 88% 10%, rgba(140, 190, 220, 0.18), transparent 50%),
-            radial-gradient(600px 300px at 50% 100%, rgba(240, 220, 160, 0.1), transparent 60%),
-            linear-gradient(165deg, #0f1612 0%, #121a16 40%, #0c1210 100%)
-          `,
-        }}
-      />
-      {/* Soft paper grain */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.07] mix-blend-overlay"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-        }}
-      />
+      {/* Atmosphere */}
+      <div aria-hidden className="absolute inset-0">
+        {hero?.anime.background_image || hero?.anime.poster ? (
+          <Image
+            src={hero.anime.background_image || hero.anime.poster}
+            alt=""
+            fill
+            className="object-cover opacity-35"
+            sizes="1200px"
+            priority
+          />
+        ) : null}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `
+              linear-gradient(105deg, rgba(10,16,12,0.97) 0%, rgba(12,20,16,0.88) 42%, rgba(10,16,12,0.55) 100%),
+              radial-gradient(600px 280px at 80% 40%, rgba(160,200,170,0.2), transparent 60%)
+            `,
+          }}
+        />
+      </div>
 
-      <div className="relative grid gap-8 p-5 sm:p-7 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.35fr)] lg:gap-10 lg:p-8">
-        <div className="flex flex-col justify-between gap-6">
-          <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-[#a8c4a0]">
-              Studio Ghibli
-            </p>
-            <h2 className="mt-2 font-serif text-[clamp(1.85rem,4vw,2.6rem)] leading-[1.1] tracking-[-0.02em] text-[#f3f0e6]">
-              Ghibli Selection
-            </h2>
-            <p className="mt-3 max-w-md text-sm leading-relaxed text-[#b8c5b0]">
-              The complete shelf — Hayao Miyazaki and the Studio Ghibli
-              family, from Nausicaä to The Boy and the Heron.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2 text-[0.7rem]">
-              <span className="rounded-full border border-[#c5d4b8]/25 bg-[#c5d4b8]/10 px-2.5 py-1 font-medium text-[#d5e4cc]">
-                {entries.length} films
-              </span>
-              <span className="rounded-full border border-[#9ec0d8]/25 bg-[#9ec0d8]/10 px-2.5 py-1 font-medium text-[#c5dae8]">
-                {miyazaki} by Miyazaki
-              </span>
-            </div>
-          </div>
-
-          {hero ? (
+      <div className="relative flex flex-col gap-6 p-5 sm:p-6 lg:flex-row lg:items-end lg:justify-between lg:gap-10 lg:p-7">
+        <div className="max-w-md shrink-0">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-[#a8c4a0]">
+            Studio Ghibli
+          </p>
+          <h2 className="mt-2 text-[clamp(1.75rem,3.5vw,2.35rem)] font-semibold leading-[1.08] tracking-[-0.035em] text-[#f3f0e6]">
+            Ghibli Selection
+          </h2>
+          <p className="mt-2.5 text-sm leading-relaxed text-[#b0c0a8]">
+            Hayao Miyazaki and the Studio Ghibli family — {entries.length}{" "}
+            films, from Nausicaä to The Boy and the Heron.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-2.5">
             <Link
-              href={animeHref(hero.anime)}
-              className="group relative hidden overflow-hidden rounded-2xl border border-white/10 lg:block"
+              href="/ghibli"
+              className="inline-flex items-center gap-2 rounded-full bg-[#e8f0dc] px-4 py-2 text-sm font-semibold text-[#1a2618] transition hover:bg-[#f3f7ea]"
             >
-              <div className="relative aspect-[16/10]">
-                <Image
-                  src={
-                    hero.anime.background_image ||
-                    hero.anime.poster
-                  }
-                  alt=""
-                  fill
-                  className="object-cover transition duration-700 group-hover:scale-[1.03]"
-                  sizes="420px"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0c1210] via-[#0c1210]/35 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-4">
-                  <p className="text-[0.65rem] uppercase tracking-[0.16em] text-[#a8c4a0]">
-                    {hero.def.miyazaki ? "Miyazaki" : "Studio Ghibli"} ·{" "}
-                    {hero.def.year}
-                  </p>
-                  <p className="mt-1 text-lg font-medium tracking-[-0.02em] text-[#f3f0e6]">
-                    {hero.def.title}
-                  </p>
-                </div>
-              </div>
+              Enter the collection
+              <span aria-hidden>→</span>
             </Link>
-          ) : null}
+            <span className="text-xs text-[#8fa888]">
+              {miyazaki} directed by Miyazaki
+            </span>
+          </div>
         </div>
 
-        <div>
-          <div className="mb-4 flex items-end justify-between gap-3">
-            <p className="text-sm text-[#9aaf94]">
-              Chronological · full collection in the library
-            </p>
-          </div>
-          <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5">
-            {entries.map(({ anime, def }, i) => (
-              <div key={anime.id} className="relative">
-                <AnimePoster anime={anime} index={i} className="!block" />
-                {def.miyazaki ? (
-                  <span
-                    title="Directed by Hayao Miyazaki"
-                    className="pointer-events-none absolute bottom-8 left-1.5 z-[2] rounded bg-[#1a2a1c]/9 px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-wider text-[#c5e0bc] ring-1 ring-[#c5d4b8]/25"
-                  >
-                    Miyazaki
+        {/* Poster fan — images only, no title meta (avoids overlap) */}
+        <div className="min-w-0 flex-1">
+          <div className="scrollbar-none -mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1 sm:gap-3">
+            {preview.map(({ anime, def }, i) => (
+              <Link
+                key={anime.id}
+                href={animeHref(anime)}
+                className="group relative w-[4.75rem] shrink-0 sm:w-[5.5rem] md:w-[6rem]"
+                style={{
+                  transform: `translateY(${(i % 2) * 6}px)`,
+                }}
+                title={`${def.title} (${def.year})`}
+              >
+                <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-[#152018] shadow-[0_12px_28px_rgba(0,0,0,0.45)] ring-1 ring-white/12 transition duration-300 group-hover:-translate-y-1 group-hover:ring-[#c5d4b8]/45">
+                  <Image
+                    src={anime.poster}
+                    alt={def.title}
+                    fill
+                    className="object-cover transition duration-500 group-hover:scale-[1.04]"
+                    sizes="96px"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-80" />
+                  <span className="absolute bottom-1.5 left-1.5 text-[0.6rem] font-medium tabular-nums text-white/85">
+                    {def.year}
                   </span>
-                ) : null}
-              </div>
+                </div>
+              </Link>
             ))}
+            <Link
+              href="/ghibli"
+              className="flex w-[4.75rem] shrink-0 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[#c5d4b8]/30 bg-[#c5d4b8]/08 text-center transition hover:border-[#c5d4b8]/50 hover:bg-[#c5d4b8]/14 sm:w-[5.5rem] md:w-[6rem]"
+              style={{
+                aspectRatio: "2/3",
+                transform: `translateY(${(preview.length % 2) * 6}px)`,
+              }}
+            >
+              <span className="text-lg text-[#d5e4cc]">+</span>
+              <span className="px-1 text-[0.65rem] font-medium leading-tight text-[#c5d4b8]">
+                All {entries.length}
+              </span>
+            </Link>
           </div>
         </div>
       </div>
