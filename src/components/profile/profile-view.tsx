@@ -269,7 +269,7 @@ export function ProfileView({
                   ) : null}
                 </div>
 
-                <section className="mt-4 rounded-2xl bg-[#1e1f22]/90 px-3.5 py-3 ring-1 ring-white/[0.04]">
+                <section className="mt-4 rounded-2xl bg-[#1e1f22]/90 px-3.5 py-2.5 ring-1 ring-white/[0.04]">
                   <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#949ba4]">
                     About Me
                   </p>
@@ -278,13 +278,15 @@ export function ProfileView({
                       {live.bio}
                     </p>
                   ) : (
-                    <p className="mt-1.5 text-sm text-[#6d6f78]">No bio yet.</p>
+                    <p className="mt-1 text-sm text-[#6d6f78]">
+                      {isOwner ? "Add a short bio from Edit Profile." : "No bio yet."}
+                    </p>
                   )}
                 </section>
 
                 {isOwner && continueStrip.length > 0 ? (
                   <section className="mt-3 rounded-2xl bg-[#1e1f22]/90 px-3.5 py-3 ring-1 ring-white/[0.04]">
-                    <div className="mb-2.5 flex items-center justify-between gap-2">
+                    <div className="mb-2 flex items-center justify-between gap-2">
                       <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#949ba4]">
                         Continue
                       </p>
@@ -296,32 +298,40 @@ export function ProfileView({
                         See all
                       </button>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="scrollbar-none -mx-0.5 flex gap-2 overflow-x-auto px-0.5 pb-0.5">
                       {continueStrip.map((item) => (
                         <Link
                           key={`${item.id}-${item.episode}-${item.language}`}
                           href={`/watch/${item.id}/${item.slug}?ep=${item.episode}&lang=${item.language}`}
-                          className="group min-w-0 flex-1"
+                          className="group w-[3.25rem] shrink-0 sm:w-[3.5rem]"
                           title={`${item.title} · Episode ${item.episode}`}
                         >
-                          <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-[#111214] ring-1 ring-white/8 transition group-hover:ring-white/25">
+                          <div className="relative aspect-[2/3] overflow-hidden rounded-md bg-[#111214] ring-1 ring-white/8 transition group-hover:ring-white/25">
                             {item.poster ? (
                               <Image
                                 src={item.poster}
                                 alt=""
                                 fill
                                 className="object-cover"
-                                sizes="72px"
+                                sizes="56px"
                               />
                             ) : null}
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-1 pb-1 pt-4">
-                              <p
-                                className="truncate text-[0.55rem] font-medium"
-                                style={{ color: accent }}
-                              >
-                                Ep {item.episode}
-                              </p>
-                            </div>
+                            {item.percent > 0 && item.percent < 100 ? (
+                              <div className="absolute inset-x-0 bottom-0 h-0.5 bg-black/50">
+                                <div
+                                  className="h-full bg-white"
+                                  style={{
+                                    width: `${Math.min(100, item.percent)}%`,
+                                  }}
+                                />
+                              </div>
+                            ) : (
+                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-0.5 pb-0.5 pt-3">
+                                <p className="truncate text-center text-[0.5rem] font-medium text-white/90">
+                                  E{item.episode}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         </Link>
                       ))}
@@ -331,7 +341,7 @@ export function ProfileView({
               </div>
             </aside>
 
-            <div className="flex min-h-[420px] flex-col bg-[#0e0f12]/40">
+            <div className="flex min-h-[360px] flex-col bg-[#0e0f12]/40">
               <div className="flex items-center gap-1 border-b border-white/[0.06] px-4 pt-3 sm:px-5">
                 {TABS.map((t) => {
                   const active = tab === t.id;
@@ -416,7 +426,7 @@ function BoardTab({
 }) {
   return (
     <div>
-      <div className="mb-4">
+      <div className="mb-3">
         <h2 className="text-base font-semibold text-snow">Profile board</h2>
         <p className="mt-0.5 text-sm text-[#949ba4]">
           {isOwner
@@ -425,7 +435,7 @@ function BoardTab({
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-2.5 sm:grid-cols-2">
         {widgets.map((w) => (
           <WidgetCard
             key={w.id}
@@ -452,32 +462,43 @@ function WidgetCard({
   rgb: string;
 }) {
   const filled = widget.items.slice(0, widget.max);
-  const showAdd =
-    isOwner && filled.length < widget.max;
+  const showAdd = isOwner && filled.length < widget.max;
+  const empty = filled.length === 0;
 
   return (
     <div
-      className="rounded-2xl bg-[#1e1f22]/95 p-3.5 ring-1 ring-white/[0.05]"
+      className={`rounded-2xl bg-[#1e1f22]/95 ring-1 ring-white/[0.05] ${
+        empty ? "px-3.5 py-3" : "p-3.5"
+      }`}
       style={{
         boxShadow: `inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 1px rgba(${rgb}, 0.04)`,
       }}
     >
-      <div className="mb-3 flex items-center justify-between gap-2">
+      <div className="mb-2 flex items-center justify-between gap-2">
         <p className="text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-[#949ba4]">
           {widget.title}
         </p>
-        <span className="text-[0.7rem] text-[#6d6f78]">
+        <span className="text-[0.7rem] tabular-nums text-[#6d6f78]">
           {filled.length}/{widget.max}
         </span>
       </div>
 
-      {filled.length === 0 && !showAdd ? null : (
+      {empty ? (
+        <div className="flex items-center gap-2.5">
+          {showAdd ? (
+            <EmptySlot hint={widget.emptyHint} accent={accent} compact />
+          ) : null}
+          <p className="min-w-0 flex-1 text-xs leading-snug text-[#6d6f78]">
+            {widget.emptyHint}
+          </p>
+        </div>
+      ) : (
         <div className="scrollbar-none -mx-0.5 flex gap-2 overflow-x-auto px-0.5 pb-0.5">
           {filled.map((item) => (
             <Link
               key={item.id}
               href={`/anime/${item.anime_id}/${item.slug}`}
-              className="group relative aspect-[2/3] w-[4.5rem] shrink-0 overflow-hidden rounded-xl bg-[#111214] ring-1 ring-white/8 transition hover:ring-white/25 sm:w-[5rem]"
+              className="group relative aspect-[2/3] w-[4.25rem] shrink-0 overflow-hidden rounded-lg bg-[#111214] ring-1 ring-white/8 transition hover:ring-white/25 sm:w-[4.75rem]"
             >
               {item.poster ? (
                 <Image
@@ -485,7 +506,7 @@ function WidgetCard({
                   alt=""
                   fill
                   className="object-cover transition duration-500 group-hover:scale-[1.04]"
-                  sizes="80px"
+                  sizes="76px"
                 />
               ) : null}
             </Link>
@@ -495,10 +516,6 @@ function WidgetCard({
           ) : null}
         </div>
       )}
-
-      {filled.length === 0 ? (
-        <p className="mt-2 text-xs text-[#6d6f78]">{widget.emptyHint}</p>
-      ) : null}
     </div>
   );
 }
@@ -506,15 +523,21 @@ function WidgetCard({
 function EmptySlot({
   hint,
   accent,
+  compact = false,
 }: {
   hint: string;
   accent: string;
+  compact?: boolean;
 }) {
   return (
     <Link
       href="/browse"
       title={hint}
-      className="grid aspect-[2/3] w-[4.5rem] shrink-0 place-items-center rounded-xl bg-white/[0.03] text-lg text-[#6d6f78] ring-1 ring-dashed ring-white/15 transition hover:bg-white/[0.06] hover:text-snow sm:w-[5rem]"
+      className={`grid shrink-0 place-items-center rounded-lg bg-white/[0.03] text-[#6d6f78] ring-1 ring-dashed ring-white/15 transition hover:bg-white/[0.06] hover:text-snow ${
+        compact
+          ? "h-10 w-10 text-base"
+          : "aspect-[2/3] w-[4.25rem] text-lg sm:w-[4.75rem]"
+      }`}
       style={{ borderColor: `${accent}33` }}
     >
       +
