@@ -22,6 +22,8 @@
 html {
   scroll-behavior: smooth;
   background: var(--color-void);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -39,9 +41,12 @@ body {
   color: var(--color-snow);
   font-family: var(--font-sans);
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 ::selection {
@@ -71,9 +76,29 @@ button {
 .scrollbar-none {
   scrollbar-width: none;
   -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 .scrollbar-none::-webkit-scrollbar {
   display: none;
+}
+
+/* Soft press feedback — iOS-like tap response */
+.pressable {
+  transition: transform 0.18s var(--ease-out-soft);
+}
+.pressable:active {
+  transform: scale(0.97);
+}
+
+/* Mobile bottom tab bar */
+.mobile-tab-bar {
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(28px) saturate(1.35);
+  -webkit-backdrop-filter: blur(28px) saturate(1.35);
+  box-shadow:
+    0 -1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 -18px 48px rgba(0, 0, 0, 0.45);
 }
 
 .fade-x {
@@ -209,8 +234,13 @@ button {
   .poster-image,
   .poster-veil,
   .poster-score,
-  .filter-pill {
+  .filter-pill,
+  .pressable {
     transition: none !important;
+  }
+
+  .pressable:active {
+    transform: none !important;
   }
 
   .genre-tile:hover,

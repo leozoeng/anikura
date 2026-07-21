@@ -99,7 +99,9 @@ export function SiteHeader({
               link.href === "/"
                 ? pathname === "/"
                 : link.href === "/profile"
-                  ? pathname === "/profile" || pathname.startsWith("/u/")
+                  ? pathname === "/profile" ||
+                    pathname.startsWith("/u/") ||
+                    pathname.startsWith("/@")
                   : pathname.startsWith(link.href);
             return (
               <Link
@@ -174,52 +176,25 @@ export function SiteHeader({
       </div>
 
       <div
-        className={`overflow-hidden bg-black/90 backdrop-blur-2xl transition-[max-height,opacity] duration-300 md:hidden ${
+        className={`overflow-hidden bg-black/92 backdrop-blur-2xl transition-[max-height,opacity] duration-300 md:hidden ${
           menuOpen
-            ? "max-h-72 border-t border-white/[0.06] opacity-100"
+            ? "max-h-40 border-t border-white/[0.06] opacity-100"
             : "max-h-0 opacity-0"
         }`}
       >
         <nav className="flex w-full flex-col gap-1 px-3 py-4 sm:px-4" aria-label="Mobile">
-          {navLinks.map((link) => {
-            const active =
-              link.href === "/"
-                ? pathname === "/"
-                : link.href === "/profile"
-                  ? pathname === "/profile" || pathname.startsWith("/u/")
-                  : pathname.startsWith(link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`rounded-xl px-4 py-3 text-[0.95rem] tracking-[-0.02em] transition ${
-                  active
-                    ? "bg-white/[0.1] text-snow"
-                    : "text-cloud hover:bg-white/[0.05] hover:text-snow"
-                }`}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-          <Link
-            href="/search"
-            className="rounded-xl px-4 py-3 text-[0.95rem] tracking-[-0.02em] text-cloud transition hover:bg-white/[0.05] hover:text-snow"
-          >
-            Search
-          </Link>
           <a
             href="https://discord.gg/cm72gXTASn"
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-xl px-4 py-3 text-[0.95rem] tracking-[-0.02em] text-cloud transition hover:bg-white/[0.05] hover:text-snow"
+            className="rounded-xl px-4 py-3.5 text-[0.95rem] tracking-[-0.02em] text-cloud transition active:scale-[0.98] hover:bg-white/[0.05] hover:text-snow"
           >
             Discord
           </a>
-          {!email ? null : isAdmin ? (
+          {isAdmin ? (
             <Link
               href="/admin"
-              className="rounded-xl px-4 py-3 text-[0.95rem] tracking-[-0.02em] text-snow transition hover:bg-white/[0.05]"
+              className="rounded-xl px-4 py-3.5 text-[0.95rem] tracking-[-0.02em] text-snow transition active:scale-[0.98] hover:bg-white/[0.05]"
             >
               Admin
             </Link>

@@ -57,10 +57,13 @@ export function AnimeRow({ title, subtitle, href, anime }: Props) {
 
         <div
           ref={scroller}
-          className="fade-x scrollbar-none flex gap-4 overflow-x-auto scroll-smooth px-3 pb-2 sm:gap-5 sm:px-4"
+          className="fade-x scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-3 pb-2 sm:gap-5 sm:px-4"
         >
           {anime.map((item, i) => (
-            <div key={item.id} className="w-[138px] shrink-0 sm:w-[156px]">
+            <div
+              key={item.id}
+              className="w-[118px] shrink-0 snap-start sm:w-[156px]"
+            >
               <AnimePoster anime={item} priority={i < 5} index={i} />
             </div>
           ))}

@@ -15,7 +15,7 @@ type HeaderAuthProps = {
 };
 
 const accountChipClass =
-  "group inline-flex h-9 items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] pl-1.5 pr-3 text-[0.8125rem] tracking-[-0.01em] text-cloud transition duration-300 hover:border-white/25 hover:bg-white/[0.08] hover:text-snow";
+  "group inline-flex h-9 items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] pl-1.5 pr-1.5 text-[0.8125rem] tracking-[-0.01em] text-cloud transition duration-300 hover:border-white/25 hover:bg-white/[0.08] hover:text-snow active:scale-[0.97] sm:pr-3";
 
 export function HeaderAuth({
   initialEmail = null,
@@ -90,7 +90,7 @@ export function HeaderAuth({
           aria-label="Open account"
         >
           <ChipFace />
-          <span className="font-medium">Account</span>
+          <span className="hidden font-medium sm:inline">Account</span>
         </button>
         <AuthModal
           open={modalOpen}
@@ -113,7 +113,7 @@ export function HeaderAuth({
         className={accountChipClass}
       >
         <ChipFace avatarUrl={avatarUrl} initial={initial} />
-        <span className="font-medium">Account</span>
+        <span className="hidden font-medium sm:inline">Account</span>
       </button>
 
       {menuOpen ? (

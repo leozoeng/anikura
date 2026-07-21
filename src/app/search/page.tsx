@@ -1,4 +1,5 @@
 import { AnimePoster } from "@/components/anime-poster";
+import { SearchPageForm } from "@/components/search-page-form";
 import { getGenres, getRecentAnime } from "@/lib/anikoto";
 import { searchCatalog } from "@/lib/catalog";
 import type { AnimeSummary } from "@/lib/types";
@@ -32,20 +33,21 @@ export default async function SearchPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-[1200px] px-5 pb-24 pt-28 sm:px-8">
+    <div className="mx-auto max-w-[1200px] px-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-24 sm:px-8 sm:pb-24 sm:pt-28">
       <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-mute">
         Search
       </p>
-      <h1 className="mt-3 text-[clamp(2.4rem,6vw,4rem)] font-semibold tracking-[-0.05em]">
+      <h1 className="mt-2 text-[clamp(1.85rem,7vw,4rem)] font-semibold tracking-[-0.05em]">
         {query || "Find a title"}
       </h1>
-      <p className="mt-3 text-cloud">
+      <SearchPageForm initialQuery={query} />
+      <p className="mt-3 text-sm text-cloud sm:text-base">
         {query
           ? `${results.length} result${results.length === 1 ? "" : "s"}`
-          : "Use the search icon in the header"}
+          : "Type a title, studio, or vibe."}
       </p>
 
-      <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+      <div className="mt-8 grid grid-cols-2 gap-x-3 gap-y-6 sm:mt-12 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {results.map((anime) => (
           <AnimePoster key={anime.id} anime={anime} />
         ))}

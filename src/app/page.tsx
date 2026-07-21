@@ -198,14 +198,14 @@ async function HomeRows() {
           </Link>
         </div>
 
-        <div className="fade-x scrollbar-none flex gap-3 overflow-x-auto px-3 pb-2 sm:gap-3.5 sm:px-4">
+        <div className="fade-x scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-2 sm:gap-3.5 sm:px-4">
           {genreList.map((g, i) => {
             const cover = genreCovers.get(g.slug);
             return (
               <Link
                 key={g.slug}
                 href={`/genres/${g.slug}`}
-                className="genre-tile group relative h-[9.5rem] w-[9.75rem] shrink-0 overflow-hidden rounded-[1.2rem] sm:h-[10.5rem] sm:w-[11rem]"
+                className="genre-tile pressable group relative h-[9.5rem] w-[9.75rem] shrink-0 snap-start overflow-hidden rounded-[1.2rem] sm:h-[10.5rem] sm:w-[11rem]"
                 style={{ animationDelay: `${Math.min(i, 9) * 28}ms` }}
               >
                 <div className="absolute inset-0 bg-elevated" />

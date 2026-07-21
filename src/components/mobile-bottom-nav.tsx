@@ -31,7 +31,8 @@ const items = [
   {
     href: "/profile",
     label: "Profile",
-    match: (p: string) => p.startsWith("/profile") || p.startsWith("/u/"),
+    match: (p: string) =>
+      p.startsWith("/profile") || p.startsWith("/u/") || p.startsWith("/@"),
     icon: ProfileIcon,
   },
 ] as const;
@@ -50,9 +51,9 @@ export function MobileBottomNav() {
   return (
     <nav
       aria-label="Mobile primary"
-      className="site-chrome mobile-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.08] bg-void/95 backdrop-blur-xl md:hidden"
+      className="site-chrome mobile-bottom-nav mobile-tab-bar fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.08] md:hidden"
     >
-      <ul className="mx-auto flex max-w-lg items-stretch justify-between px-1 pb-[env(safe-area-inset-bottom)] pt-1">
+      <ul className="mx-auto flex max-w-lg items-stretch justify-between px-1.5 pb-[max(0.2rem,env(safe-area-inset-bottom))] pt-1.5">
         {items.map((item) => {
           const active = item.match(pathname);
           const Icon = item.icon;
@@ -60,12 +61,20 @@ export function MobileBottomNav() {
             <li key={item.href} className="flex-1">
               <Link
                 href={item.href}
-                className={`flex min-h-12 flex-col items-center justify-center gap-0.5 px-1 text-[0.62rem] font-medium tracking-[-0.01em] transition ${
+                className={`pressable flex min-h-[3.15rem] flex-col items-center justify-center gap-0.5 px-1 text-[0.625rem] font-semibold tracking-[-0.01em] transition-colors duration-200 ${
                   active ? "text-snow" : "text-mute"
                 }`}
               >
-                <Icon active={active} />
-                <span>{item.label}</span>
+                <span
+                  className={`grid h-7 w-12 place-items-center rounded-full transition duration-200 ${
+                    active ? "bg-white/[0.12]" : "bg-transparent"
+                  }`}
+                >
+                  <Icon active={active} />
+                </span>
+                <span className={active ? "text-snow" : "text-mute"}>
+                  {item.label}
+                </span>
               </Link>
             </li>
           );

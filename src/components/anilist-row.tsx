@@ -24,12 +24,12 @@ export function AniListRow({ title, subtitle, media, hrefForId }: Props) {
         {subtitle && <p className="section-sub">{subtitle}</p>}
       </div>
 
-      <div className="fade-x scrollbar-none flex gap-4 overflow-x-auto px-3 pb-2 sm:gap-5 sm:px-4">
+      <div className="fade-x scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-2 sm:gap-5 sm:px-4">
         {items.map(({ media: m, href }, i) => (
           <Link
             key={m.id}
             href={href!}
-            className="poster-link group w-[138px] shrink-0 sm:w-[156px]"
+            className="poster-link pressable group w-[118px] shrink-0 snap-start sm:w-[156px]"
             style={{ animationDelay: `${Math.min(i, 12) * 18}ms` }}
           >
             <div className="poster-frame relative aspect-[2/3] overflow-hidden rounded-[1.1rem] bg-raised">

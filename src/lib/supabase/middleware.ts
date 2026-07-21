@@ -2,8 +2,24 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 
-export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+/**
+ * Refresh the auth session. Optionally rewrite the request URL
+ * (e.g. `/@username` → `/u/username`) while keeping cookies intact.
+ */
+export async function updateSession(
+  request: NextRequest,
+  rewritePathname?: string,
+) {
+  const buildResponse = () => {
+    if (rewritePathname) {
+      const url = request.nextUrl.clone();
+      url.pathname = rewritePathname;
+      return NextResponse.rewrite(url, { request });
+    }
+    return NextResponse.next({ request });
+  };
+
+  let supabaseResponse = buildResponse();
 
   const env = getSupabaseEnv();
   if (!env) {
@@ -19,7 +35,7 @@ export async function updateSession(request: NextRequest) {
         cookiesToSet.forEach(({ name, value }) => {
           request.cookies.set(name, value);
         });
-        supabaseResponse = NextResponse.next({ request });
+        supabaseResponse = buildResponse();
         cookiesToSet.forEach(({ name, value, options }) => {
           supabaseResponse.cookies.set(name, value, options);
         });

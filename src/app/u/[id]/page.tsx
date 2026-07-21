@@ -2,10 +2,11 @@ import { notFound, redirect } from "next/navigation";
 import { ProfileView } from "@/components/profile/profile-view";
 import type { AnimeListEntry } from "@/lib/anime-list";
 import { getSessionUser } from "@/lib/auth";
+import { fetchUserProfileComments } from "@/lib/comments-server";
 import {
   PROFILE_SELECT,
   isProfileUuid,
-  normalizeUsername,
+  vanityUsernameFromParam,
   type PublicProfile,
 } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/server";
@@ -28,7 +29,7 @@ async function loadProfile(param: string) {
     return data as PublicProfile | null;
   }
 
-  const handle = normalizeUsername(key);
+  const handle = vanityUsernameFromParam(key);
   if (!handle) return null;
 
   const { data } = await supabase
@@ -58,20 +59,23 @@ export default async function PublicProfilePage({ params }: Props) {
   const profile = await loadProfile(id);
   if (!profile) notFound();
 
-  // Canonical vanity URL when opened via UUID.
-  const vanity = normalizeUsername(profile.username);
+  // Canonical solo.to-style URL when opened via UUID.
+  // Only redirect UUID → /@handle (not /u/handle → /@handle) to avoid
+  // loops with the proxy rewrite of /@handle → /u/handle.
+  const vanity = vanityUsernameFromParam(profile.username);
   if (isProfileUuid(id.trim()) && vanity) {
-    redirect(`/u/${vanity}`);
+    redirect(`/@${vanity}`);
   }
 
   const supabase = await createClient();
-  const [{ data: list }, me] = await Promise.all([
+  const [{ data: list }, me, comments] = await Promise.all([
     supabase
       .from("anime_list")
       .select("*")
       .eq("user_id", profile.id)
       .order("updated_at", { ascending: false }),
     getSessionUser(),
+    fetchUserProfileComments(profile.id),
   ]);
 
   const isOwner = me?.id === profile.id;
@@ -80,6 +84,7 @@ export default async function PublicProfilePage({ params }: Props) {
     <ProfileView
       profile={profile}
       list={(list ?? []) as AnimeListEntry[]}
+      comments={comments}
       isOwner={isOwner}
       showQuitProfile={Boolean(me) && !isOwner}
     />

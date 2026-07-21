@@ -65,24 +65,35 @@ export function ProfileSearch({ className = "" }: { className?: string }) {
 
   return (
     <section
-      className={`rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5 ${className}`.trim()}
+      className={`rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3.5 sm:p-5 ${className}`.trim()}
     >
-      <div className="mb-3 flex items-end justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold tracking-[-0.02em] text-snow sm:text-lg">
+      <div className="mb-2.5 flex items-end justify-between gap-3 sm:mb-3">
+        <div className="min-w-0">
+          <h2 className="text-[0.95rem] font-semibold tracking-[-0.02em] text-snow sm:text-lg">
             Find people
           </h2>
-          <p className="mt-0.5 text-sm text-mute">
+          <p className="mt-0.5 text-xs text-mute sm:text-sm">
             Search by @username or display name
           </p>
         </div>
         {busy ? (
-          <span className="text-xs text-mute">Searching…</span>
+          <span className="shrink-0 text-xs text-mute">Searching…</span>
         ) : null}
       </div>
 
-      <label className="block">
+      <label className="relative block">
         <span className="sr-only">Search profiles</span>
+        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-mute">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden>
+            <circle cx="7" cy="7" r="5.25" stroke="currentColor" strokeWidth="1.4" />
+            <path
+              d="M11.2 11.2 14 14"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+            />
+          </svg>
+        </span>
         <input
           type="search"
           value={query}
@@ -90,7 +101,8 @@ export function ProfileSearch({ className = "" }: { className?: string }) {
           placeholder="Search @username…"
           autoComplete="off"
           spellCheck={false}
-          className="w-full rounded-xl border border-white/[0.1] bg-black/35 px-3.5 py-2.5 text-sm text-snow outline-none transition placeholder:text-mute focus:border-white/25"
+          enterKeyHint="search"
+          className="w-full rounded-[14px] border border-white/[0.1] bg-black/40 py-3 pl-10 pr-3.5 text-[0.9375rem] text-snow outline-none transition placeholder:text-mute focus:border-white/25 focus:bg-black/55 sm:rounded-xl sm:py-2.5 sm:text-sm"
         />
       </label>
 
@@ -101,7 +113,7 @@ export function ProfileSearch({ className = "" }: { className?: string }) {
       ) : null}
 
       {query.trim() ? (
-        <ul className="mt-3 max-h-[22rem] space-y-2 overflow-y-auto overscroll-contain pr-0.5">
+        <ul className="mt-3 max-h-[min(22rem,50vh)] space-y-2 overflow-y-auto overscroll-contain pr-0.5">
           {hits.length === 0 && !busy ? (
             <li className="rounded-xl border border-dashed border-white/10 px-3 py-6 text-center text-sm text-mute">
               No profiles matched
@@ -129,16 +141,16 @@ export function ProfileSearch({ className = "" }: { className?: string }) {
                 <li key={hit.id}>
                   <Link
                     href={profileHref(profile)}
-                    className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-black/25 px-3 py-2.5 transition hover:border-white/15 hover:bg-white/[0.04]"
+                    className="pressable flex items-center gap-3 rounded-xl border border-white/[0.06] bg-black/25 px-3 py-2.5 transition hover:border-white/15 hover:bg-white/[0.04]"
                   >
-                    <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/10">
+                    <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/10 sm:h-10 sm:w-10">
                       {hit.avatar_url ? (
                         <Image
                           src={hit.avatar_url}
                           alt=""
                           fill
                           className="object-cover"
-                          sizes="40px"
+                          sizes="44px"
                         />
                       ) : (
                         <span className="grid h-full w-full place-items-center text-xs font-semibold text-mute">
@@ -166,7 +178,7 @@ export function ProfileSearch({ className = "" }: { className?: string }) {
           )}
         </ul>
       ) : (
-        <p className="mt-3 text-xs text-mute">
+        <p className="mt-2.5 text-[0.7rem] leading-relaxed text-mute sm:mt-3 sm:text-xs">
           Usernames are unique — once claimed, that @handle is yours.
         </p>
       )}

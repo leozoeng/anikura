@@ -25,7 +25,7 @@ import {
   type CommentLanguage,
   type CommentSort,
 } from "@/lib/comments";
-import { displayName, handleFromProfile } from "@/lib/profile";
+import { displayName, handleFromProfile, profileHref } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -108,9 +108,11 @@ const PEEK_CARD_WIDTH = 288;
 
 function AuthorHoverName({
   userId,
+  username,
   handle,
 }: {
   userId: string;
+  username?: string | null;
   handle: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -118,6 +120,7 @@ function AuthorHoverName({
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const triggerRef = useRef<HTMLSpanElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const href = profileHref({ id: userId, username });
 
   useEffect(() => {
     setMounted(true);
@@ -203,7 +206,7 @@ function AuthorHoverName({
       onBlur={scheduleClose}
     >
       <Link
-        href={`/u/${userId}`}
+        href={href}
         className="text-sm font-medium text-[#f1f1f1] transition hover:text-white"
       >
         {handle}
@@ -632,6 +635,10 @@ export function AnimeComments({
     const handle = handleFromProfile(
       comment.author ?? { nickname: null, email: null },
     );
+    const authorHref = profileHref({
+      id: comment.user_id,
+      username: comment.author?.username,
+    });
     const canDelete = me && (me.id === comment.user_id || isAdmin);
     const replies = repliesByParent.get(comment.id) ?? [];
     const repliesOpen = expandedReplies.has(comment.id);
@@ -640,7 +647,7 @@ export function AnimeComments({
     return (
       <li key={comment.id} className="group relative">
         <div className={`flex gap-3 ${isReply ? "" : "py-3"}`}>
-          <Link href={`/u/${comment.user_id}`} className="shrink-0 self-start">
+          <Link href={authorHref} className="shrink-0 self-start">
             <AuthorAvatar
               name={name}
               avatarUrl={comment.author?.avatar_url}
@@ -651,7 +658,11 @@ export function AnimeComments({
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
-                <AuthorHoverName userId={comment.user_id} handle={handle} />
+                <AuthorHoverName
+                  userId={comment.user_id}
+                  username={comment.author?.username}
+                  handle={handle}
+                />
                 <time
                   dateTime={comment.created_at}
                   className="text-xs text-[#aaa]"

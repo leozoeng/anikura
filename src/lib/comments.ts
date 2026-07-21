@@ -4,6 +4,7 @@ export type CommentLanguage = "sub" | "dub";
 
 export type CommentAuthor = {
   id: string;
+  username?: string | null;
   nickname: string | null;
   avatar_url: string | null;
   email: string | null;
@@ -25,7 +26,7 @@ export type AnimeComment = {
 };
 
 export const COMMENT_SELECT =
-  "id, anime_id, episode, language, user_id, body, parent_id, created_at, updated_at, author:profiles!anime_comments_user_id_fkey(id, nickname, avatar_url, email)";
+  "id, anime_id, episode, language, user_id, body, parent_id, created_at, updated_at, author:profiles!anime_comments_user_id_fkey(id, username, nickname, avatar_url, email)";
 
 export function validateCommentBody(raw: string): string | null {
   const trimmed = raw.trim();
@@ -74,6 +75,19 @@ export function formatLikeCount(n: number) {
 }
 
 export type CommentSort = "top" | "newest";
+
+export type ProfileCommentItem = {
+  id: string;
+  anime_id: number;
+  episode: number;
+  language: CommentLanguage;
+  body: string;
+  parent_id: string | null;
+  created_at: string;
+  animeTitle: string;
+  animeSlug: string;
+  animePoster: string | null;
+};
 
 export function sortComments(comments: AnimeComment[], sort: CommentSort) {
   const copy = [...comments];

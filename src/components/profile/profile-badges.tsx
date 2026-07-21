@@ -3,6 +3,22 @@
 import type { ReactNode } from "react";
 import { type ProfileBadgeId } from "@/lib/profile";
 
+/** Shared glyph metrics — sized for crisp chips at ~12px. */
+function BadgeIcon({ children }: { children: ReactNode }) {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden
+      className="shrink-0 translate-y-px"
+    >
+      {children}
+    </svg>
+  );
+}
+
 const BADGE_META: Record<
   ProfileBadgeId,
   { label: string; title: string; className: string; icon: ReactNode }
@@ -13,19 +29,17 @@ const BADGE_META: Record<
     className:
       "border-white/25 bg-[#1c1c1e] text-snow/90 ring-white/10",
     icon: (
-      <svg
-        width="11"
-        height="11"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <path d="M12 3l2.2 6.7H21l-5.4 3.9 2.1 6.4L12 16.6 6.3 20l2.1-6.4L3 9.7h6.8L12 3z" />
-      </svg>
+      <BadgeIcon>
+        {/* Soft-filled star — founding-member mark */}
+        <path
+          d="M8 1.4l1.85 3.95 4.3.45-3.25 2.95.95 4.2L8 10.85 4.15 12.95l.95-4.2L1.85 5.8l4.3-.45L8 1.4z"
+          fill="currentColor"
+          fillOpacity="0.28"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+        />
+      </BadgeIcon>
     ),
   },
   partner: {
@@ -34,22 +48,23 @@ const BADGE_META: Record<
     className:
       "border-emerald-400/30 bg-[#14201a] text-emerald-100/90 ring-emerald-400/10",
     icon: (
-      <svg
-        width="11"
-        height="11"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <path d="M8 12h8" />
-        <path d="M9.5 8.5 7 12l2.5 3.5" />
-        <path d="M14.5 8.5 17 12l-2.5 3.5" />
-        <circle cx="12" cy="12" r="9" />
-      </svg>
+      <BadgeIcon>
+        {/* Interlocking rings — partnership / alliance */}
+        <circle
+          cx="5.6"
+          cy="8"
+          r="3.45"
+          stroke="currentColor"
+          strokeWidth="1.4"
+        />
+        <circle
+          cx="10.4"
+          cy="8"
+          r="3.45"
+          stroke="currentColor"
+          strokeWidth="1.4"
+        />
+      </BadgeIcon>
     ),
   },
   dev: {
@@ -58,21 +73,30 @@ const BADGE_META: Record<
     className:
       "border-sky-400/25 bg-[#1a2330] text-sky-200/90 ring-sky-400/10",
     icon: (
-      <svg
-        width="11"
-        height="11"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <path d="M8 9l-4 3 4 3" />
-        <path d="M16 9l4 3-4 3" />
-        <path d="M14 5l-4 14" />
-      </svg>
+      <BadgeIcon>
+        {/* Balanced chevrons + slash — code glyph */}
+        <path
+          d="M5.75 3.9 2.2 8l3.55 4.1"
+          stroke="currentColor"
+          strokeWidth="1.45"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M10.25 3.9 13.8 8l-3.55 4.1"
+          stroke="currentColor"
+          strokeWidth="1.45"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M9.2 3.25 6.8 12.75"
+          stroke="currentColor"
+          strokeWidth="1.35"
+          strokeLinecap="round"
+          opacity="0.72"
+        />
+      </BadgeIcon>
     ),
   },
   vip: {
@@ -81,15 +105,29 @@ const BADGE_META: Record<
     className:
       "border-amber-400/30 bg-[#2a2418] text-amber-100/90 ring-amber-400/10",
     icon: (
-      <svg
-        width="11"
-        height="11"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        aria-hidden
-      >
-        <path d="M5 16l-1.5-8 4.5 3.5L12 5l4 6.5L20.5 8 19 16H5zm0 2h14v2H5v-2z" />
-      </svg>
+      <BadgeIcon>
+        {/* Three-peak crown with jewel — premium VIP */}
+        <path
+          d="M2.35 11.55h11.3v1.05c0 .45-.36.8-.8.8H3.15a.8.8 0 0 1-.8-.8v-1.05z"
+          fill="currentColor"
+          fillOpacity="0.3"
+        />
+        <path
+          d="M2.35 11.55 3.6 5.7l2.5 2.85L8 3.55l1.9 5 2.5-2.85 1.25 5.85H2.35z"
+          fill="currentColor"
+          fillOpacity="0.22"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+        />
+        <circle cx="8" cy="8.2" r="0.9" fill="currentColor" />
+        <path
+          d="M2.35 11.55h11.3"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          strokeLinecap="round"
+        />
+      </BadgeIcon>
     ),
   },
 };
@@ -108,8 +146,12 @@ export function ProfileBadges({
 }: Props) {
   if (!badges.length) return null;
 
-  const pad = size === "sm" ? "px-1.5 py-0.5 text-[0.58rem]" : "px-2 py-0.5 text-[0.62rem]";
+  const pad =
+    size === "sm"
+      ? "gap-0.5 px-1.5 py-0.5 text-[0.58rem]"
+      : "gap-[0.3rem] px-2 py-[0.2rem] text-[0.62rem]";
   const gap = size === "sm" ? "gap-1" : "gap-1.5";
+  const iconScale = size === "sm" ? "[&_svg]:h-[11px] [&_svg]:w-[11px]" : "";
 
   return (
     <span
@@ -123,10 +165,10 @@ export function ProfileBadges({
           <span
             key={id}
             title={meta.title}
-            className={`inline-flex items-center gap-1 rounded-md border font-semibold uppercase tracking-[0.06em] ring-1 ${pad} ${meta.className}`}
+            className={`inline-flex items-center rounded-md border font-semibold uppercase tracking-[0.06em] ring-1 ${pad} ${iconScale} ${meta.className}`}
           >
             {meta.icon}
-            {meta.label}
+            <span>{meta.label}</span>
           </span>
         );
       })}

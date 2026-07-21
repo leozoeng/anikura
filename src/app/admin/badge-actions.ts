@@ -144,6 +144,8 @@ export async function setProfileBadges(
   revalidatePath("/admin");
   revalidatePath("/profile");
   revalidatePath(`/u/${userId}`);
+  const handle = (data.username as string | null)?.trim();
+  if (handle) revalidatePath(`/@${handle}`);
 
   return mapRow(data as Record<string, unknown>);
 }

@@ -2,8 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AnimeListEntry } from "@/lib/anime-list";
+import {
+  formatCommentTime,
+  type ProfileCommentItem,
+} from "@/lib/comments";
 import {
   accentAmbientEnabled,
   displayName,
@@ -25,12 +29,13 @@ import { ProfileSearch } from "@/components/profile/profile-search";
 type Props = {
   profile: PublicProfile;
   list: AnimeListEntry[];
+  comments?: ProfileCommentItem[];
   isOwner: boolean;
   /** Signed-in viewer looking at someone else — show Quit → /profile */
   showQuitProfile?: boolean;
 };
 
-type ProfileTab = "board" | "activity" | "watch";
+type ProfileTab = "board" | "activity" | "watch" | "comments";
 
 type WidgetDef = {
   id: string;
@@ -47,6 +52,7 @@ const TABS: { id: ProfileTab; label: string }[] = [
   { id: "board", label: "Board" },
   { id: "activity", label: "Activity" },
   { id: "watch", label: "Watch" },
+  { id: "comments", label: "Comments" },
 ];
 
 function relativeTime(ms: number) {
@@ -64,6 +70,7 @@ function relativeTime(ms: number) {
 export function ProfileView({
   profile,
   list,
+  comments = [],
   isOwner,
   showQuitProfile = false,
 }: Props) {
@@ -71,6 +78,9 @@ export function ProfileView({
   const [tab, setTab] = useState<ProfileTab>("board");
   const [live, setLive] = useState(profile);
   const [episodes, setEpisodes] = useState<WatchProgress[]>([]);
+  const tabRefs = useRef<Partial<Record<ProfileTab, HTMLButtonElement | null>>>(
+    {},
+  );
 
   const name = displayName(live);
   const handle = handleFromProfile(live);
@@ -90,6 +100,16 @@ export function ProfileView({
     window.addEventListener("anikura:progress", sync);
     return () => window.removeEventListener("anikura:progress", sync);
   }, [isOwner]);
+
+  useEffect(() => {
+    const el = tabRefs.current[tab];
+    if (!el) return;
+    el.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest",
+    });
+  }, [tab]);
 
   const favorites = useMemo(
     () => list.filter((x) => x.is_favorite),
@@ -149,7 +169,7 @@ export function ProfileView({
   );
 
   return (
-    <div className="relative px-3 pb-24 pt-16 sm:px-4 sm:pt-20">
+    <div className="relative px-0 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-14 sm:px-3 sm:pb-24 sm:pt-16 md:px-4 md:pt-20">
       {ambient ? (
         <div
           aria-hidden
@@ -166,24 +186,26 @@ export function ProfileView({
 
       <div className="relative mx-auto w-full max-w-[1080px]">
         {showQuitProfile ? (
-          <div className="sticky top-14 z-30 mb-3 flex items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-void/85 px-3.5 py-2.5 backdrop-blur-md sm:top-16 sm:px-4">
+          <div className="sticky top-14 z-30 mx-3 mb-3 flex items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-void/85 px-3.5 py-2.5 backdrop-blur-md sm:top-16 sm:mx-0 sm:px-4">
             <p className="min-w-0 truncate text-sm text-[#b5bac1]">
               Viewing{" "}
               <span className="font-medium text-snow">{name}</span>
             </p>
             <Link
               href="/profile"
-              className="shrink-0 rounded-full bg-white/[0.08] px-3.5 py-1.5 text-[0.8125rem] font-medium text-snow transition hover:bg-white/[0.12]"
+              className="pressable shrink-0 rounded-full bg-white/[0.08] px-3.5 py-1.5 text-[0.8125rem] font-medium text-snow transition hover:bg-white/[0.12]"
             >
               Quit profile
             </Link>
           </div>
         ) : null}
 
-        <ProfileSearch className="mb-4" />
+        <div className="px-3 sm:px-0">
+          <ProfileSearch className="mb-3 sm:mb-4" />
+        </div>
 
         <div
-          className="overflow-hidden rounded-[28px] border border-white/[0.08] shadow-[0_40px_100px_rgba(0,0,0,0.55)]"
+          className="overflow-hidden border-y border-white/[0.08] shadow-[0_40px_100px_rgba(0,0,0,0.55)] sm:rounded-[28px] sm:border"
           style={{
             background: ambient
               ? `linear-gradient(165deg, rgba(${rgb}, 0.14) 0%, #111214 28%, #0e0f12 100%)`
@@ -195,7 +217,7 @@ export function ProfileView({
         >
           <div className="grid lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)]">
             <aside className="relative border-b border-white/[0.06] lg:border-b-0 lg:border-r lg:border-white/[0.06]">
-              <div className="relative h-[140px] sm:h-[160px]">
+              <div className="relative h-[128px] sm:h-[160px]">
                 {live.banner_url ? (
                   <Image
                     src={live.banner_url}
@@ -216,9 +238,9 @@ export function ProfileView({
                 <div className="absolute inset-0 bg-gradient-to-t from-[#111214]/80 via-transparent to-black/10" />
               </div>
 
-              <div className="relative px-5 pb-6 pt-0">
+              <div className="relative px-4 pb-5 pt-0 sm:px-5 sm:pb-6">
                 <div
-                  className="-mt-12 inline-flex rounded-full p-[6px]"
+                  className="-mt-11 inline-flex rounded-full p-[5px] sm:-mt-12 sm:p-[6px]"
                   style={{
                     background: "#111214",
                     boxShadow: ambient
@@ -226,7 +248,7 @@ export function ProfileView({
                       : `0 0 0 3px ${accent}`,
                   }}
                 >
-                  <div className="relative h-[92px] w-[92px] overflow-hidden rounded-full bg-[#1e1f22]">
+                  <div className="relative h-[84px] w-[84px] overflow-hidden rounded-full bg-[#1e1f22] sm:h-[92px] sm:w-[92px]">
                     {live.avatar_url ? (
                       <Image
                         src={live.avatar_url}
@@ -249,7 +271,7 @@ export function ProfileView({
                 <div className="mt-3 flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
-                      <h1 className="truncate text-[1.55rem] font-bold leading-tight tracking-[-0.03em] text-snow">
+                      <h1 className="truncate text-[1.4rem] font-bold leading-tight tracking-[-0.03em] text-snow sm:text-[1.55rem]">
                         {name}
                       </h1>
                       <ProfileBadges badges={badges} />
@@ -265,24 +287,24 @@ export function ProfileView({
                     <button
                       type="button"
                       onClick={() => setEditing(true)}
-                      className="mt-1 shrink-0 rounded-lg px-2.5 py-1.5 text-[0.8rem] font-medium text-[#949ba4] transition hover:bg-white/[0.06] hover:text-[#dbdee1]"
+                      className="pressable mt-0.5 shrink-0 rounded-full bg-white/[0.06] px-3 py-2 text-[0.8rem] font-medium text-[#dbdee1] ring-1 ring-white/[0.08] transition hover:bg-white/[0.1] hover:text-snow"
                     >
-                      Edit Profile
+                      Edit
                     </button>
                   ) : null}
                 </div>
 
-                <section className="mt-4 rounded-2xl bg-[#1e1f22]/90 px-3.5 py-2.5 ring-1 ring-white/[0.04]">
+                <section className="mt-4 rounded-2xl bg-[#1e1f22]/90 px-3.5 py-3 ring-1 ring-white/[0.04]">
                   <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#949ba4]">
                     About Me
                   </p>
                   {live.bio ? (
-                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-[#dbdee1]">
+                    <p className="mt-1.5 whitespace-pre-wrap text-[0.9375rem] leading-relaxed text-[#dbdee1] sm:text-sm">
                       {live.bio}
                     </p>
                   ) : (
                     <p className="mt-1 text-sm text-[#6d6f78]">
-                      {isOwner ? "Add a short bio from Edit Profile." : "No bio yet."}
+                      {isOwner ? "Add a short bio from Edit." : "No bio yet."}
                     </p>
                   )}
                 </section>
@@ -301,12 +323,12 @@ export function ProfileView({
                         See all
                       </button>
                     </div>
-                    <div className="scrollbar-none -mx-0.5 flex gap-2 overflow-x-auto px-0.5 pb-0.5">
+                    <div className="scrollbar-none -mx-0.5 flex snap-x snap-mandatory gap-2 overflow-x-auto px-0.5 pb-0.5">
                       {continueStrip.map((item) => (
                         <Link
                           key={`${item.id}-${item.episode}-${item.language}`}
                           href={`/watch/${item.id}/${item.slug}?ep=${item.episode}&lang=${item.language}`}
-                          className="group w-[4.25rem] shrink-0 sm:w-[3.5rem]"
+                          className="pressable group w-[4.25rem] shrink-0 snap-start sm:w-[3.5rem]"
                           title={`${item.title} · Episode ${item.episode}`}
                         >
                           <div className="relative aspect-[2/3] overflow-hidden rounded-md bg-[#111214] ring-1 ring-white/8 transition group-hover:ring-white/25">
@@ -344,34 +366,49 @@ export function ProfileView({
               </div>
             </aside>
 
-            <div className="flex min-h-[360px] flex-col bg-[#0e0f12]/40">
-              <div className="flex items-center gap-1 border-b border-white/[0.06] px-4 pt-3 sm:px-5">
-                {TABS.map((t) => {
-                  const active = tab === t.id;
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setTab(t.id)}
-                      className={`relative px-3.5 py-2.5 text-sm font-medium transition ${
-                        active
-                          ? "text-snow"
-                          : "text-[#949ba4] hover:text-[#dbdee1]"
-                      }`}
-                    >
-                      {t.label}
-                      {active ? (
-                        <span
-                          className="absolute inset-x-2 -bottom-px h-0.5 rounded-full"
-                          style={{ background: accent }}
-                        />
-                      ) : null}
-                    </button>
-                  );
-                })}
+            <div className="flex min-h-[320px] flex-col bg-[#0e0f12]/40 sm:min-h-[360px]">
+              <div className="sticky top-14 z-20 border-b border-white/[0.06] bg-[#0e0f12]/92 backdrop-blur-xl sm:top-16 lg:static lg:bg-transparent lg:backdrop-blur-none">
+                <div
+                  role="tablist"
+                  aria-label="Profile sections"
+                  className="scrollbar-none flex gap-0.5 overflow-x-auto px-3 py-2 sm:gap-1 sm:px-5 sm:pt-3 sm:pb-0"
+                >
+                  {TABS.map((t) => {
+                    const active = tab === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        ref={(el) => {
+                          tabRefs.current[t.id] = el;
+                        }}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        onClick={() => setTab(t.id)}
+                        className={`pressable relative shrink-0 rounded-full px-3.5 py-2 text-[0.8125rem] font-medium transition sm:rounded-none sm:px-3.5 sm:py-2.5 sm:text-sm ${
+                          active
+                            ? "bg-white/[0.12] text-snow sm:bg-transparent"
+                            : "text-[#949ba4] hover:text-[#dbdee1]"
+                        }`}
+                      >
+                        {t.label}
+                        {active ? (
+                          <span
+                            className="absolute inset-x-2.5 -bottom-px hidden h-0.5 rounded-full sm:block"
+                            style={{ background: accent }}
+                          />
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+              <div
+                key={tab}
+                className="flex-1 overflow-y-auto p-3.5 animate-rise sm:p-5"
+                style={{ animationDuration: "0.35s" }}
+              >
                 {tab === "board" ? (
                   <BoardTab
                     widgets={widgets}
@@ -394,13 +431,20 @@ export function ProfileView({
                     accent={accent}
                   />
                 ) : null}
+                {tab === "comments" ? (
+                  <CommentsTab
+                    items={comments}
+                    isOwner={isOwner}
+                    accent={accent}
+                  />
+                ) : null}
               </div>
             </div>
           </div>
         </div>
 
         {editing && isOwner ? (
-          <div className="mt-6">
+          <div className="mt-4 px-3 sm:mt-6 sm:px-0">
             <ProfileEditPanel
               profile={live}
               onSaved={(next) => {
@@ -496,12 +540,12 @@ function WidgetCard({
           </p>
         </div>
       ) : (
-        <div className="scrollbar-none -mx-0.5 flex gap-2 overflow-x-auto px-0.5 pb-0.5">
+        <div className="scrollbar-none -mx-0.5 flex snap-x snap-mandatory gap-2 overflow-x-auto px-0.5 pb-0.5">
           {filled.map((item) => (
             <Link
               key={item.id}
               href={`/anime/${item.anime_id}/${item.slug}`}
-              className="group relative aspect-[2/3] w-[4.25rem] shrink-0 overflow-hidden rounded-lg bg-[#111214] ring-1 ring-white/8 transition hover:ring-white/25 sm:w-[4.75rem]"
+              className="pressable group relative aspect-[2/3] w-[4.5rem] shrink-0 snap-start overflow-hidden rounded-lg bg-[#111214] ring-1 ring-white/8 transition hover:ring-white/25 sm:w-[4.75rem]"
             >
               {item.poster ? (
                 <Image
@@ -588,7 +632,7 @@ function ActivityTab({
           <li key={`${item.id}-${item.episode}-${item.language}-${item.updatedAt}`}>
             <Link
               href={`/watch/${item.id}/${item.slug}?ep=${item.episode}&lang=${item.language}`}
-              className="flex items-center gap-3 rounded-2xl bg-[#1e1f22]/90 p-2.5 ring-1 ring-white/[0.04] transition hover:bg-[#232428] hover:ring-white/[0.08]"
+              className="pressable flex items-center gap-3 rounded-2xl bg-[#1e1f22]/90 p-2.5 ring-1 ring-white/[0.04] transition hover:bg-[#232428] hover:ring-white/[0.08]"
             >
               <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-[#111214]">
                 {item.poster ? (
@@ -616,6 +660,17 @@ function ActivityTab({
                     {relativeTime(item.updatedAt)}
                   </span>
                 </p>
+                {item.percent > 0 && item.percent < 100 ? (
+                  <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10 sm:hidden">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.min(100, item.percent)}%`,
+                        background: accent,
+                      }}
+                    />
+                  </div>
+                ) : null}
               </div>
               {item.percent > 0 && item.percent < 100 ? (
                 <div className="hidden w-16 shrink-0 sm:block">
@@ -709,6 +764,90 @@ function PosterGrid({
           </p>
         </Link>
       ))}
+    </div>
+  );
+}
+
+function CommentsTab({
+  items,
+  isOwner,
+  accent,
+}: {
+  items: ProfileCommentItem[];
+  isOwner: boolean;
+  accent: string;
+}) {
+  return (
+    <div>
+      <div className="mb-3">
+        <h2 className="text-base font-semibold text-snow">Comments</h2>
+        <p className="mt-0.5 text-sm text-[#949ba4]">
+          {isOwner
+            ? "Your recent comments across series episodes."
+            : "Recent comments across series episodes."}
+        </p>
+      </div>
+
+      {items.length === 0 ? (
+        <EmptyState
+          title="No comments yet"
+          body={
+            isOwner
+              ? "Jump into an episode and leave a thought — it’ll show up here."
+              : "This viewer hasn’t commented on any episodes yet."
+          }
+        />
+      ) : (
+        <ul className="space-y-2.5">
+          {items.map((item) => {
+            const href = `/watch/${item.anime_id}/${item.animeSlug}?ep=${item.episode}&lang=${item.language}`;
+            return (
+              <li key={item.id}>
+                <Link
+                  href={href}
+                  className="pressable group flex gap-3 rounded-2xl border border-white/[0.06] bg-[#1e1f22]/80 p-3 transition hover:border-white/15 hover:bg-white/[0.04]"
+                >
+                  <span className="relative h-[4.25rem] w-[3rem] shrink-0 overflow-hidden rounded-lg bg-[#111214] ring-1 ring-white/8">
+                    {item.animePoster ? (
+                      <Image
+                        src={item.animePoster}
+                        alt=""
+                        fill
+                        className="object-cover transition duration-500 group-hover:scale-[1.04]"
+                        sizes="48px"
+                      />
+                    ) : null}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                      <span className="truncate text-sm font-medium tracking-[-0.02em] text-snow">
+                        {item.animeTitle}
+                      </span>
+                      <span
+                        className="text-[0.7rem] font-medium uppercase tracking-[0.08em]"
+                        style={{ color: accent }}
+                      >
+                        Ep {item.episode} · {item.language}
+                      </span>
+                    </span>
+                    <p className="mt-1 line-clamp-3 text-sm leading-relaxed text-[#dbdee1]">
+                      {item.body}
+                    </p>
+                    <span className="mt-1.5 flex flex-wrap items-center gap-2 text-[0.7rem] text-[#6d6f78]">
+                      <span>{formatCommentTime(item.created_at)}</span>
+                      {item.parent_id ? (
+                        <span className="rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[0.65rem]">
+                          Reply
+                        </span>
+                      ) : null}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

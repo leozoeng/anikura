@@ -31,6 +31,7 @@ Set these on Vercel (Production):
 
 | Variable | Purpose |
 |---|---|
+| `NEXT_PUBLIC_SITE_URL` | `https://anikura.club` — auth email confirm redirects |
 | `SUPABASE_SERVICE_ROLE_KEY` | Writes the live overlay (server-only) |
 | `CRON_SECRET` | Bearer token Vercel Cron sends as `Authorization` |
 
@@ -46,15 +47,31 @@ Anikura uses Supabase Auth (email/password) with `@supabase/ssr` for App Router 
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Publishable / anon key |
+| `NEXT_PUBLIC_SITE_URL` | Public origin for email confirm links (`https://anikura.club`) |
 | `ADMIN_EMAIL` | Comma-separated admin emails for `/admin` |
 
-Copy `.env.example` → `.env.local`.
+Copy `.env.example` → `.env.local`. On **Vercel → Settings → Environment Variables**, set `NEXT_PUBLIC_SITE_URL=https://anikura.club` for Production (then redeploy). Do not set it to `http://localhost:3000` in Production.
 
 Project (Leo Zoeng org): `anikura` · region `eu-north-1`.
+
+### Supabase Auth URL config (required for email verify)
+
+Confirm emails follow Supabase **Site URL** when `emailRedirectTo` is missing or not allow-listed. Localhost there breaks phones.
+
+In [Authentication → URL Configuration](https://supabase.com/dashboard/project/yotvmnkhxqdztuqnvzpq/auth/url-configuration):
+
+| Setting | Value |
+|---|---|
+| **Site URL** | `https://anikura.club` |
+| **Redirect URLs** | `https://anikura.club/**`, `https://www.anikura.club/**`, `http://localhost:3000/**` (local only) |
+
+Optional: keep a Vercel preview pattern like `https://*-leozoengs-projects.vercel.app/**` if you test auth on previews.
 
 ### Sign up / sign in
 
 Use **Sign in** / **Create account** in the header, or `/login`.
+
+Signup sends `emailRedirectTo` → `https://anikura.club/auth/callback` (never localhost in production).
 
 For the simplest local flow, disable email confirmation in the Supabase dashboard:
 

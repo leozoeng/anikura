@@ -243,7 +243,7 @@ export function SearchCommand({ open, onOpenChange }: Props) {
         type="button"
         aria-label="Open search"
         onClick={() => onOpenChange(true)}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent text-cloud transition hover:border-white/10 hover:bg-white/[0.06] hover:text-snow sm:w-auto sm:gap-2 sm:px-3"
+        className="hidden h-9 w-9 items-center justify-center rounded-full border border-transparent text-cloud transition hover:border-white/10 hover:bg-white/[0.06] hover:text-snow active:scale-[0.97] md:inline-flex sm:w-auto sm:gap-2 sm:px-3"
       >
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden>
           <circle cx="7" cy="7" r="5.25" stroke="currentColor" strokeWidth="1.4" />

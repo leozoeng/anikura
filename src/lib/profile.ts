@@ -28,6 +28,45 @@ export const USERNAME_MIN = 3;
 export const USERNAME_MAX = 24;
 export const USERNAME_PATTERN = /^[a-z0-9_]+$/;
 
+/** Keep in sync with `private.is_reserved_username` in Supabase migrations. */
+export const RESERVED_USERNAMES = new Set([
+  "admin",
+  "administrator",
+  "anikura",
+  "api",
+  "auth",
+  "browse",
+  "callback",
+  "discord",
+  "genres",
+  "ghibli",
+  "help",
+  "home",
+  "login",
+  "logout",
+  "me",
+  "mod",
+  "moderator",
+  "null",
+  "official",
+  "owner",
+  "profile",
+  "profiles",
+  "root",
+  "search",
+  "settings",
+  "signup",
+  "staff",
+  "support",
+  "system",
+  "undefined",
+  "u",
+  "user",
+  "users",
+  "watch",
+  "www",
+]);
+
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -101,6 +140,22 @@ export function normalizeUsername(raw: string | null | undefined): string | null
   return cleaned;
 }
 
+export function isReservedUsername(handle: string) {
+  return RESERVED_USERNAMES.has(handle.toLowerCase());
+}
+
+/**
+ * Valid public vanity handle for routing (normalized + not reserved).
+ * Reserved/invalid → null (caller should 404).
+ */
+export function vanityUsernameFromParam(
+  raw: string | null | undefined,
+): string | null {
+  const handle = normalizeUsername(raw);
+  if (!handle || isReservedUsername(handle)) return null;
+  return handle;
+}
+
 export function isProfileUuid(value: string) {
   return UUID_RE.test(value.trim());
 }
@@ -116,12 +171,12 @@ export function handleFromProfile(
   return `@${base}`;
 }
 
-/** Prefer vanity `/u/username`, fall back to UUID permalink. */
+/** Prefer solo.to-style `/@username`, fall back to UUID permalink. */
 export function profileHref(
   profile: Pick<PublicProfile, "id" | "username">,
 ) {
-  const handle = normalizeUsername(profile.username);
-  return handle ? `/u/${handle}` : `/u/${profile.id}`;
+  const handle = vanityUsernameFromParam(profile.username);
+  return handle ? `/@${handle}` : `/u/${profile.id}`;
 }
 
 /** Normalize user input to #RRGGBB or null if invalid. */

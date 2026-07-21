@@ -39,9 +39,12 @@ export function ContinueWatching() {
         </button>
       </div>
 
-      <div className="fade-x scrollbar-none flex gap-4 overflow-x-auto px-3 pb-2 sm:gap-5 sm:px-4">
+      <div className="fade-x scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-2 sm:gap-5 sm:px-4">
         {items.map((item) => (
-          <div key={item.id} className="w-[138px] shrink-0 sm:w-[156px]">
+          <div
+            key={item.id}
+            className="w-[118px] shrink-0 snap-start sm:w-[156px]"
+          >
             <AnimePoster
               href={`/watch/${item.id}/${item.slug}?ep=${item.episode}&lang=${item.language}`}
               anime={{

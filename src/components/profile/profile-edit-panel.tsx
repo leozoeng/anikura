@@ -111,7 +111,7 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
       setUsernameHint("Taken or reserved");
       return false;
     }
-    setUsernameHint(`@${normalized} is available`);
+    setUsernameHint(`anikura.club/@${normalized} is available`);
     return true;
   }
 
@@ -218,7 +218,10 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
             />
           </div>
           <p className="mt-1.5 text-[0.7rem] text-[#6d6f78]">
-            {usernameHint || "Unique vanity handle — once taken, it’s yours."}
+            {usernameHint ||
+              (username
+                ? `Public link: anikura.club/@${username}`
+                : "Unique vanity handle — once taken, it’s yours.")}
           </p>
         </label>
 
