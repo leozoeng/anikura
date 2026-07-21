@@ -5,6 +5,7 @@ import { PresenceTracker } from "@/components/presence-tracker";
 import { SiteAtmosphere } from "@/components/site-atmosphere";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeaderServer } from "@/components/site-header-server";
+import { WatchTimeTracker } from "@/components/watch-time-tracker";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -53,6 +54,7 @@ export default function RootLayout({
         <div className="noise" aria-hidden />
         <SiteHeaderServer />
         <PresenceTracker />
+        <WatchTimeTracker />
         <main className="relative z-10 min-h-screen">{children}</main>
         <SiteFooter />
         <MobileBottomNav />

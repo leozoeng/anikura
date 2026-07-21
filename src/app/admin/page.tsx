@@ -73,9 +73,17 @@ export default async function AdminPage() {
     page_views_today?: number;
     page_views_7d?: number;
     sessions_live?: number;
+    unique_visitors_today?: number;
+    returning_visitors_today?: number;
+    watch_seconds_today?: number | string;
   };
 
   const presenceRows = (presence ?? []) as Array<{
+    id: string;
+    session_id: string | null;
+    user_id: string | null;
+    email: string | null;
+    nickname: string | null;
     lat: number | null;
     lng: number | null;
     country: string | null;
@@ -98,13 +106,21 @@ export default async function AdminPage() {
           page_views_today: metrics.page_views_today ?? 0,
           page_views_7d: metrics.page_views_7d ?? 0,
           sessions_live: metrics.sessions_live ?? 0,
+          unique_visitors_today: metrics.unique_visitors_today ?? 0,
+          returning_visitors_today: metrics.returning_visitors_today ?? 0,
+          watch_seconds_today: Number(metrics.watch_seconds_today ?? 0),
         }}
         presence={presenceRows
           .filter(
-            (p): p is typeof p & { lat: number; lng: number } =>
-              p.lat != null && p.lng != null,
+            (p): p is typeof p & { lat: number; lng: number; id: string } =>
+              Boolean(p.id) && p.lat != null && p.lng != null,
           )
           .map((p) => ({
+            id: p.id,
+            session_id: p.session_id,
+            user_id: p.user_id,
+            email: p.email,
+            nickname: p.nickname,
             lat: p.lat,
             lng: p.lng,
             country: p.country,
