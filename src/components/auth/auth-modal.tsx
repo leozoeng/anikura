@@ -166,7 +166,7 @@ export function AuthModal({
           />
           <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 md:inset-auto md:bottom-0 md:left-0 md:right-0 md:p-6">
             <div className="flex items-center gap-2.5">
-              <AnikuraMark size={32} className="ring-1 ring-white/20" />
+              <AnikuraMark size={36} className="ring-1 ring-white/20" />
               <div>
                 <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-snow">
                   Anikura

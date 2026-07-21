@@ -18,8 +18,8 @@ export function SiteFooter() {
         <div className="page-shell relative py-7 sm:py-8">
           <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
             <div className="flex min-w-0 flex-col gap-1">
-              <AnikuraLogo size={26} withWordmark href="/" />
-              <p className="pl-[calc(26px+0.625rem)] text-[0.68rem] tracking-[-0.01em] text-mute/70">
+              <AnikuraLogo size={32} withWordmark href="/" />
+              <p className="pl-[calc(32px+0.625rem)] text-[0.68rem] tracking-[-0.01em] text-mute/70">
                 © {year} Anikura
               </p>
             </div>

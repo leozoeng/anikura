@@ -67,7 +67,7 @@ export function SiteHeader({
     return (
       <header className="site-chrome fixed inset-x-0 top-0 z-40 bg-void/90 backdrop-blur-md">
         <div className="flex h-14 w-full items-center gap-5 px-3 pt-[env(safe-area-inset-top)] sm:h-16 sm:px-4">
-          <AnikuraLogo size={28} />
+          <AnikuraLogo size={34} />
           <span className="text-sm text-mute">Admin</span>
           <div className="ml-auto">
             <HeaderAuth
@@ -91,7 +91,7 @@ export function SiteHeader({
       }`}
     >
       <div className="flex h-14 w-full items-center gap-3 px-3 pt-[env(safe-area-inset-top)] sm:h-16 sm:gap-8 sm:px-4">
-        <AnikuraLogo size={28} />
+        <AnikuraLogo size={34} />
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
           {navLinks.map((link) => {

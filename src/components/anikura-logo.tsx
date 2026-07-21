@@ -10,7 +10,7 @@ type Props = {
 };
 
 export function AnikuraMark({
-  size = 28,
+  size = 34,
   className = "",
 }: {
   size?: number;
@@ -33,7 +33,7 @@ export function AnikuraMark({
 
 export function AnikuraLogo({
   withWordmark = true,
-  size = 28,
+  size = 34,
   className = "",
   href = "/",
 }: Props) {

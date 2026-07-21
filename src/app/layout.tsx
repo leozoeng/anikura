@@ -28,10 +28,6 @@ export const metadata: Metadata = {
   },
   description:
     "A quiet theater for loud stories — sakura glow, soft nights, and the next episode waiting when you are.",
-  icons: {
-    icon: "/anikura-mark.png",
-    apple: "/anikura-mark.png",
-  },
 };
 
 export const viewport: Viewport = {
