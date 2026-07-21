@@ -23,7 +23,7 @@ export function AnikuraMark({
       width={size}
       height={size}
       sizes={`${size}px`}
-      quality={100}
+      unoptimized
       className={`object-contain ${className}`}
       style={{ width: size, height: size }}
       priority
