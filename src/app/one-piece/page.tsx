@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AnimePoster } from "@/components/anime-poster";
 import { OnePieceHero } from "@/components/one-piece-hero";
 import { resolveAniListForAnime } from "@/lib/anilist";
@@ -16,12 +17,22 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
+type Props = {
+  searchParams: Promise<{ view?: string }>;
+};
+
 const TRAILER_PRIORITY = [
   /film:? ?red/i,
   /film:? ?gold/i,
   /film z|movie 12/i,
   /strong world(?! episode)/i,
   /^one piece$/i,
+];
+
+/** Known YouTube trailers when AniList is missing/slow — Film Red first. */
+const TRAILER_FALLBACKS: { match: RegExp; youtubeId: string }[] = [
+  { match: /film:? ?red/i, youtubeId: "YAN45KAL5lg" },
+  { match: /film:? ?gold/i, youtubeId: "_shEgcWHC2U" },
 ];
 
 async function resolveHeroTrailer(entries: OnePieceCatalogEntry[]) {
@@ -33,6 +44,17 @@ async function resolveHeroTrailer(entries: OnePieceCatalogEntry[]) {
     if (trailer?.site?.toLowerCase() === "youtube" && trailer.id) {
       return {
         trailerId: trailer.id,
+        title: entry.def.title,
+        poster:
+          media?.bannerImage ||
+          entry.anime.background_image ||
+          entry.anime.poster,
+      };
+    }
+    const pinned = TRAILER_FALLBACKS.find((f) => f.match.test(entry.def.title));
+    if (pinned) {
+      return {
+        trailerId: pinned.youtubeId,
         title: entry.def.title,
         poster:
           media?.bannerImage ||
@@ -53,11 +75,15 @@ async function resolveHeroTrailer(entries: OnePieceCatalogEntry[]) {
   };
 }
 
-export default async function OnePiecePage() {
+export default async function OnePiecePage({ searchParams }: Props) {
+  const { view } = await searchParams;
+  const filmsOnly = view === "films";
+
   const catalog = await getCatalog();
-  const entries = getOnePieceCollection(catalog);
-  const films = onePieceFilmCount(entries);
-  const hero = await resolveHeroTrailer(entries);
+  const all = getOnePieceCollection(catalog);
+  const entries = filmsOnly ? all.filter((e) => e.def.film) : all;
+  const films = onePieceFilmCount(all);
+  const hero = await resolveHeroTrailer(all);
 
   return (
     <div className="page-enter relative pb-24">
@@ -65,7 +91,7 @@ export default async function OnePiecePage() {
         trailerId={hero.trailerId}
         posterSrc={hero.poster}
         title={hero.title}
-        entryCount={entries.length}
+        entryCount={all.length}
         filmCount={films}
       />
 
@@ -75,18 +101,38 @@ export default async function OnePiecePage() {
           className="pointer-events-none absolute inset-x-0 -top-24 -z-10 h-64"
           style={{
             background:
-              "radial-gradient(ellipse at 50% 0%, rgba(58,160,232,0.12), transparent 70%)",
+              "radial-gradient(ellipse at 50% 0%, rgba(58,160,232,0.1), transparent 70%)",
           }}
         />
 
-        <div className="flex flex-wrap items-center gap-2 border-b border-[#f0a35a]/12 pb-5">
-          <p className="text-sm text-[#8aa8c0]">
+        <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-5">
+          <Link
+            href="/one-piece"
+            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+              !filmsOnly
+                ? "bg-[#ffd28a] text-[#1a1208] shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
+                : "border border-white/15 text-white/55 hover:border-white/30 hover:text-white/85"
+            }`}
+          >
+            All titles
+          </Link>
+          <Link
+            href="/one-piece?view=films"
+            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+              filmsOnly
+                ? "bg-[#ffd28a] text-[#1a1208] shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
+                : "border border-white/15 text-white/55 hover:border-white/30 hover:text-white/85"
+            }`}
+          >
+            Films only
+          </Link>
+          <p className="ml-auto text-sm text-white/40">
             Chronological · {entries.length} shown
           </p>
         </div>
 
         {entries.length === 0 ? (
-          <p className="mt-16 text-center text-[#8aa8c0]">
+          <p className="mt-16 text-center text-white/40">
             No One Piece titles found in the catalog yet.
           </p>
         ) : (

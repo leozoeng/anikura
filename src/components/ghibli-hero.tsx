@@ -28,16 +28,16 @@ export function GhibliHero({
       showAudioToggle
       className="ghibli-hero border-b border-[#c5d4b8]/15"
     >
-      {/* Meadow / sky wash over trailer */}
+      {/* Heavy dim veil for readable white type over trailer */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 z-[1]"
         style={{
           background: `
-            linear-gradient(180deg, rgba(12,22,16,0.35) 0%, rgba(10,18,14,0.55) 45%, rgba(8,12,10,0.92) 100%),
-            radial-gradient(900px 420px at 15% 10%, rgba(168,210,170,0.28), transparent 55%),
-            radial-gradient(700px 380px at 90% 20%, rgba(150,195,220,0.2), transparent 50%),
-            radial-gradient(500px 280px at 50% 100%, rgba(232,210,150,0.12), transparent 55%)
+            linear-gradient(180deg, rgba(6,12,10,0.58) 0%, rgba(6,12,10,0.72) 40%, rgba(4,8,6,0.96) 100%),
+            linear-gradient(90deg, rgba(4,8,6,0.72) 0%, rgba(4,8,6,0.35) 42%, transparent 70%),
+            radial-gradient(900px 420px at 15% 10%, rgba(168,210,170,0.16), transparent 55%),
+            radial-gradient(700px 380px at 90% 20%, rgba(150,195,220,0.12), transparent 50%)
           `,
         }}
       />
@@ -45,7 +45,7 @@ export function GhibliHero({
       {/* Soft cloud blobs */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 z-[1] overflow-hidden opacity-40"
+        className="pointer-events-none absolute inset-0 z-[1] overflow-hidden opacity-28"
       >
         <div className="ghibli-cloud absolute -left-[8%] top-[12%] h-28 w-[42%] rounded-full bg-white/15 blur-3xl" />
         <div className="ghibli-cloud-slow absolute right-[-4%] top-[22%] h-24 w-[36%] rounded-full bg-[#c5dce8]/20 blur-3xl" />

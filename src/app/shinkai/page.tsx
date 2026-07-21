@@ -23,6 +23,13 @@ const TRAILER_PRIORITY = [
   /5 centimeters/i,
 ];
 
+/** Known YouTube trailers when AniList is missing/slow — Your Name first. */
+const TRAILER_FALLBACKS: { match: RegExp; youtubeId: string }[] = [
+  { match: /your name/i, youtubeId: "k4xGqY5IDBE" },
+  { match: /suzume/i, youtubeId: "g0JMPkn7Wuo" },
+  { match: /weathering with you/i, youtubeId: "Q6iK6DjV_iE" },
+];
+
 async function resolveHeroTrailer(entries: ShinkaiCatalogEntry[]) {
   for (const re of TRAILER_PRIORITY) {
     const entry = entries.find((e) => re.test(e.def.title));
@@ -32,6 +39,17 @@ async function resolveHeroTrailer(entries: ShinkaiCatalogEntry[]) {
     if (trailer?.site?.toLowerCase() === "youtube" && trailer.id) {
       return {
         trailerId: trailer.id,
+        title: entry.def.title,
+        poster:
+          media?.bannerImage ||
+          entry.anime.background_image ||
+          entry.anime.poster,
+      };
+    }
+    const pinned = TRAILER_FALLBACKS.find((f) => f.match.test(entry.def.title));
+    if (pinned) {
+      return {
+        trailerId: pinned.youtubeId,
         title: entry.def.title,
         poster:
           media?.bannerImage ||
