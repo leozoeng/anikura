@@ -216,22 +216,7 @@ export function SiteHeader({
           >
             Discord
           </a>
-          {!email ? (
-            <>
-              <Link
-                href="/login"
-                className="rounded-xl px-4 py-3 text-[0.95rem] font-medium tracking-[-0.02em] text-cloud transition hover:bg-white/[0.05] hover:text-snow"
-              >
-                Sign in
-              </Link>
-              <Link
-                href="/login?mode=signup"
-                className="rounded-xl bg-white/[0.08] px-4 py-3 text-center text-[0.95rem] tracking-[-0.02em] text-snow shadow-[inset_0_0_0_1px_rgba(255,140,170,0.22)] transition hover:bg-white/[0.12]"
-              >
-                Create account
-              </Link>
-            </>
-          ) : isAdmin ? (
+          {!email ? null : isAdmin ? (
             <Link
               href="/admin"
               className="rounded-xl px-4 py-3 text-[0.95rem] tracking-[-0.02em] text-snow transition hover:bg-white/[0.05]"

@@ -75,28 +75,20 @@ export function HeaderAuth({
   if (!email) {
     return (
       <>
-        <div className="hidden items-center gap-1 md:flex">
-          <button
-            type="button"
-            onClick={() => {
-              setMode("signin");
-              setModalOpen(true);
-            }}
-            className="rounded-full px-3.5 py-1.5 text-[0.8125rem] tracking-[-0.01em] text-mute transition duration-300 hover:bg-white/[0.05] hover:text-snow"
-          >
-            Sign in
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMode("signup");
-              setModalOpen(true);
-            }}
-            className="rounded-full bg-white/[0.08] px-3.5 py-1.5 text-[0.8125rem] tracking-[-0.01em] text-snow shadow-[inset_0_0_0_1px_rgba(255,140,170,0.22)] transition duration-300 hover:bg-white/[0.12] hover:shadow-[inset_0_0_0_1px_rgba(255,140,170,0.35)]"
-          >
-            Create account
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setMode("signin");
+            setModalOpen(true);
+          }}
+          className="group inline-flex h-9 items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] pl-1.5 pr-3 text-[0.8125rem] tracking-[-0.01em] text-cloud transition duration-300 hover:border-white/25 hover:bg-white/[0.08] hover:text-snow"
+          aria-label="Open account"
+        >
+          <span className="grid h-6 w-6 place-items-center rounded-full bg-white/[0.08] text-snow ring-1 ring-white/12 transition group-hover:bg-white/[0.14]">
+            <UserIcon />
+          </span>
+          <span className="font-medium">Account</span>
+        </button>
         <AuthModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}
@@ -121,21 +113,22 @@ export function HeaderAuth({
         aria-haspopup="menu"
         className="group flex items-center gap-2 rounded-full py-0.5 pl-0.5 pr-1 transition duration-300 hover:bg-white/[0.06] sm:pr-2.5"
       >
-        <span className="relative h-9 w-9 overflow-hidden rounded-full bg-gradient-to-b from-[#2a2a30] to-[#141416] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/20 transition duration-300 group-hover:ring-[#ffb3c7]/45">
-          {avatarUrl ? (
-            <Image
-              src={avatarUrl}
-              alt=""
-              fill
-              className="object-cover"
-              sizes="36px"
-            />
-          ) : (
-            <span className="grid h-full w-full place-items-center text-[0.8rem] font-semibold tracking-[-0.02em] text-sakura-soft">
-              {initial}
-            </span>
-          )}
-        </span>
+        className="relative h-9 w-9 overflow-hidden rounded-full bg-gradient-to-b from-[#2a2a30] to-[#141416] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/20 transition duration-300 group-hover:ring-white/40"
+      >
+        {avatarUrl ? (
+          <Image
+            src={avatarUrl}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="36px"
+          />
+        ) : (
+          <span className="grid h-full w-full place-items-center text-[0.8rem] font-semibold tracking-[-0.02em] text-snow">
+            {initial}
+          </span>
+        )}
+      </span>
         <span className="hidden max-w-[7.5rem] truncate text-[0.8125rem] font-medium tracking-[-0.02em] text-cloud transition group-hover:text-snow sm:inline">
           {label}
         </span>
@@ -195,5 +188,19 @@ export function HeaderAuth({
         </>
       ) : null}
     </div>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="9" r="3.25" stroke="currentColor" strokeWidth="1.6" />
+      <path
+        d="M5.5 19c1.5-3 3.8-4.5 6.5-4.5S17 16 18.5 19"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
