@@ -404,7 +404,7 @@ export function WatchExperience(props: Props) {
                 related={related}
                 seasons={seasons}
                 nextAirLabel={nextAirLabel}
-                className="lg:sticky lg:top-20 lg:self-start"
+                className="min-w-0 self-start"
               />
 
               <AnimeComments

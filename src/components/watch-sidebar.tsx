@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RelatedAnimeList } from "@/components/related-anime";
 import { decodeEntities } from "@/lib/anilist";
 import { watchHref } from "@/lib/anikoto";
@@ -16,6 +16,11 @@ import type {
   SeasonEntry,
 } from "@/lib/related";
 import type { AnimeSummary, Episode } from "@/lib/types";
+
+/** How many episodes to keep around the current one (avoids 1000+ DOM nodes). */
+const WINDOW_BEFORE = 30;
+const WINDOW_AFTER = 30;
+const WINDOW_STEP = 40;
 
 type Props = {
   anime: Pick<AnimeSummary, "id" | "slug">;
@@ -49,11 +54,12 @@ export function WatchSidebar({
   const [query, setQuery] = useState("");
   const [reversed, setReversed] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [compact, setCompact] = useState(false);
+  const [compact, setCompact] = useState(() => episodes.length > 80);
+  const [beforeExtra, setBeforeExtra] = useState(0);
+  const [afterExtra, setAfterExtra] = useState(0);
   const [progressMap, setProgressMap] = useState<Map<number, number>>(
     () => new Map(),
   );
-  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setProgressMap(getProgressMapForAnime(anime.id, language));
@@ -65,16 +71,13 @@ export function WatchSidebar({
 
   useEffect(() => {
     setCollapsed(false);
-    const root = listRef.current;
-    if (!root) return;
-    const active = root.querySelector<HTMLElement>("[data-active-episode='1']");
-    if (!active) return;
-    const top =
-      active.offsetTop - root.clientHeight / 2 + active.clientHeight / 2;
-    root.scrollTop = Math.max(0, top);
-  }, [anime.id, current, language]);
+    setBeforeExtra(0);
+    setAfterExtra(0);
+    setQuery("");
+    setCompact(episodes.length > 80);
+  }, [anime.id, current, language, episodes.length]);
 
-  const visible = useMemo(() => {
+  const filtered = useMemo(() => {
     let list = [...episodes];
     const q = query.trim().toLowerCase();
     if (q) {
@@ -87,9 +90,38 @@ export function WatchSidebar({
     return list;
   }, [episodes, query, reversed]);
 
+  const windowed = useMemo(() => {
+    const searching = query.trim().length > 0;
+    if (searching || filtered.length <= WINDOW_BEFORE + WINDOW_AFTER + 1) {
+      return {
+        items: filtered,
+        hasBefore: false,
+        hasAfter: false,
+        hiddenBefore: 0,
+        hiddenAfter: 0,
+      };
+    }
+
+    const idx = filtered.findIndex((e) => e.number === current);
+    const center = idx >= 0 ? idx : 0;
+    const start = Math.max(0, center - WINDOW_BEFORE - beforeExtra);
+    const end = Math.min(
+      filtered.length,
+      center + WINDOW_AFTER + afterExtra + 1,
+    );
+
+    return {
+      items: filtered.slice(start, end),
+      hasBefore: start > 0,
+      hasAfter: end < filtered.length,
+      hiddenBefore: start,
+      hiddenAfter: filtered.length - end,
+    };
+  }, [filtered, current, query, beforeExtra, afterExtra]);
+
   return (
     <aside className={`flex flex-col gap-5 ${className}`.trim()}>
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-elevated/60">
+      <div className="shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-elevated/60">
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
@@ -100,7 +132,7 @@ export function WatchSidebar({
               Episodes
             </span>
             <span className="mt-0.5 block truncate text-xs text-mute">
-              Playing · Episode {current} · {showTitle}
+              Playing · Episode {current} · {episodes.length} total
             </span>
           </span>
           <svg
@@ -121,7 +153,7 @@ export function WatchSidebar({
           </svg>
         </button>
 
-        {!collapsed && (
+        {!collapsed ? (
           <div className="border-t border-white/8 px-3 pb-3 pt-3">
             <div className="flex items-center gap-1.5">
               <label className="relative min-w-0 flex-1">
@@ -156,15 +188,25 @@ export function WatchSidebar({
             </div>
 
             <div
-              ref={listRef}
-              className="mt-3 max-h-[min(52vh,520px)] space-y-1 overflow-y-auto overscroll-contain pr-1"
+              className="mt-3 space-y-1 overflow-y-auto overscroll-contain pr-1"
+              style={{ maxHeight: "min(52vh, 520px)" }}
             >
-              {visible.length === 0 ? (
+              {windowed.hasBefore ? (
+                <button
+                  type="button"
+                  onClick={() => setBeforeExtra((n) => n + WINDOW_STEP)}
+                  className="mb-1 w-full rounded-xl border border-white/10 bg-white/[0.03] py-2 text-xs font-medium text-cloud transition hover:bg-white/[0.06] hover:text-snow"
+                >
+                  Show earlier · {windowed.hiddenBefore} more
+                </button>
+              ) : null}
+
+              {windowed.items.length === 0 ? (
                 <p className="px-2 py-8 text-center text-sm text-mute">
                   No Episodes Found :(
                 </p>
               ) : (
-                visible.map((ep) => {
+                windowed.items.map((ep) => {
                   const isActive = ep.number === current;
                   const label = episodeDisplayTitle(ep);
                   const thumb = episodeThumbnails[ep.number] || fallbackImage;
@@ -175,7 +217,6 @@ export function WatchSidebar({
                     <Link
                       key={ep.id}
                       href={watchHref(anime, ep.number, language)}
-                      data-active-episode={isActive ? "1" : undefined}
                       className={`flex gap-3 rounded-xl p-2 transition ${
                         isActive
                           ? "bg-white/[0.08] ring-1 ring-white/12"
@@ -195,6 +236,7 @@ export function WatchSidebar({
                                 watched && !isActive ? "opacity-50" : ""
                               }`}
                               loading="lazy"
+                              decoding="async"
                               referrerPolicy="no-referrer"
                             />
                           ) : null}
@@ -244,17 +286,27 @@ export function WatchSidebar({
                   );
                 })
               )}
+
+              {windowed.hasAfter ? (
+                <button
+                  type="button"
+                  onClick={() => setAfterExtra((n) => n + WINDOW_STEP)}
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.03] py-2 text-xs font-medium text-cloud transition hover:bg-white/[0.06] hover:text-snow"
+                >
+                  Show later · {windowed.hiddenAfter} more
+                </button>
+              ) : null}
             </div>
           </div>
-        )}
+        ) : null}
       </div>
 
-      {nextAirLabel && (
+      {nextAirLabel ? (
         <div className="inline-flex items-center gap-2 self-start rounded-full bg-raised px-3.5 py-2 text-xs font-medium text-cloud ring-1 ring-white/10">
           <span aria-hidden>🔔</span>
           {nextAirLabel}
         </div>
-      )}
+      ) : null}
 
       <RelatedAnimeList
         title="Seasons"
