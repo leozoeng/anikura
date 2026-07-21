@@ -1,5 +1,6 @@
 import { AnimePoster } from "@/components/anime-poster";
 import { BrowseFeatured, type FeaturedSlide } from "@/components/browse-featured";
+import { PagePagination } from "@/components/page-pagination";
 import { getCatalog, getSyncMeta } from "@/lib/catalog";
 import { getGhibliCollection, ghibliMiyazakiCount } from "@/lib/ghibli";
 import { getOnePieceCollection, onePieceFilmCount } from "@/lib/one-piece";
@@ -205,27 +206,11 @@ export default async function BrowsePage({ searchParams }: Props) {
             ))}
           </div>
 
-          <div className="mt-14 flex items-center justify-center gap-4 text-sm">
-            {page > 1 && (
-              <Link
-                href={`/browse?sort=${sort}&page=${page - 1}`}
-                className="btn-ghost !px-4 !py-2 text-sm"
-              >
-                Previous
-              </Link>
-            )}
-            <span className="text-mute">
-              {page} / {totalPages}
-            </span>
-            {page < totalPages && (
-              <Link
-                href={`/browse?sort=${sort}&page=${page + 1}`}
-                className="btn-primary !px-4 !py-2 text-sm"
-              >
-                Next
-              </Link>
-            )}
-          </div>
+          <PagePagination
+            page={Math.min(page, totalPages)}
+            totalPages={totalPages}
+            hrefForPage={(p) => `/browse?sort=${sort}&page=${p}`}
+          />
         </>
       )}
     </div>

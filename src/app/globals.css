@@ -101,13 +101,19 @@ button {
     0 -18px 48px rgba(0, 0, 0, 0.45);
 }
 
+/* Right-edge fade only — keeps the first poster fully visible */
 .fade-x {
   mask-image: linear-gradient(
     to right,
-    transparent,
-    #000 3%,
-    #000 97%,
-    transparent
+    #000 0%,
+    #000 94%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0%,
+    #000 94%,
+    transparent 100%
   );
 }
 
