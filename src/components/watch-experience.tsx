@@ -304,7 +304,7 @@ export function WatchExperience(props: Props) {
             </div>
           </div>
         ) : (
-          <div className="mx-auto w-full max-w-[1400px] px-4 pt-4 sm:px-6 lg:px-8">
+          <div className="page-shell pt-4">
             <nav className="mb-3 flex flex-wrap items-center gap-1.5 text-sm text-mute">
               <Link
                 href="/"
@@ -327,7 +327,7 @@ export function WatchExperience(props: Props) {
             {/* Desktop: comments nested under description (avoids sidebar-height gap). Mobile: episodes then comments. */}
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
               <div className="min-w-0">
-                <div id={PLAYER_ID} ref={playerRef} className="-mx-4 sm:mx-0">
+                <div id={PLAYER_ID} ref={playerRef} className="-mx-5 sm:mx-0">
                   <VideoPlayer
                     title={`${showTitle} episode ${current.number}`}
                     servers={servers}

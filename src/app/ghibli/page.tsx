@@ -82,7 +82,7 @@ export default async function GhibliPage({ searchParams }: Props) {
         miyazakiCount={miyazakiCount}
       />
 
-      <div className="relative mx-auto max-w-[1200px] px-5 pt-10 sm:px-8">
+      <div className="page-shell relative pt-10">
         {/* Soft ground wash */}
         <div
           aria-hidden

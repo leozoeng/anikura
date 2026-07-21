@@ -52,7 +52,7 @@ export function GhibliHero({
         <div className="ghibli-cloud absolute left-[30%] top-[8%] h-16 w-[28%] rounded-full bg-white/10 blur-2xl" />
       </div>
 
-      <div className="relative z-[2] mx-auto flex min-h-[min(78svh,720px)] max-w-[1200px] flex-col justify-end px-5 pb-12 pt-28 sm:px-8 sm:pb-14 sm:pt-32">
+      <div className="page-shell relative z-[2] flex min-h-[min(78svh,720px)] flex-col justify-end pb-12 pt-28 sm:pb-14 sm:pt-32">
         <Link
           href="/browse"
           className="mb-auto inline-flex w-fit items-center gap-1.5 rounded-full border border-white/10 bg-black/25 px-3 py-1.5 text-sm text-[#c5d4b8] backdrop-blur-sm transition hover:border-white/20 hover:text-[#f3f0e6]"

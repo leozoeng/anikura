@@ -52,7 +52,7 @@ export default async function ShinkaiPage() {
           <div className="featured-ray absolute left-[52%] top-[-25%] h-[150%] w-28 rotate-[16deg] bg-gradient-to-b from-white/12 to-transparent blur-xl" />
         </div>
 
-        <div className="relative mx-auto max-w-[1200px] px-5 pb-14 pt-28 sm:px-8 sm:pb-16 sm:pt-32">
+        <div className="page-shell relative pb-14 pt-28 sm:pb-16 sm:pt-32">
           <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-[#a8c8ff]">
             Makoto Shinkai
           </p>
@@ -75,7 +75,7 @@ export default async function ShinkaiPage() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-[1200px] px-5 pt-10 sm:px-8">
+      <div className="page-shell pt-10">
         {entries.length === 0 ? (
           <p className="text-mute">No Shinkai films found in the catalog yet.</p>
         ) : (

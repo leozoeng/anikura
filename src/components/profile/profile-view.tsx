@@ -172,7 +172,7 @@ export function ProfileView({
   );
 
   return (
-    <div className="relative px-0 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-14 sm:px-3 sm:pb-24 sm:pt-16 md:px-4 md:pt-20">
+    <div className="page-shell relative pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-14 sm:pb-24 sm:pt-16 md:pt-20">
       {ambient ? (
         <div
           aria-hidden
@@ -187,13 +187,9 @@ export function ProfileView({
         />
       ) : null}
 
-      <div
-        className={`relative mx-auto w-full ${
-          hub ? "max-w-[1280px]" : "max-w-[1080px]"
-        }`}
-      >
+      <div className="relative w-full">
         {showQuitProfile ? (
-          <div className="sticky top-14 z-30 mx-3 mb-3 flex items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-void/85 px-3.5 py-2.5 backdrop-blur-md sm:top-16 sm:mx-0 sm:px-4">
+          <div className="sticky top-14 z-30 mb-3 flex items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-void/85 px-3.5 py-2.5 backdrop-blur-md sm:top-16 sm:px-4">
             <p className="min-w-0 truncate text-sm text-[#b5bac1]">
               Viewing{" "}
               <span className="font-medium text-snow">{name}</span>
@@ -216,7 +212,7 @@ export function ProfileView({
         >
           <div className="min-w-0">
             <div
-              className="overflow-hidden border-y border-white/[0.08] shadow-[0_40px_100px_rgba(0,0,0,0.55)] sm:rounded-[28px] sm:border"
+              className="overflow-hidden rounded-[1.25rem] border border-white/[0.08] shadow-[0_40px_100px_rgba(0,0,0,0.55)] sm:rounded-[28px]"
               style={{
                 background: ambient
                   ? `linear-gradient(165deg, rgba(${rgb}, 0.14) 0%, #111214 28%, #0e0f12 100%)`
@@ -455,7 +451,7 @@ export function ProfileView({
         </div>
 
         {editing && isOwner ? (
-          <div className="mt-4 px-3 sm:mt-6 sm:px-0">
+          <div className="mt-4 sm:mt-6">
             <ProfileEditPanel
               profile={live}
               onSaved={(next) => {
@@ -468,14 +464,14 @@ export function ProfileView({
         ) : null}
 
         {!hub ? (
-          <div className="mt-4 px-3 sm:px-0">
+          <div className="mt-4">
             <ProfileSearch />
           </div>
         ) : null}
           </div>
 
           {hub ? (
-            <aside className="mt-4 space-y-3 px-3 sm:px-0 lg:mt-0 lg:sticky lg:top-[4.75rem] lg:self-start">
+            <aside className="mt-4 space-y-3 lg:mt-0 lg:sticky lg:top-[4.75rem] lg:self-start">
               <ProfileSearch compact />
               {hub}
             </aside>

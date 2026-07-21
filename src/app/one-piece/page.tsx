@@ -56,7 +56,7 @@ export default async function OnePiecePage() {
           <div className="featured-wave absolute -bottom-8 left-[-10%] h-20 w-[55%] rounded-[100%] bg-[#2a7ec0]/18 blur-2xl" />
         </div>
 
-        <div className="relative mx-auto max-w-[1200px] px-5 pb-14 pt-28 sm:px-8 sm:pb-16 sm:pt-32">
+        <div className="page-shell relative pb-14 pt-28 sm:pb-16 sm:pt-32">
           <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-[#7ec8ff]">
             Grand Line
           </p>
@@ -79,7 +79,7 @@ export default async function OnePiecePage() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-[1200px] px-5 pt-10 sm:px-8">
+      <div className="page-shell pt-10">
         {entries.length === 0 ? (
           <p className="text-mute">No One Piece titles found in the catalog yet.</p>
         ) : (

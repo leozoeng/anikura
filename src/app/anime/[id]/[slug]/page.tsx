@@ -142,7 +142,7 @@ export default async function AnimeDetailPage({ params }: Props) {
         hasDub={episodes.some((e) => e.embed_url?.dub)}
       />
 
-      <div className="relative mx-auto max-w-[1200px] px-5 sm:px-8">
+      <div className="page-shell relative">
         <div
           aria-hidden
           className="pointer-events-none absolute -left-20 top-10 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(255,140,170,0.12),transparent_70%)] blur-2xl"

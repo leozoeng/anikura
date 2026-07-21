@@ -33,7 +33,7 @@ export default async function SearchPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-[1200px] px-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-24 sm:px-8 sm:pb-24 sm:pt-28">
+    <div className="page-shell pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-24 sm:pb-24 sm:pt-28">
       <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-mute">
         Search
       </p>

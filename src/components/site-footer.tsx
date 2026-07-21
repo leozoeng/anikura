@@ -27,7 +27,7 @@ export function SiteFooter() {
           <div className="site-footer-sheen absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ffb3c7]/30 to-transparent" />
         </div>
 
-        <div className="relative mx-auto max-w-[1400px] px-4 py-7 sm:px-6 sm:py-8 lg:px-8">
+        <div className="page-shell relative py-7 sm:py-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
             <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
               <AnikuraLogo size={26} withWordmark href="/" />
