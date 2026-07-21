@@ -68,7 +68,7 @@ export function MoodHero({
         />
       </div>
 
-      <div className="relative z-[2] mx-auto flex min-h-[min(62svh,560px)] max-w-[1200px] flex-col justify-end px-5 pb-12 pt-28 sm:min-h-[min(68svh,620px)] sm:px-8 sm:pb-14 sm:pt-32">
+      <div className="page-shell relative z-[2] flex min-h-[min(62svh,560px)] flex-col justify-end pb-12 pt-28 sm:min-h-[min(68svh,620px)] sm:pb-14 sm:pt-32">
         <div className="mb-auto flex flex-wrap items-center gap-2">
           <Link
             href="/genres"

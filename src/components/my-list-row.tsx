@@ -20,14 +20,14 @@ export function MyListRow() {
 
   return (
     <section className="space-y-5">
-      <div className="flex w-full items-end justify-between gap-4 px-3 sm:px-4">
+      <div className="flex w-full items-end justify-between gap-4">
         <div>
           <h2 className="section-title">My List</h2>
           <p className="section-sub">Saved for later</p>
         </div>
       </div>
 
-      <div className="fade-x scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-2 sm:gap-5 sm:px-4">
+      <div className="fade-x scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:gap-5">
         {items.map((item) => {
           const latest = getLatestProgressForAnime(item.id);
           const href = latest

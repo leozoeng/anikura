@@ -19,12 +19,12 @@ export function AniListRow({ title, subtitle, media, hrefForId }: Props) {
 
   return (
     <section className="space-y-5">
-      <div className="px-3 sm:px-4">
+      <div>
         <h2 className="section-title">{title}</h2>
         {subtitle && <p className="section-sub">{subtitle}</p>}
       </div>
 
-      <div className="fade-x scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-2 sm:gap-5 sm:px-4">
+      <div className="fade-x scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:gap-5">
         {items.map(({ media: m, href }, i) => (
           <Link
             key={m.id}

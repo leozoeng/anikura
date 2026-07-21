@@ -45,7 +45,7 @@ export default async function GenresPage() {
           <div className="absolute right-[-8%] top-[0%] h-[50%] w-[36%] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.04),transparent_70%)] blur-3xl" />
         </div>
 
-        <div className="relative mx-auto flex max-w-[1200px] flex-wrap items-end justify-between gap-4 px-5 pb-5 pt-24 sm:gap-6 sm:px-8 sm:pb-6 sm:pt-28">
+        <div className="page-shell relative flex flex-wrap items-end justify-between gap-4 pb-5 pt-24 sm:gap-6 sm:pb-6 sm:pt-28">
           <div className="min-w-0">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-0.5 text-[10px] font-medium tracking-[0.16em] text-mute uppercase">
               <span className="sakura-dot h-1.5 w-1.5 rounded-full bg-sakura" />
@@ -86,7 +86,7 @@ export default async function GenresPage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-[1200px] px-5 pt-5 sm:px-8 sm:pt-6">
+      <div className="page-shell pt-5 sm:pt-6">
         {genres.length === 0 ? (
           <p className="text-mute">
             No genres yet. Run <code className="text-snow">npm run sync</code>.

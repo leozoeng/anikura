@@ -116,7 +116,7 @@ export default async function BrowsePage({ searchParams }: Props) {
   }
 
   return (
-    <div className="page-enter relative mx-auto max-w-[1200px] px-5 pb-16 pt-28 sm:px-8">
+    <div className="page-shell page-enter relative pb-16 pt-28">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 overflow-hidden"

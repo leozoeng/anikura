@@ -98,7 +98,7 @@ export default async function GenreDetailPage({ params, searchParams }: Props) {
         credit={curated?.credit || undefined}
       />
 
-      <div className="relative mx-auto max-w-[1200px] px-5 pt-10 sm:px-8">
+      <div className="page-shell relative pt-10">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 -top-24 -z-10 h-64"

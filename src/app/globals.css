@@ -517,6 +517,20 @@ button {
   background: rgba(255, 255, 255, 0.55);
 }
 
+/* Shared content width for Home, Browse, Genres (and matching heroes/rows). */
+.page-shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 1400px;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .page-shell {
+    padding-inline: 2rem;
+  }
+}
+
 .section-eyebrow {
   margin-bottom: 0.45rem;
   font-family: var(--font-jp);

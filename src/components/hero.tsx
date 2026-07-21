@@ -92,7 +92,7 @@ export function Hero({ slides }: Props) {
       title={showTitle}
       scale={1.65}
     >
-      <div className="relative mx-auto flex min-h-[100svh] w-full max-w-[1200px] flex-col justify-end px-5 pb-16 pt-28 sm:px-8 lg:pb-24">
+      <div className="page-shell relative flex min-h-[100svh] flex-col justify-end pb-16 pt-28 lg:pb-24">
         <p className="animate-rise text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-snow/70">
           Anikura
         </p>

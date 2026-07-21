@@ -25,7 +25,7 @@ export function AnimeRow({ title, subtitle, href, anime }: Props) {
 
   return (
     <section className="group/row relative space-y-5">
-      <div className="flex w-full items-end justify-between gap-4 px-3 sm:px-4">
+      <div className="flex w-full items-end justify-between gap-4">
         <div>
           <h2 className="section-title">{title}</h2>
           {subtitle && <p className="section-sub">{subtitle}</p>}
@@ -57,7 +57,7 @@ export function AnimeRow({ title, subtitle, href, anime }: Props) {
 
         <div
           ref={scroller}
-          className="fade-x scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-3 pb-2 sm:gap-5 sm:px-4"
+          className="fade-x scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 sm:gap-5"
         >
           {anime.map((item, i) => (
             <div

@@ -34,7 +34,7 @@ function HeroShell() {
     <section className="relative isolate min-h-[100svh] overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-t from-void via-void/50 to-void/10" />
       <div className="absolute inset-0 bg-gradient-to-r from-void/80 via-void/30 to-transparent" />
-      <div className="relative mx-auto flex min-h-[100svh] w-full max-w-[1200px] flex-col justify-end px-5 pb-16 pt-28 sm:px-8 lg:pb-24">
+      <div className="page-shell relative flex min-h-[100svh] flex-col justify-end pb-16 pt-28 lg:pb-24">
         <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-snow/70">
           Anikura
         </p>
@@ -136,7 +136,7 @@ async function HomeRows() {
   const genreCovers = pickGenreCovers(catalog, genreList, moodOverrides);
 
   return (
-    <div className="relative z-10 space-y-12 pt-8 sm:space-y-14 sm:pt-10">
+    <div className="page-shell relative z-10 space-y-12 pt-8 sm:space-y-14 sm:pt-10">
       <ContinueWatching />
 
       <MyListRow />
@@ -184,7 +184,7 @@ async function HomeRows() {
       )}
 
       <section className="page-enter space-y-5">
-        <div className="flex w-full items-end justify-between gap-4 px-3 sm:px-4">
+        <div className="flex w-full items-end justify-between gap-4">
           <div>
             <h2 className="section-title">Genres</h2>
             <p className="section-sub">
@@ -198,7 +198,7 @@ async function HomeRows() {
           </Link>
         </div>
 
-        <div className="fade-x scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-2 sm:gap-3.5 sm:px-4">
+        <div className="fade-x scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:gap-3.5">
           {genreList.map((g, i) => {
             const cover = genreCovers.get(g.slug);
             return (
