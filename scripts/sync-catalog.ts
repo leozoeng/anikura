@@ -4,7 +4,8 @@ import { LIGHT_REFRESH_PAGES } from "../src/lib/catalog-sync";
 import type { CatalogAnime } from "../src/lib/types";
 
 const PER_PAGE = 50;
-const DELAY_MS = 400;
+/** Anikoto rate limit is ~60 req / 120s — keep full scrapes under that. */
+const DELAY_MS = 2200;
 
 function parsePagesArg(): number | null {
   const arg = process.argv.find((a) => a.startsWith("--pages="));
@@ -53,18 +54,12 @@ async function main() {
   }
 
   if (checkOnly) {
-    const inSync =
-      meta != null &&
-      meta.totalAnime === availableTotal &&
-      meta.totalPagesAvailable === availablePages;
+    const inSync = meta != null && meta.totalAnime === availableTotal;
     console.log(inSync ? "Status: in sync" : "Status: out of sync");
     process.exit(inSync ? 0 : 2);
   }
 
-  const totalsMatch =
-    meta != null &&
-    meta.totalAnime === availableTotal &&
-    meta.totalPagesAvailable === availablePages;
+  const totalsMatch = meta != null && meta.totalAnime === availableTotal;
 
   const totalPages = pageLimit
     ? Math.min(pageLimit, availablePages)
@@ -123,6 +118,10 @@ async function main() {
     return;
   }
 
+  // Seed from existing catalog so a failed page cannot shrink the library.
+  const existing = await getCatalog();
+  for (const item of existing) byId.set(item.id, item);
+
   ingest(first.anime);
   console.log(`Page 1/${totalPages} — ${byId.size} titles`);
 
@@ -138,14 +137,14 @@ async function main() {
       }
     } catch (err) {
       console.warn(`Page ${page} failed:`, err);
-      await sleep(2000);
+      await sleep(5000);
       try {
         const { anime } = await getRecentAnime(page, PER_PAGE, {
           cache: "no-store",
         });
         ingest(anime);
       } catch (retryErr) {
-        console.warn(`Page ${page} retry failed:`, retryErr);
+        console.warn(`Page ${page} retry failed (kept existing titles):`, retryErr);
       }
     }
   }
