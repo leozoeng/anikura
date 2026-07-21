@@ -1095,6 +1095,14 @@ body[data-theater="true"] .site-atmosphere {
   background: #080c0a;
 }
 
+.onepiece-hero {
+  background: #061220;
+}
+
+.shinkai-hero {
+  background: #080c1c;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ghibli-cloud,
   .ghibli-cloud-slow,

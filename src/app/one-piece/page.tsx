@@ -1,11 +1,11 @@
-import Image from "next/image";
-import Link from "next/link";
 import { AnimePoster } from "@/components/anime-poster";
-import { animeHref } from "@/lib/anikoto";
+import { OnePieceHero } from "@/components/one-piece-hero";
+import { resolveAniListForAnime } from "@/lib/anilist";
 import { getCatalog } from "@/lib/catalog";
 import {
   getOnePieceCollection,
   onePieceFilmCount,
+  type OnePieceCatalogEntry,
 } from "@/lib/one-piece";
 
 export const metadata = {
@@ -16,74 +16,81 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
+const TRAILER_PRIORITY = [
+  /film:? ?red/i,
+  /film:? ?gold/i,
+  /film z|movie 12/i,
+  /strong world(?! episode)/i,
+  /^one piece$/i,
+];
+
+async function resolveHeroTrailer(entries: OnePieceCatalogEntry[]) {
+  for (const re of TRAILER_PRIORITY) {
+    const entry = entries.find((e) => re.test(e.def.title));
+    if (!entry) continue;
+    const media = await resolveAniListForAnime(entry.anime);
+    const trailer = media?.trailer;
+    if (trailer?.site?.toLowerCase() === "youtube" && trailer.id) {
+      return {
+        trailerId: trailer.id,
+        title: entry.def.title,
+        poster:
+          media?.bannerImage ||
+          entry.anime.background_image ||
+          entry.anime.poster,
+      };
+    }
+  }
+
+  const fallback = entries[0];
+  return {
+    trailerId: null as string | null,
+    title: fallback?.def.title ?? "One Piece",
+    poster:
+      fallback?.anime.background_image ||
+      fallback?.anime.poster ||
+      "/anikura-mark.png",
+  };
+}
+
 export default async function OnePiecePage() {
   const catalog = await getCatalog();
   const entries = getOnePieceCollection(catalog);
   const films = onePieceFilmCount(entries);
-  const hero =
-    entries.find((e) => /film red/i.test(e.def.title)) ??
-    entries.find((e) => e.def.series) ??
-    entries[0];
-  const heroSrc =
-    hero?.anime.background_image || hero?.anime.poster || null;
+  const hero = await resolveHeroTrailer(entries);
 
   return (
     <div className="page-enter relative pb-24">
-      <section className="onepiece-hero relative overflow-hidden border-b border-[#f0a35a]/20">
-        <div aria-hidden className="absolute inset-0">
-          {heroSrc ? (
-            <Image
-              src={heroSrc}
-              alt=""
-              fill
-              className="object-cover opacity-45"
-              sizes="100vw"
-              priority
-            />
-          ) : null}
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `
-                linear-gradient(118deg, rgba(6,18,32,0.97) 0%, rgba(12,36,58,0.9) 42%, rgba(28,22,14,0.75) 100%),
-                radial-gradient(640px 320px at 80% 30%, rgba(255,140,60,0.3), transparent 60%),
-                radial-gradient(520px 280px at 15% 80%, rgba(40,140,210,0.24), transparent 58%)
-              `,
-            }}
-          />
-          <div className="featured-cloud absolute -left-[8%] top-[16%] h-28 w-[42%] rounded-full bg-[#3aa0e8]/16 blur-3xl" />
-          <div className="featured-cloud-slow absolute right-[-6%] top-[24%] h-24 w-[36%] rounded-full bg-[#ff9a3c]/14 blur-3xl" />
-          <div className="featured-wave absolute -bottom-8 left-[-10%] h-20 w-[55%] rounded-[100%] bg-[#2a7ec0]/18 blur-2xl" />
+      <OnePieceHero
+        trailerId={hero.trailerId}
+        posterSrc={hero.poster}
+        title={hero.title}
+        entryCount={entries.length}
+        filmCount={films}
+      />
+
+      <div className="page-shell relative pt-10">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-24 -z-10 h-64"
+          style={{
+            background:
+              "radial-gradient(ellipse at 50% 0%, rgba(58,160,232,0.12), transparent 70%)",
+          }}
+        />
+
+        <div className="flex flex-wrap items-center gap-2 border-b border-[#f0a35a]/12 pb-5">
+          <p className="text-sm text-[#8aa8c0]">
+            Chronological · {entries.length} shown
+          </p>
         </div>
 
-        <div className="page-shell relative pb-14 pt-28 sm:pb-16 sm:pt-32">
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-[#7ec8ff]">
-            Grand Line
-          </p>
-          <h1 className="mt-3 max-w-2xl text-[clamp(2.4rem,6vw,4rem)] font-semibold tracking-[-0.05em] text-[#fff6e8]">
-            One Piece Voyage
-          </h1>
-          <p className="mt-4 max-w-xl text-[#b8d4ea]">
-            Set sail with the Straw Hats — {entries.length} titles, {films}{" "}
-            films. Adventure, found family, and the next island over the horizon.
-          </p>
-          {hero ? (
-            <Link
-              href={animeHref(hero.anime)}
-              className="mt-7 inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-[#ffd28a] to-[#f0a035] px-5 py-2.5 text-sm font-semibold text-[#1a1208] shadow-[0_12px_32px_rgba(0,0,0,0.4)] transition hover:from-[#ffe0a8] hover:to-[#f5b04a]"
-            >
-              {hero.def.series ? "Start the voyage" : `Open ${hero.def.title}`}
-              <span aria-hidden>→</span>
-            </Link>
-          ) : null}
-        </div>
-      </section>
-
-      <div className="page-shell pt-10">
         {entries.length === 0 ? (
-          <p className="text-mute">No One Piece titles found in the catalog yet.</p>
+          <p className="mt-16 text-center text-[#8aa8c0]">
+            No One Piece titles found in the catalog yet.
+          </p>
         ) : (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          <div className="mt-9 grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
             {entries.map(({ anime, def }, i) => (
               <div key={anime.id} className="featured-card group relative">
                 <AnimePoster anime={anime} index={i} />
