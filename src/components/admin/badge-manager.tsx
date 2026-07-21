@@ -16,6 +16,7 @@ import {
   displayName,
   formatMemberSince,
   handleFromProfile,
+  profileHref,
   type ProfileBadgeId,
 } from "@/lib/profile";
 
@@ -82,7 +83,7 @@ function UserRow({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <Link
-              href={`/u/${user.id}`}
+              href={profileHref(user)}
               className="truncate text-sm font-medium text-snow transition hover:underline"
             >
               {name}
@@ -104,7 +105,7 @@ function UserRow({
 
       <div className="flex flex-wrap items-center gap-2 sm:justify-end">
         <Link
-          href={`/u/${user.id}`}
+          href={profileHref(user)}
           className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-cloud transition hover:border-white/25 hover:text-snow"
         >
           Profile

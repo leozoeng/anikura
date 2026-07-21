@@ -3,6 +3,8 @@ export type ProfileBadgeId = "dev" | "vip" | "og";
 export type PublicProfile = {
   id: string;
   email: string | null;
+  /** Unique vanity handle (lowercase a-z0-9_). */
+  username?: string | null;
   nickname: string | null;
   bio: string | null;
   avatar_url: string | null;
@@ -20,7 +22,14 @@ export type PublicProfile = {
 export const DEFAULT_ACCENT_HEX = "#5865F2";
 
 export const PROFILE_SELECT =
-  "id, email, nickname, bio, avatar_url, banner_url, created_at, role, accent_hex, accent_ambient, badges";
+  "id, email, username, nickname, bio, avatar_url, banner_url, created_at, role, accent_hex, accent_ambient, badges";
+
+export const USERNAME_MIN = 3;
+export const USERNAME_MAX = 24;
+export const USERNAME_PATTERN = /^[a-z0-9_]+$/;
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Known badge ids, display order. */
 export const PROFILE_BADGE_ORDER: ProfileBadgeId[] = ["og", "dev", "vip"];
@@ -59,23 +68,50 @@ export function resolveProfileBadges(
 }
 
 export function displayName(
-  profile: Pick<PublicProfile, "nickname" | "email">,
+  profile: Pick<PublicProfile, "nickname" | "username" | "email">,
 ) {
   return (
     profile.nickname?.trim() ||
+    profile.username?.trim() ||
     profile.email?.split("@")[0] ||
     "Viewer"
   );
 }
 
+/** Normalize vanity username input → lowercase handle or null if invalid. */
+export function normalizeUsername(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const cleaned = raw
+    .trim()
+    .replace(/^@+/, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "");
+  if (cleaned.length < USERNAME_MIN || cleaned.length > USERNAME_MAX) return null;
+  if (!USERNAME_PATTERN.test(cleaned)) return null;
+  return cleaned;
+}
+
+export function isProfileUuid(value: string) {
+  return UUID_RE.test(value.trim());
+}
+
 export function handleFromProfile(
-  profile: Pick<PublicProfile, "nickname" | "email">,
+  profile: Pick<PublicProfile, "username" | "nickname" | "email">,
 ) {
   const base =
-    profile.nickname?.trim() ||
-    profile.email?.split("@")[0] ||
+    normalizeUsername(profile.username) ||
+    normalizeUsername(profile.nickname) ||
+    profile.email?.split("@")[0]?.toLowerCase().replace(/[^a-z0-9_]/g, "") ||
     "viewer";
-  return `@${base.toLowerCase().replace(/\s+/g, "")}`;
+  return `@${base}`;
+}
+
+/** Prefer vanity `/u/username`, fall back to UUID permalink. */
+export function profileHref(
+  profile: Pick<PublicProfile, "id" | "username">,
+) {
+  const handle = normalizeUsername(profile.username);
+  return handle ? `/u/${handle}` : `/u/${profile.id}`;
 }
 
 /** Normalize user input to #RRGGBB or null if invalid. */

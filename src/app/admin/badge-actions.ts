@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 export type AdminBadgeUser = {
   id: string;
   email: string | null;
+  username: string | null;
   nickname: string | null;
   avatar_url: string | null;
   role: "user" | "admin";
@@ -37,6 +38,7 @@ function mapRow(row: Record<string, unknown>): AdminBadgeUser {
   return {
     id: String(row.id),
     email: (row.email as string | null) ?? null,
+    username: (row.username as string | null) ?? null,
     nickname: (row.nickname as string | null) ?? null,
     avatar_url: (row.avatar_url as string | null) ?? null,
     role: row.role === "admin" ? "admin" : "user",
@@ -68,8 +70,8 @@ export async function searchProfilesForBadges(
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, email, nickname, avatar_url, role, badges, created_at")
-    .or(`email.ilike."${pattern}",nickname.ilike."${pattern}"`)
+    .select("id, email, username, nickname, avatar_url, role, badges, created_at")
+    .or(`email.ilike."${pattern}",nickname.ilike."${pattern}",username.ilike."${pattern}"`)
     .order("created_at", { ascending: false })
     .limit(24);
 
@@ -83,7 +85,7 @@ export async function listBadgedProfiles(): Promise<AdminBadgeUser[]> {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, email, nickname, avatar_url, role, badges, created_at")
+    .select("id, email, username, nickname, avatar_url, role, badges, created_at")
     .or("badges.cs.{dev},badges.cs.{vip},badges.cs.{og}")
     .order("created_at", { ascending: false })
     .limit(40);
@@ -102,7 +104,7 @@ export async function listRecentSignups(
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, email, nickname, avatar_url, role, badges, created_at")
+    .select("id, email, username, nickname, avatar_url, role, badges, created_at")
     .order("created_at", { ascending: false })
     .limit(take);
 
@@ -128,7 +130,7 @@ export async function setProfileBadges(
     .from("profiles")
     .update({ badges: next })
     .eq("id", userId)
-    .select("id, email, nickname, avatar_url, role, badges, created_at")
+    .select("id, email, username, nickname, avatar_url, role, badges, created_at")
     .maybeSingle();
 
   if (error) throw new Error(error.message);

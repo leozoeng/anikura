@@ -20,6 +20,7 @@ import {
 } from "@/lib/progress";
 import { ProfileBadges } from "@/components/profile/profile-badges";
 import { ProfileEditPanel } from "@/components/profile/profile-edit-panel";
+import { ProfileSearch } from "@/components/profile/profile-search";
 
 type Props = {
   profile: PublicProfile;
@@ -178,6 +179,8 @@ export function ProfileView({
             </Link>
           </div>
         ) : null}
+
+        <ProfileSearch className="mb-4" />
 
         <div
           className="overflow-hidden rounded-[28px] border border-white/[0.08] shadow-[0_40px_100px_rgba(0,0,0,0.55)]"

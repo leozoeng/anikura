@@ -6,9 +6,11 @@ import { createClient } from "@/lib/supabase/client";
 import {
   DEFAULT_ACCENT_HEX,
   PROFILE_SELECT,
+  USERNAME_MAX,
   accentAmbientEnabled,
   displayName,
   normalizeAccentHex,
+  normalizeUsername,
   resolveAccentHex,
   type PublicProfile,
 } from "@/lib/profile";
@@ -33,6 +35,7 @@ const PRESET_COLORS = [
 ];
 
 export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
+  const [username, setUsername] = useState(profile.username ?? "");
   const [nickname, setNickname] = useState(profile.nickname ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
@@ -41,6 +44,7 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
   const [ambient, setAmbient] = useState(accentAmbientEnabled(profile));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [usernameHint, setUsernameHint] = useState<string | null>(null);
 
   async function upload(kind: "avatars" | "banners", file: File) {
     const supabase = createClient();
@@ -84,6 +88,33 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
     }
   }
 
+  async function checkUsername(raw: string) {
+    const normalized = normalizeUsername(raw);
+    if (!normalized) {
+      setUsernameHint("3–24 chars: a–z, 0–9, underscore");
+      return false;
+    }
+    if (normalized === profile.username) {
+      setUsernameHint("This is your current username");
+      return true;
+    }
+    const supabase = createClient();
+    const { data, error: err } = await supabase.rpc("username_available", {
+      p_username: normalized,
+      p_user_id: profile.id,
+    });
+    if (err) {
+      setUsernameHint(err.message);
+      return false;
+    }
+    if (!data) {
+      setUsernameHint("Taken or reserved");
+      return false;
+    }
+    setUsernameHint(`@${normalized} is available`);
+    return true;
+  }
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -93,10 +124,20 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
       if (!hex) {
         throw new Error("Accent color must be a 6-digit hex (e.g. #5865F2)");
       }
+      const handle = normalizeUsername(username);
+      if (!handle) {
+        throw new Error("Choose a username (3–24: letters, numbers, _)");
+      }
+      const ok = await checkUsername(handle);
+      if (!ok && handle !== profile.username) {
+        throw new Error("That username isn’t available");
+      }
+
       const supabase = createClient();
       const { data, error: err } = await supabase
         .from("profiles")
         .update({
+          username: handle,
           nickname: nickname.trim() || displayName(profile),
           bio: bio.trim() || null,
           avatar_url: avatarUrl,
@@ -110,7 +151,13 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
       if (err) throw err;
       onSaved(data as PublicProfile);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save profile");
+      const message =
+        err instanceof Error ? err.message : "Could not save profile";
+      if (/duplicate|unique|username/i.test(message)) {
+        setError("That username is already taken");
+      } else {
+        setError(message);
+      }
     } finally {
       setBusy(false);
     }
@@ -127,7 +174,7 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
         <div>
           <h2 className="text-base font-semibold text-snow">Edit profile</h2>
           <p className="text-sm text-[#949ba4]">
-            Nickname, media, accent, and ambient glow.
+            Username, nickname, media, and accent.
           </p>
         </div>
         {onCancel ? (
@@ -144,7 +191,40 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
       <div className="grid gap-6 p-5 sm:grid-cols-2 sm:p-6">
         <label className="block text-sm">
           <span className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-[#949ba4]">
-            Nickname
+            Username
+          </span>
+          <div className="relative mt-2">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#6d6f78]">
+              @
+            </span>
+            <input
+              value={username}
+              onChange={(e) => {
+                const next = e.target.value
+                  .toLowerCase()
+                  .replace(/[^a-z0-9_]/g, "")
+                  .slice(0, USERNAME_MAX);
+                setUsername(next);
+                setUsernameHint(null);
+              }}
+              onBlur={() => {
+                if (username.trim()) void checkUsername(username);
+              }}
+              maxLength={USERNAME_MAX}
+              spellCheck={false}
+              autoComplete="off"
+              className="w-full rounded-xl border border-white/10 bg-[#1e1f22] py-2.5 pl-7 pr-3 text-snow outline-none transition focus:border-white/30"
+              placeholder="yourname"
+            />
+          </div>
+          <p className="mt-1.5 text-[0.7rem] text-[#6d6f78]">
+            {usernameHint || "Unique vanity handle — once taken, it’s yours."}
+          </p>
+        </label>
+
+        <label className="block text-sm">
+          <span className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-[#949ba4]">
+            Display name
           </span>
           <input
             value={nickname}
