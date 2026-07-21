@@ -1,8 +1,13 @@
 import { redirect } from "next/navigation";
 import { ProfileView } from "@/components/profile/profile-view";
+import { SocialHub } from "@/components/social/social-hub";
 import { getSessionUser } from "@/lib/auth";
 import type { AnimeListEntry } from "@/lib/anime-list";
-import { fetchUserProfileComments } from "@/lib/comments-server";
+import { fetchSocialAnnouncements } from "@/lib/announcements";
+import {
+  fetchRecentSiteComments,
+  fetchUserProfileComments,
+} from "@/lib/comments-server";
 import {
   DEFAULT_ACCENT_HEX,
   PROFILE_SELECT,
@@ -26,7 +31,13 @@ export default async function ProfilePage() {
   }
 
   const supabase = await createClient();
-  const [{ data: profile }, { data: list }, comments] = await Promise.all([
+  const [
+    { data: profile },
+    { data: list },
+    comments,
+    announcements,
+    recentComments,
+  ] = await Promise.all([
     supabase
       .from("profiles")
       .select(PROFILE_SELECT)
@@ -38,6 +49,8 @@ export default async function ProfilePage() {
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false }),
     fetchUserProfileComments(user.id),
+    fetchSocialAnnouncements(12),
+    fetchRecentSiteComments(24),
   ]);
 
   const resolved: PublicProfile = profile ?? {
@@ -58,6 +71,12 @@ export default async function ProfilePage() {
       list={(list ?? []) as AnimeListEntry[]}
       comments={comments}
       isOwner
+      hub={
+        <SocialHub
+          announcements={announcements}
+          comments={recentComments}
+        />
+      }
     />
   );
 }

@@ -5,8 +5,10 @@ import {
   LiveGlobe,
   type GlobePerson,
 } from "@/components/admin/live-globe";
+import { AnnouncementManager } from "@/components/admin/announcement-manager";
 import { BadgeManager } from "@/components/admin/badge-manager";
 import { MoodArtManager } from "@/components/admin/mood-art-manager";
+import type { SocialAnnouncement } from "@/lib/announcements";
 
 export type DashboardMetrics = {
   live_users: number;
@@ -34,6 +36,7 @@ type AdminDashboardProps = {
   series: SignupDay[];
   adminEmail: string | null;
   moodOverrides: Record<string, string>;
+  announcements: SocialAnnouncement[];
 };
 
 type RangeKey = "7" | "14" | "30";
@@ -175,6 +178,7 @@ export function AdminDashboard({
   series,
   adminEmail,
   moodOverrides,
+  announcements,
 }: AdminDashboardProps) {
   const [range, setRange] = useState<RangeKey>("14");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -374,6 +378,8 @@ export function AdminDashboard({
       </section>
 
       <BadgeManager />
+
+      <AnnouncementManager initialItems={announcements} />
 
       <MoodArtManager initialOverrides={moodOverrides} />
 

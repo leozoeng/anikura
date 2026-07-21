@@ -89,6 +89,14 @@ export type ProfileCommentItem = {
   animePoster: string | null;
 };
 
+/** Site-wide feed item with author info. */
+export type SiteCommentItem = ProfileCommentItem & {
+  user_id: string;
+  authorNickname: string | null;
+  authorUsername: string | null;
+  authorAvatarUrl: string | null;
+};
+
 export function sortComments(comments: AnimeComment[], sort: CommentSort) {
   const copy = [...comments];
   if (sort === "newest") {

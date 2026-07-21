@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { AnimeListEntry } from "@/lib/anime-list";
 import {
   formatCommentTime,
@@ -33,6 +33,8 @@ type Props = {
   isOwner: boolean;
   /** Signed-in viewer looking at someone else — show Quit → /profile */
   showQuitProfile?: boolean;
+  /** Social hub blocks (announcements, recent comments) above the profile card */
+  hub?: ReactNode;
 };
 
 type ProfileTab = "board" | "activity" | "watch" | "comments";
@@ -73,6 +75,7 @@ export function ProfileView({
   comments = [],
   isOwner,
   showQuitProfile = false,
+  hub,
 }: Props) {
   const [editing, setEditing] = useState(false);
   const [tab, setTab] = useState<ProfileTab>("board");
@@ -201,6 +204,7 @@ export function ProfileView({
         ) : null}
 
         <div className="px-3 sm:px-0">
+          {hub ? <div className="mb-4 space-y-4">{hub}</div> : null}
           <ProfileSearch className="mb-3 sm:mb-4" />
         </div>
 

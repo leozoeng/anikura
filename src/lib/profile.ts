@@ -58,6 +58,7 @@ export const RESERVED_USERNAMES = new Set([
   "settings",
   "shinkai",
   "signup",
+  "social",
   "staff",
   "support",
   "system",
