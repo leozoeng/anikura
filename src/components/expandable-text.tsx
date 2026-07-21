@@ -40,18 +40,18 @@ export function ExpandableText({
     <div className={className}>
       <p className={`whitespace-pre-line ${textClassName}`}>
         {preview}
-        {needsCollapse && !expanded ? "…" : ""}
+        {needsCollapse && !expanded ? "… " : needsCollapse ? " " : null}
+        {needsCollapse ? (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="inline text-[0.92em] font-medium text-mute/85 transition hover:text-cloud"
+            aria-expanded={expanded}
+          >
+            {expanded ? "Show less" : "Read more"}
+          </button>
+        ) : null}
       </p>
-      {needsCollapse && (
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          className="mt-2 text-sm tracking-[-0.01em] text-mute transition hover:text-snow"
-          aria-expanded={expanded}
-        >
-          {expanded ? "Show less" : "Read more"}
-        </button>
-      )}
     </div>
   );
 }

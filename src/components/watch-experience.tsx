@@ -298,8 +298,8 @@ export function WatchExperience(props: Props) {
               <span className="text-cloud">Episode {current.number}</span>
             </nav>
 
-            {/* Mobile: player → meta → episodes → comments. Desktop: comments under player, sidebar right. */}
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
+            {/* Mobile: player → meta → episodes → comments. Desktop: comments under meta; sidebar no longer stretches the left column. */}
+            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
               <div className="min-w-0">
                 <div id={PLAYER_ID} ref={playerRef} className="-mx-4 sm:mx-0">
                   <VideoPlayer
@@ -385,7 +385,7 @@ export function WatchExperience(props: Props) {
                   {episodeDescription ? (
                     <ExpandableText
                       text={episodeDescription}
-                      limit={220}
+                      limit={180}
                       textClassName="text-sm leading-relaxed text-cloud"
                     />
                   ) : null}
@@ -404,7 +404,7 @@ export function WatchExperience(props: Props) {
                 related={related}
                 seasons={seasons}
                 nextAirLabel={nextAirLabel}
-                className="lg:row-span-2"
+                className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:overscroll-contain"
               />
 
               <AnimeComments
@@ -412,7 +412,7 @@ export function WatchExperience(props: Props) {
                 episode={current.number}
                 language={language}
                 returnPath={watchHref(anime, current.number, language)}
-                className="min-w-0 mt-2 lg:col-start-1 lg:mt-0"
+                className="min-w-0 lg:col-start-1"
               />
             </div>
           </div>
