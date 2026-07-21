@@ -827,29 +827,6 @@ body[data-theater="true"] .site-atmosphere {
     0 12px 28px rgba(0, 0, 0, 0.28);
 }
 
-.footer-nav-link {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 0.4rem 0.85rem;
-  font-size: 0.8125rem;
-  letter-spacing: -0.02em;
-  color: var(--color-cloud);
-  transition:
-    color 0.28s var(--ease-out-soft),
-    background 0.28s var(--ease-out-soft);
-}
-
-.footer-nav-link:hover {
-  color: var(--color-snow);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.footer-nav-link:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(255, 140, 170, 0.4);
-}
-
 @keyframes footer-sheen {
   0%,
   100% {

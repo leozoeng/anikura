@@ -1,17 +1,5 @@
-import Link from "next/link";
 import { AnikuraLogo } from "@/components/anikura-logo";
 import { FooterDonations } from "@/components/footer-donations";
-
-const links = [
-  { href: "/", label: "Home" },
-  { href: "/browse", label: "Browse" },
-  { href: "/browse?sort=score", label: "Top rated" },
-  { href: "/genres", label: "Genres" },
-  { href: "/search", label: "Search" },
-  { href: "/ghibli", label: "Ghibli" },
-  { href: "/one-piece", label: "One Piece" },
-  { href: "/shinkai", label: "Shinkai" },
-];
 
 const DISCORD = "https://discord.gg/cm72gXTASn";
 
@@ -76,25 +64,6 @@ export function SiteFooter() {
               </a>
             </div>
           </div>
-
-          <nav
-            aria-label="Footer"
-            className="mt-5 flex flex-wrap items-center gap-x-1 gap-y-1 border-t border-white/[0.06] pt-4"
-          >
-            {links.map((item) => (
-              <Link key={item.label} href={item.href} className="footer-nav-link">
-                {item.label}
-              </Link>
-            ))}
-            <a
-              href={DISCORD}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footer-nav-link"
-            >
-              Community
-            </a>
-          </nav>
 
           <div className="mt-4 flex flex-col gap-2 border-t border-white/[0.06] pt-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
             <p className="max-w-2xl text-[0.75rem] leading-relaxed text-mute/90">
