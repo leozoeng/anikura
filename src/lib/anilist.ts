@@ -397,10 +397,23 @@ export async function getTrendingAnime(perPage = 18) {
 
 export async function getPopularThisSeason(perPage = 18) {
   const now = new Date();
-  const month = now.getUTCMonth();
-  const season =
-    month <= 2 ? "WINTER" : month <= 5 ? "SPRING" : month <= 8 ? "SUMMER" : "FALL";
-  const year = now.getUTCFullYear();
+  // AniList seasons: Winter Dec–Feb, Spring Mar–May, Summer Jun–Aug, Fall Sep–Nov.
+  // Winter's seasonYear is the January year (Dec 2025 → Winter 2026).
+  const month = now.getUTCMonth(); // 0–11
+  let season: "WINTER" | "SPRING" | "SUMMER" | "FALL";
+  let year = now.getUTCFullYear();
+  if (month === 11) {
+    season = "WINTER";
+    year += 1;
+  } else if (month <= 1) {
+    season = "WINTER";
+  } else if (month <= 4) {
+    season = "SPRING";
+  } else if (month <= 7) {
+    season = "SUMMER";
+  } else {
+    season = "FALL";
+  }
 
   const data = await anilistFetch<{
     Page: { media: AniListMedia[] };

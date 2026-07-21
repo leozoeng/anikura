@@ -30,7 +30,7 @@ export function SeasonsSection({ seasons, className = "mt-16" }: Props) {
             season.match.title;
           const poster =
             season.media.coverImage?.large || season.match.poster;
-          const label = `Season ${season.seasonIndex}`;
+          const label = season.seasonLabel || `Season ${season.seasonIndex}`;
           const inner = (
             <>
               <div

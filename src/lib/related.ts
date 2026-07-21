@@ -160,8 +160,20 @@ function cardFromMatch(
 
 export type SeasonEntry = RelatedEntry & {
   isCurrent?: boolean;
+  /** Chronological / title-derived season number for TV installments; 0 for movies. */
   seasonIndex: number;
+  /** Display badge, e.g. "Season 2", "Season 1 · Part 2", "Movie". */
+  seasonLabel: string;
 };
+
+function entryTitle(entry: RelatedMediaCard) {
+  return (
+    entry.media.title.english ||
+    entry.media.title.romaji ||
+    entry.match.title ||
+    ""
+  );
+}
 
 function franchiseStem(title: string) {
   return title
@@ -180,6 +192,54 @@ function stemsMatch(a: string, b: string) {
   return a === b || a.startsWith(b) || b.startsWith(a);
 }
 
+function normalizeTitleKey(title: string) {
+  return title
+    .toLowerCase()
+    .replace(/\b(\d+)(st|nd|rd|th)?\s*season\b/gi, "season $1")
+    .replace(/\bseason\s*0*(\d+)\b/gi, "season $1")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Pull explicit "Season 2" / "2nd Season" / "Part 2" from titles.
+ * Part/cour alone is not a season number (Spy x Family Part 2 ≠ Season 2).
+ */
+function parseTitleSeason(title: string): {
+  season: number | null;
+  part: number | null;
+} {
+  const seasonMatch =
+    title.match(/\b(\d+)(?:st|nd|rd|th)\s*season\b/i) ||
+    title.match(/\bseason\s*0*(\d+)\b/i);
+  const partMatch = title.match(/\b(?:part|cour)\s*0*(\d+)\b/i);
+  return {
+    season: seasonMatch ? Number(seasonMatch[1]) : null,
+    part: partMatch ? Number(partMatch[1]) : null,
+  };
+}
+
+/** Formats that belong in the Seasons strip (not OVA/special noise). */
+function isSeasonStripFormat(format?: string | null, title = "") {
+  const f = (format || "TV").toUpperCase();
+  if (f === "TV" || f === "TV_SHORT" || f === "MOVIE") return true;
+  // Keep numbered ONA seasons; skip mini-anime shorts.
+  if (f === "ONA") {
+    const parsed = parseTitleSeason(title);
+    return parsed.season != null || parsed.part != null;
+  }
+  return false;
+}
+
+function catalogFormat(item: CatalogAnime, mediaFormat?: string | null) {
+  return (
+    mediaFormat ||
+    item.terms_by_type?.type?.[0] ||
+    "TV"
+  );
+}
+
 function findCatalogSiblings(
   current: CatalogAnime,
   catalog: CatalogAnime[],
@@ -194,6 +254,94 @@ function findCatalogSiblings(
   });
 }
 
+/**
+ * Assign Season / Part / Movie labels from title cues + chronological order.
+ * Avoids treating specials/OVAs as Season 1 and Part 2 cours as a new season.
+ */
+function labelFranchiseSeasons(entries: RelatedEntry[]): SeasonEntry[] {
+  const strip = entries.filter((e) =>
+    isSeasonStripFormat(e.media.format, entryTitle(e)),
+  );
+
+  strip.sort((a, b) => {
+    const ya = a.media.seasonYear;
+    const yb = b.media.seasonYear;
+    const yearA = ya && ya > 0 ? ya : 9999;
+    const yearB = yb && yb > 0 ? yb : 9999;
+    if (yearA !== yearB) return yearA - yearB;
+
+    // Movies sit after TV cours in the same year.
+    const aMovie = (a.media.format || "").toUpperCase() === "MOVIE" ? 1 : 0;
+    const bMovie = (b.media.format || "").toUpperCase() === "MOVIE" ? 1 : 0;
+    if (aMovie !== bMovie) return aMovie - bMovie;
+
+    const pa = parseTitleSeason(entryTitle(a));
+    const pb = parseTitleSeason(entryTitle(b));
+    const sa = pa.season ?? 0;
+    const sb = pb.season ?? 0;
+    if (sa !== sb) return sa - sb;
+    const partA = pa.part ?? 0;
+    const partB = pb.part ?? 0;
+    if (partA !== partB) return partA - partB;
+
+    return a.match.id - b.match.id;
+  });
+
+  let autoSeason = 0;
+  let lastTvSeason = 0;
+
+  return strip.map((entry) => {
+    const title = entryTitle(entry);
+    const format = (entry.media.format || "TV").toUpperCase();
+    const parsed = parseTitleSeason(title);
+    const isCurrent = entry.relationType === "CURRENT";
+
+    if (format === "MOVIE") {
+      return {
+        ...entry,
+        seasonIndex: 0,
+        seasonLabel: "Movie",
+        isCurrent,
+        relationLabel: isCurrent ? "Movie · Current" : "Movie",
+      };
+    }
+
+    let seasonIndex: number;
+    let seasonLabel: string;
+
+    if (parsed.season != null) {
+      seasonIndex = parsed.season;
+      lastTvSeason = parsed.season;
+      autoSeason = Math.max(autoSeason, parsed.season);
+      seasonLabel =
+        parsed.part != null && parsed.part > 1
+          ? `Season ${parsed.season} · Part ${parsed.part}`
+          : `Season ${parsed.season}`;
+    } else if (parsed.part != null) {
+      // Cour continuation of the prior (or first) season.
+      seasonIndex = lastTvSeason > 0 ? lastTvSeason : 1;
+      if (lastTvSeason === 0) {
+        lastTvSeason = 1;
+        autoSeason = Math.max(autoSeason, 1);
+      }
+      seasonLabel = `Season ${seasonIndex} · Part ${parsed.part}`;
+    } else {
+      autoSeason += 1;
+      seasonIndex = autoSeason;
+      lastTvSeason = autoSeason;
+      seasonLabel = `Season ${autoSeason}`;
+    }
+
+    return {
+      ...entry,
+      seasonIndex,
+      seasonLabel,
+      isCurrent,
+      relationLabel: isCurrent ? `${seasonLabel} · Current` : seasonLabel,
+    };
+  });
+}
+
 type FranchiseHit = {
   node: AniListRelationNode;
   relationType: "PREQUEL" | "SEQUEL";
@@ -202,6 +350,7 @@ type FranchiseHit = {
 /**
  * Full season list for the more-info / watch pages:
  * AniList prequel/sequel walk + catalog title siblings, including the current season.
+ * Labels use title season/part cues (not raw list index) and skip OVA/special noise.
  */
 export async function resolveFranchiseSeasons(
   anilist: AniListMedia | null | undefined,
@@ -265,13 +414,32 @@ export async function resolveFranchiseSeasons(
   }
 
   const byCatalogId = new Map<number, RelatedEntry>();
+  const seenAniIds = new Set<number>();
+  const seenTitleKeys = new Set<string>();
+
+  const tryAdd = (entry: RelatedEntry) => {
+    if (byCatalogId.has(entry.match.id)) return;
+    const ani = entry.media.id;
+    if (ani && seenAniIds.has(ani)) return;
+    const key = normalizeTitleKey(entryTitle(entry));
+    if (key.length >= 8 && seenTitleKeys.has(key)) return;
+
+    // Drop OVA / special / music noise from the seasons strip.
+    if (!isSeasonStripFormat(entry.media.format, entryTitle(entry))) return;
+
+    byCatalogId.set(entry.match.id, entry);
+    if (ani) seenAniIds.add(ani);
+    if (key.length >= 8) seenTitleKeys.add(key);
+  };
 
   for (const { node, relationType } of hits.values()) {
     const match = findCatalogMatch(node, byAniId, byMalId);
     if (!match || match.id === current.id) continue;
-    if (byCatalogId.has(match.id)) continue;
-    const card = cardFromMatch(match, node);
-    byCatalogId.set(match.id, {
+    const card = cardFromMatch(match, {
+      ...node,
+      format: catalogFormat(match, node.format),
+    });
+    tryAdd({
       ...card,
       relationType,
       relationLabel:
@@ -281,12 +449,14 @@ export async function resolveFranchiseSeasons(
 
   // Catalog siblings (covers missing ani_ids / incomplete AniList links).
   for (const sibling of findCatalogSiblings(current, catalog)) {
-    if (byCatalogId.has(sibling.id)) continue;
     const year = sibling.year ?? 0;
     const curYear = current.year ?? anilist?.seasonYear ?? 0;
     const relationType = year && curYear && year < curYear ? "PREQUEL" : "SEQUEL";
-    byCatalogId.set(sibling.id, {
-      ...cardFromMatch(sibling),
+    tryAdd({
+      ...cardFromMatch(sibling, {
+        format: catalogFormat(sibling),
+        seasonYear: sibling.year,
+      }),
       relationType,
       relationLabel:
         relationType === "PREQUEL" ? "Earlier season" : "Later season",
@@ -301,31 +471,29 @@ export async function resolveFranchiseSeasons(
           title: anilist.title,
           coverImage: anilist.coverImage,
           seasonYear: anilist.seasonYear,
-          format: anilist.format,
+          format: catalogFormat(current, anilist.format),
         }
-      : undefined),
+      : { format: catalogFormat(current) }),
     relationType: "CURRENT",
     relationLabel: "Current",
   };
+  byCatalogId.set(current.id, currentCard);
+  if (currentCard.media.id) seenAniIds.add(currentCard.media.id);
+  const currentKey = normalizeTitleKey(entryTitle(currentCard));
+  if (currentKey.length >= 8) seenTitleKeys.add(currentKey);
 
-  const all = [...byCatalogId.values(), currentCard];
-  all.sort(
-    (a, b) =>
-      (a.media.seasonYear ?? a.match.id) - (b.media.seasonYear ?? b.match.id) ||
-      a.match.id - b.match.id,
-  );
+  const labeled = labelFranchiseSeasons([...byCatalogId.values()]);
 
   // Need at least current + one other to show a seasons strip.
-  if (all.length < 2) return [];
+  if (labeled.length < 2) return [];
 
-  return all.map((entry, i) => ({
+  return labeled.map((entry) => ({
     ...entry,
-    seasonIndex: i + 1,
     isCurrent: entry.match.id === current.id,
     relationLabel:
       entry.match.id === current.id
-        ? `Season ${i + 1} · Current`
-        : `Season ${i + 1}`,
+        ? `${entry.seasonLabel} · Current`
+        : entry.seasonLabel,
   }));
 }
 
@@ -344,9 +512,23 @@ export function buildRelatedEntries(
     const node = edge.node;
     if (!node || node.type !== "ANIME") continue;
     const type = edge.relationType || "OTHER";
-    // Seasons are handled by resolveFranchiseSeasons — skip here.
-    if (SEASON_TYPES.has(type)) continue;
-    if (!RELATED_TYPES.has(type) && node.format !== "MOVIE") continue;
+    // TV/movie seasons live in resolveFranchiseSeasons; keep OVA/special
+    // prequel/sequel edges here so they still surface under Related.
+    if (SEASON_TYPES.has(type)) {
+      const format = (node.format || "").toUpperCase();
+      if (
+        !format ||
+        format === "TV" ||
+        format === "TV_SHORT" ||
+        format === "ONA" ||
+        format === "MOVIE"
+      ) {
+        continue;
+      }
+    }
+    if (!RELATED_TYPES.has(type) && !SEASON_TYPES.has(type) && node.format !== "MOVIE") {
+      continue;
+    }
 
     const match = findCatalogMatch(node, byAniId, byMalId);
     if (!match) continue;

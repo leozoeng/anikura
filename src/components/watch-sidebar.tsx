@@ -242,11 +242,15 @@ export function WatchSidebar({
         title="Seasons"
         items={seasons}
         badge={(item) =>
-          "relationLabel" in item && item.relationLabel
-            ? item.relationLabel
-            : "seasonIndex" in item
-              ? `Season ${(item as SeasonEntry).seasonIndex}`
-              : null
+          "seasonLabel" in item && (item as SeasonEntry).seasonLabel
+            ? (item as SeasonEntry).isCurrent
+              ? `${(item as SeasonEntry).seasonLabel} · Current`
+              : (item as SeasonEntry).seasonLabel
+            : "relationLabel" in item && item.relationLabel
+              ? item.relationLabel
+              : "seasonIndex" in item
+                ? `Season ${(item as SeasonEntry).seasonIndex}`
+                : null
         }
       />
 
