@@ -19,14 +19,9 @@ export function AniListRow({ title, subtitle, media, hrefForId }: Props) {
 
   return (
     <section className="space-y-5">
-      <div className="flex w-full items-end justify-between gap-4 px-3 sm:px-4">
-        <div>
-          <h2 className="section-title">{title}</h2>
-          {subtitle && <p className="section-sub">{subtitle}</p>}
-        </div>
-        <span className="text-[11px] uppercase tracking-[0.16em] text-mute">
-          AniList
-        </span>
+      <div className="px-3 sm:px-4">
+        <h2 className="section-title">{title}</h2>
+        {subtitle && <p className="section-sub">{subtitle}</p>}
       </div>
 
       <div className="fade-x scrollbar-none flex gap-4 overflow-x-auto px-3 pb-2 sm:gap-5 sm:px-4">
