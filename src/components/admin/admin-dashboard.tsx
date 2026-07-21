@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { LiveGlobe, type GlobeMarker } from "@/components/admin/live-globe";
+import { BadgeManager } from "@/components/admin/badge-manager";
 import { MoodArtManager } from "@/components/admin/mood-art-manager";
 
 export type DashboardMetrics = {
@@ -259,6 +260,8 @@ export function AdminDashboard({
           </div>
         </div>
       </section>
+
+      <BadgeManager />
 
       <MoodArtManager initialOverrides={moodOverrides} />
 
