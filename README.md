@@ -16,10 +16,14 @@ Open [http://localhost:3000](http://localhost:3000).
 ### Full catalog sync
 
 ```bash
-npm run sync
+npm run sync          # full if totals changed; light refresh if already matched
+npm run sync:force    # always full re-scrape
+npm run sync:check    # exit 0 if local matches Anikoto totals
 ```
 
-Pulls the full Anikoto catalog (~9k titles), builds genre indexes into `data/`.
+Pulls the Anikoto catalog (~9k titles), builds genre indexes into `data/`.
+
+**Auto-sync:** GitHub Action `.github/workflows/sync-catalog.yml` runs twice daily (06:15 & 18:15 UTC) and on manual **Actions → Sync catalog → Run workflow**. If the catalog files change, it commits and pushes so Vercel redeploys with a fresh library.
 
 ## Auth & admin (Supabase)
 
