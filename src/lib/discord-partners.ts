@@ -28,21 +28,6 @@ export const DISCORD_PARTNERS: DiscordPartner[] = [
     inviteUrl: ANIKURA_DISCORD_INVITE,
     featured: true,
   },
-  // Placeholder partners — replace name / icon / invite when real servers join.
-  {
-    id: "placeholder-nightwatch",
-    name: "Nightwatch Lounge (Placeholder)",
-    iconUrl: "/discord/placeholder-nightwatch.png",
-    memberCount: 12400,
-    inviteUrl: ANIKURA_DISCORD_INVITE,
-  },
-  {
-    id: "placeholder-sakura",
-    name: "Sakura After Hours (Placeholder)",
-    iconUrl: "/discord/placeholder-sakura-lounge.png",
-    memberCount: 8600,
-    inviteUrl: ANIKURA_DISCORD_INVITE,
-  },
 ];
 
 export function formatMemberCount(n: number): string {

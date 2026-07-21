@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DISCORD_PARTNERS,
   formatMemberCount,
@@ -9,6 +9,11 @@ import {
 } from "@/lib/discord-partners";
 
 const PARTNER_BADGE = "/discord/partner-badge.png";
+
+/** Pixels per second at normal speed. */
+const BASE_SPEED_PX = 48;
+/** Hover / focus slows the rail without pausing or resetting progress. */
+const HOVER_SPEED_MULT = 0.3;
 
 type Props = {
   partners?: DiscordPartner[];
@@ -18,6 +23,12 @@ export function CommunityPartnersMarquee({
   partners = DISCORD_PARTNERS,
 }: Props) {
   const [reducedMotion, setReducedMotion] = useState(false);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const groupRef = useRef<HTMLDivElement>(null);
+  const offsetRef = useRef(0);
+  const speedMultRef = useRef(1);
+  const rafRef = useRef(0);
+  const lastTsRef = useRef(0);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -29,12 +40,47 @@ export function CommunityPartnersMarquee({
 
   const strip = useMemo(() => {
     if (partners.length === 0) return [];
-    // Enough copies so one half of the track fills wide viewports.
-    const copies = Math.max(3, Math.ceil(8 / partners.length));
+    // Enough copies so one half of the track fills wide viewports (single partner too).
+    const copies = Math.max(6, Math.ceil(12 / partners.length));
     return Array.from({ length: copies }, () => partners).flat();
   }, [partners]);
 
+  useEffect(() => {
+    if (reducedMotion || partners.length === 0) return;
+
+    const track = trackRef.current;
+    const group = groupRef.current;
+    if (!track || !group) return;
+
+    const tick = (ts: number) => {
+      if (!lastTsRef.current) lastTsRef.current = ts;
+      const dt = Math.min((ts - lastTsRef.current) / 1000, 0.05);
+      lastTsRef.current = ts;
+
+      const loopWidth = group.offsetWidth;
+      if (loopWidth > 0) {
+        offsetRef.current += BASE_SPEED_PX * speedMultRef.current * dt;
+        if (offsetRef.current >= loopWidth) {
+          offsetRef.current %= loopWidth;
+        }
+        track.style.transform = `translate3d(${-offsetRef.current}px, 0, 0)`;
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      lastTsRef.current = 0;
+    };
+  }, [reducedMotion, partners.length, strip.length]);
+
   if (partners.length === 0) return null;
+
+  const setSlow = (slow: boolean) => {
+    speedMultRef.current = slow ? HOVER_SPEED_MULT : 1;
+  };
 
   return (
     <section
@@ -53,7 +99,17 @@ export function CommunityPartnersMarquee({
         </p>
       </div>
 
-      <div className="community-marquee relative py-3.5">
+      <div
+        className="community-marquee relative py-3.5"
+        onPointerEnter={() => setSlow(true)}
+        onPointerLeave={() => setSlow(false)}
+        onFocusCapture={() => setSlow(true)}
+        onBlurCapture={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+            setSlow(false);
+          }
+        }}
+      >
         <div
           className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-8 bg-gradient-to-r from-[#0a0b0e] to-transparent sm:w-12"
           aria-hidden
@@ -71,8 +127,8 @@ export function CommunityPartnersMarquee({
           </div>
         ) : (
           <div className="community-marquee__viewport">
-            <div className="community-marquee__track">
-              <div className="community-marquee__group">
+            <div ref={trackRef} className="community-marquee__track">
+              <div ref={groupRef} className="community-marquee__group">
                 {strip.map((partner, i) => (
                   <PartnerChip
                     key={`${partner.id}-a-${i}`}
