@@ -3,9 +3,11 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { AnikuraMark } from "@/components/anikura-logo";
+import { MOOD_ART } from "@/lib/genre-moods";
 import { createClient } from "@/lib/supabase/client";
 import { getAuthCallbackUrl } from "@/lib/site-url";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+
 
 type Mode = "signin" | "signup";
 
@@ -16,13 +18,11 @@ type AuthModalProps = {
   configured?: boolean;
 };
 
-/** Genres Discord banner — left panel art for sign-in / create account. */
-const AUTH_HERO = {
-  src: "/anikura-auth-banner.jpg",
-  credit: "Genres",
-  /** Favor the Genres UI mock on the right of the wide banner. */
-  position: "object-[68%_center]",
-} as const;
+const BACKDROPS = Object.values(MOOD_ART);
+
+function pickBackdrop(seed: number) {
+  return BACKDROPS[seed % BACKDROPS.length]!;
+}
 
 export function AuthModal({
   open,
@@ -37,6 +37,7 @@ export function AuthModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [artSeed, setArtSeed] = useState(0);
 
   useEffect(() => {
     if (open) {
@@ -44,6 +45,7 @@ export function AuthModal({
       setError(null);
       setMessage(null);
       setShowPassword(false);
+      setArtSeed(Math.floor(Math.random() * BACKDROPS.length));
     }
   }, [open, initialMode]);
 
@@ -59,6 +61,8 @@ export function AuthModal({
       document.body.style.overflow = "";
     };
   }, [open, onClose]);
+
+  const art = useMemo(() => pickBackdrop(artSeed), [artSeed]);
 
   const copy = useMemo(
     () =>
@@ -141,15 +145,16 @@ export function AuthModal({
         aria-labelledby="auth-modal-title"
         className="relative grid w-full max-w-[52rem] overflow-hidden rounded-[1.35rem] border border-white/[0.12] bg-[#080809] shadow-[0_40px_120px_rgba(0,0,0,0.8)] md:grid-cols-[1.05fr_1fr]"
       >
-        {/* Genres banner panel */}
+        {/* Anime panel */}
         <div className="relative min-h-[9.5rem] overflow-hidden md:min-h-full">
           <Image
-            src={AUTH_HERO.src}
+            key={art.src}
+            src={art.src}
             alt=""
             fill
             priority
             sizes="(max-width: 768px) 100vw, 28rem"
-            className={`object-cover ${AUTH_HERO.position}`}
+            className={`object-cover ${art.position ?? "object-center"}`}
           />
           <div
             aria-hidden
@@ -166,9 +171,7 @@ export function AuthModal({
                 <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-snow">
                   Anikura
                 </p>
-                <p className="mt-0.5 text-[0.72rem] text-white/55">
-                  {AUTH_HERO.credit}
-                </p>
+                <p className="mt-0.5 text-[0.72rem] text-white/55">{art.credit}</p>
               </div>
             </div>
           </div>
