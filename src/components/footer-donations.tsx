@@ -18,7 +18,7 @@ const DONATIONS = [
 ] as const;
 
 function shortAddress(address: string) {
-  return `${address.slice(0, 4)}…${address.slice(-3)}`;
+  return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
 export function FooterDonations() {
@@ -28,79 +28,56 @@ export function FooterDonations() {
     try {
       await navigator.clipboard.writeText(address);
       setCopied(id);
-      window.setTimeout(() => setCopied(null), 1600);
+      window.setTimeout(() => setCopied(null), 1800);
     } catch {
       // ignore
     }
   }
 
   return (
-    <div className="inline-flex w-full max-w-full flex-col gap-2.5 rounded-2xl border border-[#ff8caa]/28 bg-[linear-gradient(135deg,rgba(255,140,170,0.16),rgba(255,255,255,0.04)_55%,rgba(255,179,199,0.1))] p-2.5 shadow-[inset_0_1px_0_rgba(255,232,238,0.12)] sm:w-auto sm:flex-row sm:items-center sm:gap-3 sm:py-1.5 sm:pl-2.5 sm:pr-1.5">
-      <div className="inline-flex min-w-0 items-center gap-2.5 px-0.5 sm:pr-1">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#ff8caa]/18 ring-1 ring-[#ff8caa]/30">
-          <HeartPetal />
-        </span>
-        <span className="min-w-0 leading-tight">
-          <span className="block text-[0.7rem] font-semibold tracking-[-0.02em] text-sakura-mist">
-            Keep Anikura cozy
-          </span>
-          <span className="block text-[0.62rem] tracking-[-0.01em] text-[#ffb3c7]/85">
-            Donations keep the lights on ♡
-          </span>
-        </span>
-      </div>
-
-      <span
-        aria-hidden
-        className="hidden h-7 w-px shrink-0 bg-[#ff8caa]/22 sm:block"
-      />
-
-      <div className="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-1.5">
-        {DONATIONS.map((d) => (
+    <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+      {DONATIONS.map((d) => {
+        const isCopied = copied === d.id;
+        return (
           <div
             key={d.id}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/[0.08] bg-black/25 py-1 pl-2 pr-1 transition hover:border-white/15 hover:bg-black/35"
+            className="footer-donate-row group flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2.5 py-2 sm:min-w-[14rem]"
             title={`${d.label}: ${d.address}`}
           >
-            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-black/40 ring-1 ring-white/10">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-black/35 ring-1 ring-white/10 transition duration-300 group-hover:ring-white/20">
               {d.id === "sol" ? <SolanaIcon /> : <EthereumIcon />}
             </span>
+
             <a
               href={d.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="min-w-0 leading-tight"
+              className="min-w-0 flex-1 leading-tight"
             >
-              <span className="block text-[0.68rem] font-medium tracking-[-0.01em] text-snow">
+              <span className="block text-[0.78rem] font-semibold tracking-[-0.02em] text-snow transition group-hover:text-white">
                 {d.label}
               </span>
-              <span className="block font-mono text-[0.62rem] text-mute">
+              <span className="block font-mono text-[0.68rem] text-mute transition group-hover:text-cloud">
                 {shortAddress(d.address)}
               </span>
             </a>
+
             <button
               type="button"
               onClick={() => void copy(d.id, d.address)}
-              className="rounded-lg px-2 py-1 text-[0.68rem] text-mute transition hover:bg-white/[0.08] hover:text-snow"
+              aria-label={isCopied ? `${d.label} copied` : `Copy ${d.label} address`}
+              className={`inline-flex h-9 min-w-[4.25rem] shrink-0 items-center justify-center rounded-lg text-[0.72rem] font-semibold tracking-[-0.01em] transition duration-300 ${
+                isCopied
+                  ? "bg-[#ff8caa]/22 text-sakura-mist ring-1 ring-[#ff8caa]/35"
+                  : "bg-white/[0.06] text-cloud ring-1 ring-white/10 hover:bg-white/[0.1] hover:text-snow"
+              }`}
             >
-              {copied === d.id ? "Copied" : "Copy"}
+              {isCopied ? "Copied ✓" : "Copy"}
             </button>
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
-  );
-}
-
-function HeartPetal() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden>
-      <path
-        fill="#ffb3c7"
-        d="M12 20.4c-.4 0-.7-.1-1-.4C7.2 16.4 4 13.5 4 10.1 4 7.5 6 5.6 8.5 5.6c1.4 0 2.6.6 3.5 1.7.9-1.1 2.1-1.7 3.5-1.7C17.9 5.6 20 7.5 20 10.1c0 3.4-3.2 6.3-7 9.9-.3.3-.6.4-1 .4Z"
-      />
-      <circle cx="9.2" cy="9.4" r="0.9" fill="#ffe8ee" opacity="0.85" />
-    </svg>
   );
 }
 
@@ -162,11 +139,20 @@ function SolanaIcon() {
 function EthereumIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 256 417" aria-hidden>
-      <path fill="#8A92B2" d="M127.961 0 125.167 9.5v275.527l2.794 2.79 127.963-75.638z" />
+      <path
+        fill="#8A92B2"
+        d="M127.961 0 125.167 9.5v275.527l2.794 2.79 127.963-75.638z"
+      />
       <path fill="#62688F" d="M127.962 0 0 212.179l127.962 75.638V154.338z" />
-      <path fill="#8A92B2" d="m127.961 312.187-1.575 1.92v98.199l1.575 4.601 128.039-180.32z" />
+      <path
+        fill="#8A92B2"
+        d="m127.961 312.187-1.575 1.92v98.199l1.575 4.601 128.039-180.32z"
+      />
       <path fill="#62688F" d="M127.962 416.905v-104.72L0 236.185z" />
-      <path fill="#454A75" d="m127.961 287.958 127.96-75.637-127.96-58.162z" />
+      <path
+        fill="#454A75"
+        d="m127.961 287.958 127.96-75.637-127.96-58.162z"
+      />
       <path fill="#8A92B2" d="m.001 212.321 127.96 75.637V154.159z" />
     </svg>
   );
