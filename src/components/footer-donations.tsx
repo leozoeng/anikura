@@ -35,11 +35,8 @@ export function FooterDonations() {
   }
 
   return (
-    <div className="footer-cozy group/cozy relative inline-flex w-full max-w-full flex-col gap-2 overflow-hidden rounded-2xl p-2.5 sm:w-auto sm:flex-row sm:items-center sm:gap-2.5 sm:py-1.5 sm:pl-2.5 sm:pr-1.5">
-      <span
-        aria-hidden
-        className="footer-cozy-glow pointer-events-none absolute inset-0"
-      />
+    <div className="footer-cozy relative inline-flex w-full max-w-full flex-col gap-2 overflow-hidden rounded-2xl p-2.5 sm:w-auto sm:flex-row sm:items-center sm:gap-2.5 sm:py-1.5 sm:pl-2.5 sm:pr-1.5">
+      <span aria-hidden className="footer-cozy-glow pointer-events-none absolute inset-0" />
       <span
         aria-hidden
         className="footer-petal pointer-events-none absolute -right-1 top-1 text-[0.85rem] text-[#ffb3c7]/55"
@@ -54,14 +51,14 @@ export function FooterDonations() {
       </span>
       <span
         aria-hidden
-        className="footer-petal pointer-events-none absolute -left-0.5 top-[42%] text-[0.55rem] text-[#ffe8ee]/35"
-        style={{ animationDelay: "1.4s" }}
+        className="footer-petal pointer-events-none absolute left-3 top-0.5 text-[0.55rem] text-[#ffe8ee]/35"
+        style={{ animationDelay: "1.2s" }}
       >
         ♡
       </span>
 
       <div className="relative inline-flex min-w-0 items-center gap-2.5 px-0.5 sm:pr-1">
-        <span className="footer-heart-badge grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#ff8caa]/20 ring-1 ring-[#ff8caa]/40">
+        <span className="footer-heart-badge grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#ff8caa]/20 ring-1 ring-[#ff8caa]/40">
           <HeartPetal />
         </span>
         <span className="min-w-0 leading-tight">
@@ -85,10 +82,10 @@ export function FooterDonations() {
           return (
             <div
               key={d.id}
-              className="footer-tip-chip group inline-flex h-10 items-center gap-2 rounded-xl border border-white/[0.1] bg-black/30 py-1 pl-2 pr-1"
+              className="footer-tip-chip group inline-flex h-10 items-center gap-2 rounded-xl border border-white/[0.1] bg-black/30 py-1 pl-2 pr-1 backdrop-blur-sm"
               title={`${d.label}: ${d.address}`}
             >
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-black/45 ring-1 ring-white/12 transition duration-300 group-hover:ring-[#ff8caa]/35">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-black/45 ring-1 ring-white/12 transition group-hover:ring-[#ff8caa]/35">
                 {d.id === "sol" ? <SolanaIcon /> : <EthereumIcon />}
               </span>
               <a
@@ -112,7 +109,7 @@ export function FooterDonations() {
                 }
                 className={`rounded-lg px-2 py-1 text-[0.68rem] font-medium transition duration-300 ${
                   isCopied
-                    ? "footer-copied bg-[#ff8caa]/28 text-sakura-mist"
+                    ? "footer-copied bg-[#ff8caa]/25 text-sakura-mist"
                     : "text-mute hover:bg-white/[0.1] hover:text-snow"
                 }`}
               >
