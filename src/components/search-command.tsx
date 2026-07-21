@@ -14,6 +14,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import type { SearchHit } from "@/lib/search";
+import { formatPosterMeta } from "@/lib/poster-meta";
 
 type Props = {
   open: boolean;
@@ -350,9 +351,11 @@ export function SearchCommand({ open, onOpenChange }: Props) {
                         {hit.title}
                       </p>
                       <p className="mt-0.5 truncate text-xs text-mute">
-                        {[hit.year, hit.score ? `${hit.score}` : null]
-                          .filter(Boolean)
-                          .join(" · ") ||
+                        {formatPosterMeta({
+                          type: hit.type,
+                          year: hit.year,
+                          score: hit.score,
+                        }) ||
                           (hit.source === "anilist" ? "AniList" : "Catalog")}
                       </p>
                     </div>

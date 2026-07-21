@@ -145,6 +145,7 @@ const MEDIA_FIELDS = `
   description(asHtml: false)
   episodes
   status
+  format
   season
   seasonYear
   averageScore
@@ -494,6 +495,7 @@ export async function searchAniList(query: string, perPage = 8) {
           id
           idMal
           title { romaji english native }
+          format
           averageScore
           seasonYear
           coverImage { large }

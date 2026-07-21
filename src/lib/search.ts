@@ -8,6 +8,7 @@ export type SearchHit = {
   title: string;
   native?: string | null;
   poster: string;
+  type?: string | null;
   year?: number | null;
   score?: string | number | null;
   href: string;
@@ -53,6 +54,7 @@ function catalogHit(anime: CatalogAnime): SearchHit {
     title: anime.title,
     native: anime.native,
     poster: anime.poster,
+    type: anime.terms_by_type?.type?.[0] ?? null,
     year: anime.year,
     score: anime.score,
     href: animeHref(anime),
@@ -66,6 +68,7 @@ function anilistHit(media: AniListMedia): SearchHit {
     title: displayTitle(media.title),
     native: media.title.native,
     poster: media.coverImage?.large || "",
+    type: media.format ?? null,
     year: media.seasonYear,
     score: media.averageScore,
     href: `/search?q=${encodeURIComponent(displayTitle(media.title))}`,
@@ -104,6 +107,7 @@ function mergeHits(
       }
       if (!hit.year && media.seasonYear) hit.year = media.seasonYear;
       if (!hit.score && media.averageScore) hit.score = media.averageScore;
+      if (!hit.type && media.format) hit.type = media.format;
       if (seen.has(hit.key)) continue;
       seen.add(hit.key);
       results.push(hit);

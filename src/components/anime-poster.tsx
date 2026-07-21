@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { AnimeSummary, CatalogAnime } from "@/lib/types";
 import { animeHref } from "@/lib/anikoto";
+import { formatPosterMeta, formatPosterScore } from "@/lib/poster-meta";
 import { MyListButton } from "./my-list-button";
 
 type Props = {
@@ -28,8 +29,12 @@ export function AnimePoster({
   showMyList = false,
   index,
 }: Props) {
-  const score =
-    anime.score && anime.score !== "N/A" ? anime.score : null;
+  const score = formatPosterScore(anime.score);
+  const meta = formatPosterMeta({
+    type: anime.terms_by_type?.type?.[0],
+    year: anime.year,
+    score: anime.score,
+  });
   const delay =
     typeof index === "number"
       ? { animationDelay: `${Math.min(index, 14) * 18}ms` }
@@ -84,9 +89,9 @@ export function AnimePoster({
         </h3>
         {episodeLabel ? (
           <p className="text-[0.75rem] text-mute">{episodeLabel}</p>
-        ) : score ? (
+        ) : meta ? (
           <p className="text-[0.75rem] text-mute transition duration-300 group-hover:text-cloud">
-            {score}
+            {meta}
           </p>
         ) : null}
       </div>
