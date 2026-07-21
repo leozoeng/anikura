@@ -113,8 +113,7 @@ export function HeaderAuth({
         aria-haspopup="menu"
         className="group flex items-center gap-2 rounded-full py-0.5 pl-0.5 pr-1 transition duration-300 hover:bg-white/[0.06] sm:pr-2.5"
       >
-        className="relative h-9 w-9 overflow-hidden rounded-full bg-gradient-to-b from-[#2a2a30] to-[#141416] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/20 transition duration-300 group-hover:ring-white/40"
-      >
+        <span className="relative h-9 w-9 overflow-hidden rounded-full bg-gradient-to-b from-[#2a2a30] to-[#141416] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/20 transition duration-300 group-hover:ring-white/40">
         {avatarUrl ? (
           <Image
             src={avatarUrl}
