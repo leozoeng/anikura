@@ -2,20 +2,13 @@
 
 import { useEffect, useRef } from "react";
 import type { GlobePerson } from "@/components/admin/live-globe";
+import { adminDisplayName } from "@/lib/profile";
 
 type VisitorDrawerProps = {
   person: GlobePerson | null;
   open: boolean;
   onClose: () => void;
 };
-
-function visitorName(person: GlobePerson) {
-  return (
-    person.nickname?.trim() ||
-    person.email?.split("@")[0] ||
-    (person.user_id ? "Signed-in guest" : "Anonymous")
-  );
-}
 
 export function VisitorDrawer({ person, open, onClose }: VisitorDrawerProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -36,6 +29,18 @@ export function VisitorDrawer({ person, open, onClose }: VisitorDrawerProps) {
   const place = person
     ? [person.city, person.country].filter(Boolean).join(", ") || "Unknown place"
     : "";
+
+  const name = person
+    ? adminDisplayName(
+        {
+          nickname: person.nickname,
+          username: person.username,
+          email: person.email,
+          user_id: person.user_id,
+        },
+        "Anonymous",
+      )
+    : "—";
 
   return (
     <>
@@ -62,9 +67,7 @@ export function VisitorDrawer({ person, open, onClose }: VisitorDrawerProps) {
             <p className="text-[0.65rem] uppercase tracking-[0.14em] text-mute">
               Visitor
             </p>
-            <p className="mt-0.5 text-lg tracking-[-0.03em] text-snow">
-              {person ? visitorName(person) : "—"}
-            </p>
+            <p className="mt-0.5 text-lg tracking-[-0.03em] text-snow">{name}</p>
           </div>
           <button
             type="button"
@@ -89,6 +92,12 @@ export function VisitorDrawer({ person, open, onClose }: VisitorDrawerProps) {
                 <dt className="text-mute">Signed in</dt>
                 <dd className="text-right text-cloud">
                   {person.user_id ? "Yes" : "Anonymous"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-3">
+                <dt className="text-mute">Username</dt>
+                <dd className="max-w-[14rem] truncate text-right text-cloud">
+                  {person.username ? `@${person.username}` : "—"}
                 </dd>
               </div>
               <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-3">

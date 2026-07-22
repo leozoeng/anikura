@@ -99,6 +99,7 @@ export default async function AdminPage() {
     user_id: string | null;
     email: string | null;
     nickname: string | null;
+    username: string | null;
     lat: number | null;
     lng: number | null;
     country: string | null;
@@ -147,6 +148,7 @@ export default async function AdminPage() {
             user_id: p.user_id,
             email: p.email,
             nickname: p.nickname,
+            username: p.username ?? null,
             lat: p.lat,
             lng: p.lng,
             country: p.country,

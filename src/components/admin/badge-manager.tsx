@@ -17,7 +17,7 @@ import {
 } from "@/components/profile/profile-badges";
 import {
   PROFILE_BADGE_ORDER,
-  displayName,
+  adminDisplayName,
   formatMemberSince,
   handleFromProfile,
   profileHref,
@@ -37,7 +37,7 @@ function UserRow({
   showJoined?: boolean;
   onToggle: (userId: string, badge: ProfileBadgeId, next: boolean) => void;
 }) {
-  const name = displayName(user);
+  const name = adminDisplayName(user);
   const handle = handleFromProfile(user);
 
   return (
@@ -231,7 +231,7 @@ export function BadgeManager() {
       const updated = await setProfileBadges(userId, nextBadges);
       patchUser(updated);
       toast(
-        `${displayName(updated)} · ${
+        `${adminDisplayName(updated)} · ${
           nextBadges.length
             ? nextBadges.map((b) => b.toUpperCase()).join(", ")
             : "no badges"

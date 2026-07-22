@@ -15,6 +15,7 @@ export type GlobePerson = {
   user_id: string | null;
   email: string | null;
   nickname: string | null;
+  username: string | null;
 };
 
 type LiveGlobeProps = {

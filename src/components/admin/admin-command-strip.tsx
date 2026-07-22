@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 
 export type AdminNavItem = {
   id: string;
@@ -10,23 +10,25 @@ export type AdminNavItem = {
 
 type AdminCommandStripProps = {
   items: AdminNavItem[];
+  activeId: string;
+  onChange: (id: string) => void;
   onRefresh: () => void;
   refreshing: boolean;
 };
 
 export function AdminCommandStrip({
   items,
+  activeId,
+  onChange,
   onRefresh,
   refreshing,
 }: AdminCommandStripProps) {
-  const [active, setActive] = useState(items[0]?.id ?? "");
-
-  const jump = useCallback((id: string) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-    setActive(id);
-  }, []);
+  const select = useCallback(
+    (id: string) => {
+      onChange(id);
+    },
+    [onChange],
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -50,43 +52,30 @@ export function AdminCommandStrip({
       const idx = Number(e.key);
       if (!Number.isFinite(idx) || idx < 1 || idx > items.length) return;
       e.preventDefault();
-      jump(items[idx - 1]!.id);
+      select(items[idx - 1]!.id);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [items, jump, onRefresh]);
-
-  useEffect(() => {
-    const observers: IntersectionObserver[] = [];
-    for (const item of items) {
-      const el = document.getElementById(item.id);
-      if (!el) continue;
-      const obs = new IntersectionObserver(
-        ([entry]) => {
-          if (entry?.isIntersecting) setActive(item.id);
-        },
-        { rootMargin: "-30% 0px -55% 0px", threshold: 0 },
-      );
-      obs.observe(el);
-      observers.push(obs);
-    }
-    return () => observers.forEach((o) => o.disconnect());
-  }, [items]);
+  }, [items, onRefresh, select]);
 
   return (
     <div className="sticky top-16 z-40 -mx-5 mb-3 border-y border-white/[0.06] bg-black/70 px-5 backdrop-blur-xl sm:-mx-8 sm:px-8">
       <div className="flex items-center gap-2 py-1.5">
         <nav
           className="flex min-w-0 flex-1 gap-1 overflow-x-auto scrollbar-none"
-          aria-label="Admin sections"
+          aria-label="Admin tabs"
+          role="tablist"
         >
           {items.map((item, i) => {
-            const isActive = active === item.id;
+            const isActive = activeId === item.id;
             return (
               <button
                 key={item.id}
                 type="button"
-                onClick={() => jump(item.id)}
+                role="tab"
+                aria-selected={isActive}
+                id={`admin-tab-${item.id}`}
+                onClick={() => select(item.id)}
                 className={`shrink-0 rounded-full px-3 py-1.5 text-xs transition ${
                   isActive
                     ? "bg-snow text-void"

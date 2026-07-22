@@ -120,6 +120,24 @@ export function displayName(
   );
 }
 
+/**
+ * Admin desk only — may fall back to email local-part.
+ * Do not use on public pages (privacy scrub keeps email out of public identity).
+ */
+export function adminDisplayName(
+  profile: Pick<PublicProfile, "nickname" | "username" | "email"> & {
+    user_id?: string | null;
+  },
+  guestLabel = "Guest",
+) {
+  return (
+    profile.nickname?.trim() ||
+    profile.username?.trim() ||
+    profile.email?.split("@")[0]?.trim() ||
+    (profile.user_id ? "Signed in" : guestLabel)
+  );
+}
+
 /** Normalize vanity username input → lowercase handle or null if invalid. */
 export function normalizeUsername(raw: string | null | undefined): string | null {
   if (!raw) return null;
