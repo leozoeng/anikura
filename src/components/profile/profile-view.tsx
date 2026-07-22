@@ -598,68 +598,30 @@ function SocialProfileRail({
   excludeUserId: string;
   children: ReactNode;
 }) {
-  const profileRef = useRef<HTMLDivElement>(null);
-  const searchRef = useRef<HTMLDivElement>(null);
-  const [discordMinH, setDiscordMinH] = useState<number | null>(null);
-
-  useEffect(() => {
-    const profile = profileRef.current;
-    const search = searchRef.current;
-    if (!profile || !search) return;
-
-    const sync = () => {
-      // Only lock heights on desktop rail; mobile stacks naturally.
-      if (window.matchMedia("(max-width: 1023px)").matches) {
-        setDiscordMinH(null);
-        return;
-      }
-      const gap = 16; // gap-4
-      const next = Math.max(
-        224,
-        Math.round(profile.getBoundingClientRect().height - search.getBoundingClientRect().height - gap),
-      );
-      setDiscordMinH((prev) => (prev === next ? prev : next));
-    };
-
-    sync();
-    const ro = new ResizeObserver(sync);
-    ro.observe(profile);
-    ro.observe(search);
-    window.addEventListener("resize", sync);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", sync);
-    };
-  }, []);
-
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-start lg:gap-4">
-      <div ref={profileRef} className="order-1 min-w-0">
-        {children}
-      </div>
-      <aside className="order-2 flex min-w-0 flex-col gap-4">
-        <div ref={searchRef} className="shrink-0">
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch lg:gap-4">
+      <div className="order-1 min-w-0 flex-1">{children}</div>
+      <aside className="order-2 flex w-full min-w-0 flex-col gap-4 lg:w-[min(100%,20rem)] lg:shrink-0">
+        <div className="shrink-0">
           <ProfileSearch compact excludeUserId={excludeUserId} />
         </div>
-        <RailDiscordCta minHeight={discordMinH} />
+        {/* flex-1 fills leftover height so Discord bottom matches profile */}
+        <div className="flex min-h-[14rem] flex-1 flex-col sm:min-h-[16rem]">
+          <RailDiscordCta />
+        </div>
       </aside>
     </div>
   );
 }
 
-function RailDiscordCta({ minHeight }: { minHeight?: number | null }) {
+function RailDiscordCta() {
   return (
     <a
       href={ANIKURA_DISCORD_INVITE}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Join Anikura Discord for latest updates, feedback, and bugs"
-      style={
-        minHeight && minHeight > 0
-          ? { minHeight, height: minHeight }
-          : undefined
-      }
-      className={`group footer-discord-invite pressable relative flex w-full min-h-[14rem] flex-col justify-between gap-5 overflow-hidden rounded-2xl px-4 py-4 sm:min-h-[16rem] sm:px-5 sm:py-5 ${FOCUS_RING}`}
+      className={`group footer-discord-invite pressable relative flex h-full min-h-[14rem] w-full flex-1 flex-col justify-between gap-5 overflow-hidden rounded-2xl px-4 py-4 sm:min-h-[16rem] sm:px-5 sm:py-5 ${FOCUS_RING}`}
     >
       <span
         aria-hidden
