@@ -1,6 +1,7 @@
 import { displayTitle, searchAniList, type AniListMedia } from "@/lib/anilist";
 import { animeHref } from "@/lib/anikoto";
 import { getCatalog, searchCatalog } from "@/lib/catalog";
+import { bestAniListCover, preferHighResPoster } from "@/lib/cover-image";
 import type { CatalogAnime } from "@/lib/types";
 
 export type SearchHit = {
@@ -53,7 +54,7 @@ function catalogHit(anime: CatalogAnime): SearchHit {
     key: `c-${anime.id}`,
     title: anime.title,
     native: anime.native,
-    poster: anime.poster,
+    poster: preferHighResPoster(anime.poster),
     type: anime.terms_by_type?.type?.[0] ?? null,
     year: anime.year,
     score: anime.score,
@@ -67,7 +68,7 @@ function anilistHit(media: AniListMedia): SearchHit {
     key: `a-${media.id}`,
     title: displayTitle(media.title),
     native: media.title.native,
-    poster: media.coverImage?.large || "",
+    poster: bestAniListCover(media.coverImage),
     type: media.format ?? null,
     year: media.seasonYear,
     score: media.averageScore,
@@ -102,8 +103,9 @@ function mergeHits(
     if (matched) {
       const hit = catalogHit(matched);
       if (media.title.native && !hit.native) hit.native = media.title.native;
-      if (!hit.poster && media.coverImage?.large) {
-        hit.poster = media.coverImage.large;
+      const cover = bestAniListCover(media.coverImage);
+      if (cover && (!hit.poster || hit.poster.includes("/thumbnail/"))) {
+        hit.poster = cover;
       }
       if (!hit.year && media.seasonYear) hit.year = media.seasonYear;
       if (!hit.score && media.averageScore) hit.score = media.averageScore;

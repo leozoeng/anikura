@@ -280,8 +280,6 @@ button {
 
   .genre-tile:hover,
   .genre-tile:focus-visible,
-  .poster-link:hover .poster-frame,
-  .poster-link:focus-visible .poster-frame,
   .poster-link:hover .poster-image,
   .poster-link:focus-visible .poster-image {
     transform: none;
@@ -634,15 +632,47 @@ button {
   background: var(--color-raised);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
   transition:
-    box-shadow 0.35s var(--ease-out-soft),
-    transform 0.35s var(--ease-out-soft);
+    box-shadow 0.32s var(--ease-out-soft);
 }
+
+.poster-card > img,
+.poster-card > span img,
+.poster-card .poster-image {
+  transition: transform 0.55s var(--ease-out-soft);
+}
+
+.poster-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 48%,
+    rgba(0, 0, 0, 0.28) 72%,
+    rgba(0, 0, 0, 0.72) 100%
+  );
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity 0.35s var(--ease-out-soft);
+}
+
 .group:hover .poster-card,
 .poster-card:hover {
-  box-shadow:
-    0 0 0 1px rgba(255, 140, 170, 0.28),
-    0 18px 40px rgba(0, 0, 0, 0.35);
-  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+.group:hover .poster-card > img,
+.group:hover .poster-card > span img,
+.group:hover .poster-card .poster-image,
+.poster-card:hover > img,
+.poster-card:hover > span img,
+.poster-card:hover .poster-image {
+  transform: scale(1.06);
+}
+
+.group:hover .poster-card::after,
+.poster-card:hover::after {
+  opacity: 1;
 }
 
 /* Poster hover presence — shared by AnimePoster */
@@ -652,24 +682,26 @@ button {
 
 .poster-frame {
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
-  transition:
-    transform 0.32s var(--ease-out-soft),
-    box-shadow 0.32s var(--ease-out-soft);
+  transition: box-shadow 0.32s var(--ease-out-soft);
 }
 
 .poster-image {
-  transition: transform 0.5s var(--ease-out-soft);
+  transform: scale(1);
+  transform-origin: center center;
+  transition: transform 0.55s var(--ease-out-soft);
+  will-change: transform;
 }
 
+/* Bottom vignette — quiet at rest, stronger on hover for title/meta */
 .poster-veil {
   background: linear-gradient(
     180deg,
-    transparent 42%,
-    rgba(0, 0, 0, 0.55) 78%,
-    rgba(0, 0, 0, 0.82) 100%
+    transparent 48%,
+    rgba(0, 0, 0, 0.28) 72%,
+    rgba(0, 0, 0, 0.72) 100%
   );
-  opacity: 0.85;
-  transition: opacity 0.28s var(--ease-out-soft);
+  opacity: 0.55;
+  transition: opacity 0.35s var(--ease-out-soft);
   pointer-events: none;
 }
 
@@ -692,17 +724,12 @@ button {
 
 .poster-link:hover .poster-frame,
 .poster-link:focus-visible .poster-frame {
-  transform: translateY(-4px);
-  box-shadow:
-    0 0 0 1px rgba(255, 140, 170, 0.42),
-    0 0 0 4px rgba(255, 140, 170, 0.12),
-    0 18px 40px rgba(0, 0, 0, 0.55),
-    0 0 28px rgba(255, 140, 170, 0.16);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16);
 }
 
 .poster-link:hover .poster-image,
 .poster-link:focus-visible .poster-image {
-  transform: scale(1.04);
+  transform: scale(1.06);
 }
 
 .poster-link:hover .poster-veil,

@@ -4,6 +4,7 @@ import {
   type AniListRelationNode,
   type AniListTitle,
 } from "@/lib/anilist";
+import { bestAniListCover } from "@/lib/cover-image";
 import type { CatalogAnime } from "@/lib/types";
 
 export type CatalogMatch = {
@@ -17,7 +18,10 @@ export type RelatedMediaCard = {
   media: {
     id: number;
     title: AniListTitle;
-    coverImage?: { large?: string | null } | null;
+    coverImage?: {
+      extraLarge?: string | null;
+      large?: string | null;
+    } | null;
     seasonYear?: number | null;
     format?: string | null;
   };
@@ -137,11 +141,16 @@ function cardFromMatch(
   media?: {
     id?: number;
     title?: AniListTitle;
-    coverImage?: { large?: string | null } | null;
+    coverImage?: {
+      extraLarge?: string | null;
+      large?: string | null;
+    } | null;
     seasonYear?: number | null;
     format?: string | null;
   },
 ): RelatedMediaCard {
+  const cover =
+    bestAniListCover(media?.coverImage) || match.poster || null;
   return {
     media: {
       id: Number(match.ani_id) || media?.id || match.id,
@@ -150,7 +159,9 @@ function cardFromMatch(
         romaji: media?.title?.romaji || match.title,
         native: match.native || media?.title?.native,
       },
-      coverImage: { large: match.poster || media?.coverImage?.large || null },
+      coverImage: cover
+        ? { extraLarge: cover, large: cover }
+        : null,
       seasonYear: match.year ?? media?.seasonYear ?? null,
       format: media?.format ?? match.terms_by_type?.type?.[0] ?? null,
     },

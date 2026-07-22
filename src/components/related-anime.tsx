@@ -1,6 +1,7 @@
 import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import { SectionHeading } from "@/components/section-heading";
+import { bestAniListCover, preferHighResPoster } from "@/lib/cover-image";
 import type { RelatedEntry, RelatedMediaCard } from "@/lib/related";
 
 function displayTitle(title: {
@@ -51,25 +52,28 @@ export function RelatedAnimeGrid({
       >
         {visible.map((item) => {
           const label = badge?.(item);
-          const poster = item.media.coverImage?.large || item.match.poster;
+          const poster =
+            bestAniListCover(item.media.coverImage) ||
+            preferHighResPoster(item.match.poster);
           return (
             <Link
               key={`${item.match.id}-${item.media.id}`}
               href={`/anime/${item.match.id}/${item.match.slug}`}
-              className="group"
+              className="poster-link group"
             >
-              <div className="poster-card relative aspect-[2/3]">
+              <div className="poster-frame relative aspect-[2/3] overflow-hidden rounded-[0.9rem] bg-raised">
                 {poster ? (
                   <SafeImage
                     src={poster}
                     alt={displayTitle(item.media.title)}
                     fill
-                    className="object-cover transition duration-500 group-hover:scale-[1.04]"
-                    sizes="180px"
+                    className="poster-image object-cover"
+                    sizes="(max-width: 640px) 45vw, 220px"
                   />
                 ) : null}
+                <div className="poster-veil absolute inset-0" />
                 {label ? (
-                  <span className="absolute left-2 top-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-snow/95 backdrop-blur-sm">
+                  <span className="absolute left-2 top-2 z-[1] rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-snow/95 backdrop-blur-sm">
                     {label}
                   </span>
                 ) : null}
@@ -108,7 +112,9 @@ export function RelatedAnimeList({
         {items.map((item) => {
           const label = badge?.(item);
           const name = displayTitle(item.media.title);
-          const poster = item.media.coverImage?.large || item.match.poster;
+          const poster =
+            bestAniListCover(item.media.coverImage) ||
+            preferHighResPoster(item.match.poster);
           return (
             <li key={`${title}-${item.match.id}-${item.media.id}`}>
               <Link

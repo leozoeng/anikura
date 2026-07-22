@@ -2,6 +2,7 @@ import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import type { AniListMedia } from "@/lib/anilist";
 import { displayTitle } from "@/lib/anilist";
+import { bestAniListCover } from "@/lib/cover-image";
 import { formatPosterMeta, formatPosterScore } from "@/lib/poster-meta";
 
 type Props = {
@@ -49,17 +50,17 @@ export function AniListRow({
               style={{ animationDelay: `${Math.min(i, 12) * 18}ms` }}
             >
               <div className="poster-frame relative aspect-[2/3] overflow-hidden rounded-[1.1rem] bg-raised">
-                {(m.coverImage?.large || m.coverImage?.extraLarge) && (
+                {bestAniListCover(m.coverImage) ? (
                   <SafeImage
-                    src={m.coverImage.large || m.coverImage.extraLarge || ""}
+                    src={bestAniListCover(m.coverImage)}
                     alt={displayTitle(m.title)}
                     fill
-                    sizes="160px"
+                    sizes="(max-width: 640px) 42vw, 220px"
                     priority={i < priorityCount}
                     className="poster-image object-cover"
                     loading={i < priorityCount ? "eager" : "lazy"}
                   />
-                )}
+                ) : null}
                 <div className="poster-veil absolute inset-0" />
                 {score ? (
                   <span className="poster-score absolute left-2.5 top-2.5 z-[1]">

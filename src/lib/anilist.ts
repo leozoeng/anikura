@@ -23,7 +23,10 @@ export type AniListRelationNode = {
   type?: string | null;
   format?: string | null;
   title: AniListTitle;
-  coverImage?: { large?: string | null } | null;
+  coverImage?: {
+    extraLarge?: string | null;
+    large?: string | null;
+  } | null;
   seasonYear?: number | null;
   averageScore?: number | null;
 };
@@ -91,7 +94,10 @@ export type AniListMedia = {
         id: number;
         idMal?: number | null;
         title: AniListTitle;
-        coverImage?: { large?: string | null } | null;
+        coverImage?: {
+          extraLarge?: string | null;
+          large?: string | null;
+        } | null;
         averageScore?: number | null;
         seasonYear?: number | null;
         format?: string | null;
@@ -330,7 +336,7 @@ export async function getAniListMedia(id: number) {
               type
               format
               title { romaji english native }
-              coverImage { large }
+              coverImage { extraLarge large }
               seasonYear
               averageScore
             }
@@ -342,7 +348,7 @@ export async function getAniListMedia(id: number) {
               id
               idMal
               title { romaji english }
-              coverImage { large }
+              coverImage { extraLarge large }
               averageScore
               seasonYear
               format
@@ -374,7 +380,7 @@ export async function getAniListMediaByMal(malId: number) {
               type
               format
               title { romaji english native }
-              coverImage { large }
+              coverImage { extraLarge large }
               seasonYear
               averageScore
             }
@@ -386,7 +392,7 @@ export async function getAniListMediaByMal(malId: number) {
               id
               idMal
               title { romaji english }
-              coverImage { large }
+              coverImage { extraLarge large }
               averageScore
               seasonYear
               format
@@ -466,7 +472,7 @@ export async function getAniListRelationGraphs(ids: number[]) {
                 type
                 format
                 title { romaji english native }
-                coverImage { large }
+                coverImage { extraLarge large }
                 seasonYear
                 averageScore
               }
@@ -498,7 +504,7 @@ export async function searchAniList(query: string, perPage = 8) {
           format
           averageScore
           seasonYear
-          coverImage { large }
+          coverImage { extraLarge large }
           genres
         }
       }
