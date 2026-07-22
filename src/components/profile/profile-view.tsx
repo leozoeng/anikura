@@ -480,53 +480,42 @@ export function ProfileView({
         ) : null}
 
         {/*
-          Desktop 2×2:
-            [ Profile ] [ Find people ]
+          Desktop 2×2 (explicit grid areas — no display:contents):
+            [ Profile  ] [ Find people ]
             [ Community ] [ Discord CTA ]
           then full-width partners below with breathing room.
           Mobile: Profile → Find people → Community → Discord → Partners
         */}
-        <div
-          className={
-            hub
-              ? "flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)] lg:items-start lg:gap-5"
-              : undefined
-          }
-        >
-          {hub ? (
-            <>
-              <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-5">
-                <div className="order-1 min-w-0">{profileColumn}</div>
-                <div className="order-3 min-w-0 lg:order-none">
-                  <div className="rounded-2xl border border-white/[0.08] bg-[#111214]/55 p-3.5 sm:p-4">
-                    {hub}
-                  </div>
+        {hub ? (
+          <>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)] lg:items-start lg:gap-x-5 lg:gap-y-5">
+              <div className="order-1 min-w-0 lg:col-start-1 lg:row-start-1">
+                {profileColumn}
+              </div>
+              <aside className="order-2 min-w-0 lg:col-start-2 lg:row-start-1 lg:sticky lg:top-[4.75rem]">
+                <ProfileSearch compact excludeUserId={live.id} />
+              </aside>
+              <div className="order-3 min-w-0 lg:col-start-1 lg:row-start-2">
+                <div className="rounded-2xl border border-white/[0.08] bg-[#111214]/55 p-3.5 sm:p-4">
+                  {hub}
                 </div>
               </div>
-              <div className="contents lg:sticky lg:top-[4.75rem] lg:flex lg:min-w-0 lg:flex-col lg:gap-5 lg:self-start">
-                <aside className="order-2 min-w-0 lg:order-none">
-                  <ProfileSearch compact excludeUserId={live.id} />
-                </aside>
-                <div className="order-4 min-w-0 lg:order-none">
-                  <RailDiscordCta />
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="min-w-0">
-              {profileColumn}
-              <div className="mt-4">
-                <ProfileSearch excludeUserId={live.id} />
+              <div className="order-4 min-w-0 lg:col-start-2 lg:row-start-2">
+                <RailDiscordCta />
               </div>
             </div>
-          )}
-        </div>
-
-        {hub ? (
-          <div className="mt-10 sm:mt-12 lg:mt-14">
-            <CommunityPartnersMarquee />
+            <div className="mt-10 sm:mt-12 lg:mt-14">
+              <CommunityPartnersMarquee />
+            </div>
+          </>
+        ) : (
+          <div className="min-w-0">
+            {profileColumn}
+            <div className="mt-4">
+              <ProfileSearch excludeUserId={live.id} />
+            </div>
           </div>
-        ) : null}
+        )}
       </div>
     </div>
   );
