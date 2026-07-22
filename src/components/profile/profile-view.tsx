@@ -480,10 +480,9 @@ export function ProfileView({
         ) : null}
 
         {/*
-          Desktop 2×2 (explicit grid areas — no display:contents):
-            [ Profile  ] [ Find people ]
-            [ Community ] [ Discord CTA ]
-          then full-width partners below with breathing room.
+          Desktop:
+            [ Profile   ] [ Find people ]
+            [ Community ] [ Discord CTA ]  ← Discord stacked under Find, not sticky
           Mobile: Profile → Find people → Community → Discord → Partners
         */}
         {hub ? (
@@ -492,15 +491,22 @@ export function ProfileView({
               <div className="order-1 min-w-0 lg:col-start-1 lg:row-start-1">
                 {profileColumn}
               </div>
-              <aside className="order-2 min-w-0 lg:col-start-2 lg:row-start-1 lg:sticky lg:top-[4.75rem]">
-                <ProfileSearch compact excludeUserId={live.id} />
+              <aside className="order-2 min-w-0 lg:col-start-2 lg:row-start-1 lg:row-span-2">
+                <div className="flex flex-col gap-5">
+                  <ProfileSearch compact excludeUserId={live.id} />
+                  {/* Desktop: sits directly under Find people */}
+                  <div className="hidden lg:block">
+                    <RailDiscordCta />
+                  </div>
+                </div>
               </aside>
               <div className="order-3 min-w-0 lg:col-start-1 lg:row-start-2">
                 <div className="rounded-2xl border border-white/[0.08] bg-[#111214]/55 p-3.5 sm:p-4">
                   {hub}
                 </div>
               </div>
-              <div className="order-4 min-w-0 lg:col-start-2 lg:row-start-2">
+              {/* Mobile: after Community */}
+              <div className="order-4 min-w-0 lg:hidden">
                 <RailDiscordCta />
               </div>
             </div>
