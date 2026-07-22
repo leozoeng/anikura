@@ -7,7 +7,6 @@ export type CommentAuthor = {
   username?: string | null;
   nickname: string | null;
   avatar_url: string | null;
-  email: string | null;
 };
 
 export type AnimeComment = {
@@ -26,7 +25,7 @@ export type AnimeComment = {
 };
 
 export const COMMENT_SELECT =
-  "id, anime_id, episode, language, user_id, body, parent_id, created_at, updated_at, author:profiles!anime_comments_user_id_fkey(id, username, nickname, avatar_url, email)";
+  "id, anime_id, episode, language, user_id, body, parent_id, created_at, updated_at, author:profiles!anime_comments_user_id_fkey(id, username, nickname, avatar_url)";
 
 export function validateCommentBody(raw: string): string | null {
   const trimmed = raw.trim();

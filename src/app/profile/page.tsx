@@ -56,7 +56,7 @@ export default async function ProfilePage() {
   const resolved: PublicProfile = profile ?? {
     id: user.id,
     email: user.email ?? null,
-    nickname: user.email?.split("@")[0] ?? "Viewer",
+    nickname: "Viewer",
     bio: null,
     avatar_url: null,
     banner_url: null,

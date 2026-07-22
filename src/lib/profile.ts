@@ -24,6 +24,10 @@ export const DEFAULT_ACCENT_HEX = "#5865F2";
 export const PROFILE_SELECT =
   "id, email, username, nickname, bio, avatar_url, banner_url, created_at, role, accent_hex, accent_ambient, badges";
 
+/** Public-facing columns — no email (keeps operator identity out of client payloads). */
+export const PUBLIC_PROFILE_SELECT =
+  "id, username, nickname, bio, avatar_url, banner_url, created_at, role, accent_hex, accent_ambient, badges";
+
 export const USERNAME_MIN = 3;
 export const USERNAME_MAX = 24;
 export const USERNAME_PATTERN = /^[a-z0-9_]+$/;
@@ -81,14 +85,6 @@ export const PROFILE_BADGE_ORDER: ProfileBadgeId[] = [
   "vip",
 ];
 
-/**
- * Email → badges allowlist (reliable for staff even before DB seed).
- * Dev is also inferred from `role === "admin"`.
- */
-const BADGE_EMAIL_ALLOWLIST: Record<string, ProfileBadgeId[]> = {
-  "leozoeng@icloud.com": ["dev"],
-};
-
 function isKnownBadge(value: string): value is ProfileBadgeId {
   return (
     value === "dev" ||
@@ -98,9 +94,9 @@ function isKnownBadge(value: string): value is ProfileBadgeId {
   );
 }
 
-/** Merge DB badges + email allowlist + admin role → ordered unique list. */
+/** Merge DB badges + admin role → ordered unique list. Never use email for public identity. */
 export function resolveProfileBadges(
-  profile: Pick<PublicProfile, "email" | "role" | "badges">,
+  profile: Pick<PublicProfile, "role" | "badges">,
 ): ProfileBadgeId[] {
   const set = new Set<ProfileBadgeId>();
 
@@ -109,23 +105,17 @@ export function resolveProfileBadges(
     if (isKnownBadge(id)) set.add(id);
   }
 
-  const email = profile.email?.trim().toLowerCase() ?? "";
-  if (email && BADGE_EMAIL_ALLOWLIST[email]) {
-    for (const id of BADGE_EMAIL_ALLOWLIST[email]) set.add(id);
-  }
-
   if (profile.role === "admin") set.add("dev");
 
   return PROFILE_BADGE_ORDER.filter((id) => set.has(id));
 }
 
 export function displayName(
-  profile: Pick<PublicProfile, "nickname" | "username" | "email">,
+  profile: Pick<PublicProfile, "nickname" | "username">,
 ) {
   return (
     profile.nickname?.trim() ||
     profile.username?.trim() ||
-    profile.email?.split("@")[0] ||
     "Viewer"
   );
 }
@@ -164,12 +154,11 @@ export function isProfileUuid(value: string) {
 }
 
 export function handleFromProfile(
-  profile: Pick<PublicProfile, "username" | "nickname" | "email">,
+  profile: Pick<PublicProfile, "username" | "nickname">,
 ) {
   const base =
     normalizeUsername(profile.username) ||
     normalizeUsername(profile.nickname) ||
-    profile.email?.split("@")[0]?.toLowerCase().replace(/[^a-z0-9_]/g, "") ||
     "viewer";
   return `@${base}`;
 }

@@ -630,10 +630,10 @@ export function AnimeComments({
 
   function renderComment(comment: AnimeComment, isReply = false) {
     const name = displayName(
-      comment.author ?? { nickname: null, email: null },
+      comment.author ?? { nickname: null, username: null },
     );
     const handle = handleFromProfile(
-      comment.author ?? { nickname: null, email: null },
+      comment.author ?? { nickname: null, username: null },
     );
     const authorHref = profileHref({
       id: comment.user_id,

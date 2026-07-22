@@ -4,7 +4,7 @@ import type { AnimeListEntry } from "@/lib/anime-list";
 import { getSessionUser } from "@/lib/auth";
 import { fetchUserProfileComments } from "@/lib/comments-server";
 import {
-  PROFILE_SELECT,
+  PUBLIC_PROFILE_SELECT,
   isProfileUuid,
   vanityUsernameFromParam,
   type PublicProfile,
@@ -23,7 +23,7 @@ async function loadProfile(param: string) {
   if (isProfileUuid(key)) {
     const { data } = await supabase
       .from("profiles")
-      .select(PROFILE_SELECT)
+      .select(PUBLIC_PROFILE_SELECT)
       .eq("id", key)
       .maybeSingle();
     return data as PublicProfile | null;
@@ -34,7 +34,7 @@ async function loadProfile(param: string) {
 
   const { data } = await supabase
     .from("profiles")
-    .select(PROFILE_SELECT)
+    .select(PUBLIC_PROFILE_SELECT)
     .eq("username", handle)
     .maybeSingle();
   return data as PublicProfile | null;
@@ -47,7 +47,6 @@ export async function generateMetadata({ params }: Props) {
   const name =
     profile?.nickname?.trim() ||
     profile?.username?.trim() ||
-    profile?.email?.split("@")[0] ||
     "Profile";
   return { title: name };
 }
@@ -80,9 +79,14 @@ export default async function PublicProfilePage({ params }: Props) {
 
   const isOwner = me?.id === profile.id;
 
+  // Never ship operator/user email to other visitors' browsers.
+  const publicProfile: PublicProfile = isOwner
+    ? profile
+    : { ...profile, email: null };
+
   return (
     <ProfileView
-      profile={profile}
+      profile={publicProfile}
       list={(list ?? []) as AnimeListEntry[]}
       comments={comments}
       isOwner={isOwner}

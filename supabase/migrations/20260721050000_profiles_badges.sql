@@ -15,13 +15,13 @@ alter table public.profiles
 comment on column public.profiles.badges is
   'Public profile badge ids shown next to display name (e.g. dev, vip).';
 
--- Seed known staff / VIP emails
+-- Optional seed for the configured admin account (placeholder email).
 update public.profiles
 set badges = (
   select array_agg(distinct b order by b)
   from unnest(coalesce(badges, '{}'::text[]) || array['dev', 'vip']::text[]) as b
 )
-where lower(coalesce(email, '')) = lower('leozoeng@icloud.com');
+where lower(coalesce(email, '')) = lower('your_admin@example.com');
 
 -- Prevent users from granting themselves badges (mirrors role protection)
 create or replace function private.protect_profile_badges()

@@ -52,7 +52,7 @@ Anikura uses Supabase Auth (email/password) with `@supabase/ssr` for App Router 
 
 Copy `.env.example` → `.env.local`. On **Vercel → Settings → Environment Variables**, set `NEXT_PUBLIC_SITE_URL=https://anikura.club` for Production (then redeploy). Do not set it to `http://localhost:3000` in Production.
 
-Project (Leo Zoeng org): `anikura` · region `eu-north-1`.
+Project: `anikura` · region `eu-north-1`.
 
 ### Supabase Auth URL config (required for email verify)
 
@@ -65,7 +65,7 @@ In [Authentication → URL Configuration](https://supabase.com/dashboard/project
 | **Site URL** | `https://anikura.club` |
 | **Redirect URLs** | `https://anikura.club/**`, `https://www.anikura.club/**`, `http://localhost:3000/**` (local only) |
 
-Optional: keep a Vercel preview pattern like `https://*-leozoengs-projects.vercel.app/**` if you test auth on previews.
+Optional: add your Vercel preview origin pattern to Redirect URLs if you test auth on previews.
 
 ### Sign up / sign in
 
@@ -82,26 +82,26 @@ For the simplest local flow, disable email confirmation in the Supabase dashboar
 Admin is **email-allowlist only**. New signups always get `role = user` and cannot open `/admin`.
 
 ```bash
-ADMIN_EMAIL=leozoeng@icloud.com
+ADMIN_EMAIL=your_admin@example.com
 ```
 
-DB allowlist (already seeded for that email):
+DB allowlist (seed with your admin email):
 
 ```sql
 delete from private.admin_allowlist
-where email is distinct from lower('leozoeng@icloud.com');
+where email is distinct from lower('your_admin@example.com');
 
 insert into private.admin_allowlist (email)
-values (lower('leozoeng@icloud.com'))
+values (lower('your_admin@example.com'))
 on conflict do nothing;
 
 update public.profiles
 set role = 'admin'
-where lower(email) = lower('leozoeng@icloud.com');
+where lower(email) = lower('your_admin@example.com');
 
 update public.profiles
 set role = 'user'
-where lower(coalesce(email, '')) is distinct from lower('leozoeng@icloud.com');
+where lower(coalesce(email, '')) is distinct from lower('your_admin@example.com');
 ```
 
 Then open `/admin` for the live dashboard (metrics + active-visitor globe).

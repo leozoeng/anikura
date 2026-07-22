@@ -17,18 +17,19 @@ as $$
   );
 $$;
 
--- Sole admin
+-- Seed placeholder — replace with your admin email via ADMIN_EMAIL / allowlist.
+-- (Historical personal addresses scrubbed from the public tree.)
 delete from private.admin_allowlist
-where email is distinct from lower('leozoeng@icloud.com');
+where email is distinct from lower('your_admin@example.com');
 
 insert into private.admin_allowlist (email)
-values (lower('leozoeng@icloud.com'))
+values (lower('your_admin@example.com'))
 on conflict do nothing;
 
 update public.profiles
 set role = 'user'
-where lower(coalesce(email, '')) is distinct from lower('leozoeng@icloud.com');
+where lower(coalesce(email, '')) is distinct from lower('your_admin@example.com');
 
 update public.profiles
 set role = 'admin'
-where lower(coalesce(email, '')) = lower('leozoeng@icloud.com');
+where lower(coalesce(email, '')) = lower('your_admin@example.com');

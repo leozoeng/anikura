@@ -4,7 +4,7 @@ import { SafeImage } from "@/components/safe-image";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
-  PROFILE_SELECT,
+  PUBLIC_PROFILE_SELECT,
   accentAmbientEnabled,
   displayName,
   formatMemberSince,
@@ -33,7 +33,7 @@ export function ProfilePeekCard({ userId }: { userId: string }) {
     (async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select(PROFILE_SELECT)
+        .select(PUBLIC_PROFILE_SELECT)
         .eq("id", userId)
         .maybeSingle();
       if (cancelled) return;
@@ -41,7 +41,7 @@ export function ProfilePeekCard({ userId }: { userId: string }) {
         setFailed(true);
         return;
       }
-      setProfile(data as PublicProfile);
+      setProfile({ ...(data as PublicProfile), email: null });
     })();
     return () => {
       cancelled = true;

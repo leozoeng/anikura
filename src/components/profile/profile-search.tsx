@@ -147,16 +147,14 @@ export function ProfileSearch({
                 id: hit.id,
                 username: hit.username,
                 nickname: hit.nickname,
-                email: null,
                 badges: hit.badges,
               } as Pick<
                 PublicProfile,
-                "id" | "username" | "nickname" | "email" | "badges"
+                "id" | "username" | "nickname" | "badges"
               >;
               const name = displayName(profile);
               const handle = hit.username ? `@${hit.username}` : name;
               const badges = resolveProfileBadges({
-                email: null,
                 badges: hit.badges,
               });
 
