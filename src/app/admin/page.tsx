@@ -1,9 +1,15 @@
 import { redirect } from "next/navigation";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
 import { AdminRefresh } from "@/components/admin/admin-refresh";
-import { ensureAdminRole, getProfile, isAdminUser } from "@/lib/auth";
+import {
+  enrichHotPages,
+  enrichHotWatched,
+  type HotPageRow,
+  type HotWatchRow,
+} from "@/lib/admin-hot-paths";
 import { fetchAllSocialAnnouncements } from "@/lib/announcements";
-import { fetchMoodArtOverrides } from "@/lib/mood-art";
+import { ensureAdminRole, getProfile, isAdminUser } from "@/lib/auth";
+import { getCatalog } from "@/lib/catalog";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -56,17 +62,17 @@ export default async function AdminPage() {
     { data: metricsRaw },
     { data: presence },
     { data: series },
-    moodOverrideMap,
+    { data: hotRaw },
     announcements,
+    catalog,
   ] = await Promise.all([
     supabase.rpc("admin_dashboard_metrics", { p_live_seconds: 120 }),
     supabase.rpc("admin_live_presence", { p_live_seconds: 120 }),
     supabase.rpc("admin_signup_series", { p_days: 30 }),
-    fetchMoodArtOverrides(),
+    supabase.rpc("admin_hot_activity", { p_limit: 8 }),
     fetchAllSocialAnnouncements(),
+    getCatalog(),
   ]);
-
-  const moodOverrides = Object.fromEntries(moodOverrideMap);
 
   const metrics = (metricsRaw ?? {}) as {
     live_users?: number;
@@ -79,6 +85,11 @@ export default async function AdminPage() {
     unique_visitors_today?: number;
     returning_visitors_today?: number;
     watch_seconds_today?: number | string;
+  };
+
+  const hot = (hotRaw ?? {}) as {
+    top_pages?: HotPageRow[];
+    top_watched?: HotWatchRow[];
   };
 
   const presenceRows = (presence ?? []) as Array<{
@@ -100,8 +111,9 @@ export default async function AdminPage() {
       <AdminRefresh intervalMs={45_000} />
       <AdminDashboard
         adminEmail={profile.email}
-        moodOverrides={moodOverrides}
         announcements={announcements}
+        topPages={enrichHotPages(hot.top_pages ?? [], catalog)}
+        topWatched={enrichHotWatched(hot.top_watched ?? [], catalog)}
         metrics={{
           live_users: metrics.live_users ?? 0,
           total_signups: metrics.total_signups ?? 0,
