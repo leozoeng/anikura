@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    // Vercel image optimization quota exceeded (402). Serve originals directly.
+    unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "cdn.anipixcdn.co" },
       { protocol: "https", hostname: "s4.anilist.co" },
