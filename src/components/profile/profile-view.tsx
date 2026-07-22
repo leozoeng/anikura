@@ -186,7 +186,7 @@ export function ProfileView({
   const profileColumn = (
     <>
       <div
-        className="overflow-hidden rounded-[1.25rem] border border-white/[0.08] shadow-[0_40px_100px_rgba(0,0,0,0.55)] sm:rounded-[28px]"
+        className="h-full overflow-hidden rounded-[1.25rem] border border-white/[0.08] shadow-[0_40px_100px_rgba(0,0,0,0.55)] sm:rounded-[28px]"
         style={{
           background: ambient
             ? `linear-gradient(165deg, rgba(${rgb}, 0.14) 0%, #111214 28%, #0e0f12 100%)`
@@ -196,7 +196,7 @@ export function ProfileView({
             : undefined,
         }}
       >
-        <div className="grid lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)]">
+        <div className="grid h-full lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)]">
           <aside className="relative border-b border-white/[0.06] lg:border-b-0 lg:border-r lg:border-white/[0.06]">
             <div className="relative h-[120px] sm:h-[148px]">
               {live.banner_url ? (
@@ -486,9 +486,11 @@ export function ProfileView({
         */}
         {showSocialRail ? (
           <>
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-stretch lg:gap-5">
-              <div className="order-1 min-w-0">{profileColumn}</div>
-              <aside className="order-2 flex min-w-0 flex-col gap-4 lg:gap-5">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-stretch lg:gap-4">
+              <div className="order-1 flex min-w-0 flex-col lg:h-full">
+                {profileColumn}
+              </div>
+              <aside className="order-2 grid min-w-0 grid-rows-[auto_minmax(0,1fr)] gap-4 lg:h-full lg:min-h-0">
                 <ProfileSearch compact excludeUserId={live.id} />
                 <RailDiscordCta />
               </aside>
@@ -517,7 +519,7 @@ function RailDiscordCta() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Join Anikura Discord for latest updates, feedback, and bugs"
-      className={`group footer-discord-invite pressable relative flex w-full min-h-[11rem] flex-1 flex-col justify-between gap-5 overflow-hidden rounded-2xl px-4 py-4 sm:min-h-[12.5rem] sm:px-5 sm:py-5 ${FOCUS_RING}`}
+      className={`group footer-discord-invite pressable relative flex h-full min-h-[14rem] w-full flex-col justify-between gap-5 overflow-hidden rounded-2xl px-4 py-4 sm:min-h-[16rem] sm:px-5 sm:py-5 ${FOCUS_RING}`}
     >
       <span
         aria-hidden

@@ -243,18 +243,18 @@ export function BrowseFeatured({ slides }: Props) {
                 title={`${item.title} (${item.year})`}
               >
                 <div
-                  className={`relative aspect-[2/3] overflow-hidden rounded-[0.95rem] bg-black/40 shadow-[0_14px_32px_rgba(0,0,0,0.5)] ring-1 transition duration-400 group-hover:-translate-y-1.5 group-hover:rotate-0 ${theme.ring}`}
+                  className={`relative aspect-[2/3] overflow-hidden rounded-[0.95rem] bg-black/40 shadow-[0_14px_32px_rgba(0,0,0,0.5)] ring-1 transition duration-400 group-hover:rotate-0 ${theme.ring}`}
                 >
                   <SafeImage
                     src={item.poster}
                     alt={item.title}
                     fill
-                    className="object-cover transition duration-500 group-hover:scale-[1.05]"
+                    className="object-cover transition duration-500 group-hover:scale-[1.06]"
                     sizes="94px"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-white/5" />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent opacity-55 transition duration-300 group-hover:opacity-100" />
                   <span
-                    className={`absolute bottom-1.5 left-1.5 rounded bg-black/35 px-1 py-0.5 text-[0.55rem] font-medium tabular-nums backdrop-blur-[2px] ${theme.year}`}
+                    className={`absolute bottom-1.5 left-1.5 z-[1] rounded bg-black/35 px-1 py-0.5 text-[0.55rem] font-medium tabular-nums backdrop-blur-[2px] ${theme.year}`}
                   >
                     {item.year}
                   </span>

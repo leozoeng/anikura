@@ -4,6 +4,7 @@ import {
   fetchCatalogLive,
   mergeCatalogWithOverlay,
 } from "./catalog-live";
+import { applyPosterHdMap } from "./cover-image";
 import type { CatalogAnime, GenreStat, SyncMeta } from "./types";
 import { slugifyGenre } from "./anikoto";
 
@@ -11,6 +12,7 @@ const DATA_DIR = path.join(process.cwd(), "data");
 const CATALOG_PATH = path.join(DATA_DIR, "catalog.json");
 const GENRES_PATH = path.join(DATA_DIR, "genres.json");
 const META_PATH = path.join(DATA_DIR, "sync-meta.json");
+const POSTER_HD_PATH = path.join(DATA_DIR, "poster-hd.json");
 const CATALOG_MEM_TTL_MS = 5 * 60_000;
 
 let catalogMem: { data: CatalogAnime[]; at: number } | null = null;
@@ -36,6 +38,10 @@ export async function getCatalog(): Promise<CatalogAnime[]> {
   const base = (await readJson<CatalogAnime[]>(CATALOG_PATH)) ?? [];
   const live = await fetchCatalogLive();
   const data = mergeCatalogWithOverlay(base, live?.overlay);
+  const hd = (await readJson<Record<string, string>>(POSTER_HD_PATH)) ?? {};
+  if (Object.keys(hd).length > 0) {
+    applyPosterHdMap(data, hd);
+  }
   catalogMem = { data, at: now };
   return data;
 }

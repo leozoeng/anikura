@@ -106,15 +106,15 @@ export function MoodTeaser({
                 }}
                 title={item.title}
               >
-                <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-black/40 shadow-[0_10px_24px_rgba(0,0,0,0.45)] ring-1 ring-white/12 transition duration-400 group-hover:-translate-y-1 group-hover:ring-white/30">
+                <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-black/40 shadow-[0_10px_24px_rgba(0,0,0,0.45)] ring-1 ring-white/12 transition duration-400 group-hover:ring-white/30">
                   <SafeImage
                     src={item.poster}
                     alt=""
                     fill
-                    className="object-cover transition duration-500 group-hover:scale-[1.04]"
+                    className="object-cover transition duration-500 group-hover:scale-[1.06]"
                     sizes="80px"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent opacity-55 transition duration-300 group-hover:opacity-100" />
                 </div>
               </Link>
             ))}

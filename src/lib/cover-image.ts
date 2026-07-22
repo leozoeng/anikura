@@ -26,3 +26,16 @@ export function preferHighResPoster(url: string | null | undefined): string {
     .replace(/\/cover\/small\//, "/cover/large/")
     .replace(/\/cover\/medium\//, "/cover/large/");
 }
+
+/** Apply AniList HD cover map onto catalog rows (server-side). */
+export function applyPosterHdMap(
+  catalog: { poster: string; ani_id?: string | null }[],
+  hdByAniId: Record<string, string>,
+): void {
+  for (const anime of catalog) {
+    const key = String(anime.ani_id ?? "").trim();
+    if (!key) continue;
+    const hd = hdByAniId[key]?.trim();
+    if (hd) anime.poster = hd;
+  }
+}
