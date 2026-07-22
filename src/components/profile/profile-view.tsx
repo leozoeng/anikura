@@ -2,7 +2,7 @@
 
 import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AnimeListEntry } from "@/lib/anime-list";
 import {
   formatCommentTime,
@@ -35,8 +35,8 @@ type Props = {
   isOwner: boolean;
   /** Signed-in viewer looking at someone else — show Quit → /profile */
   showQuitProfile?: boolean;
-  /** Social hub (announcements, recent comments) — secondary rail beside/below profile */
-  hub?: ReactNode;
+  /** Social page chrome: Find people + Discord rail + partners */
+  showSocialRail?: boolean;
 };
 
 type ProfileTab = "board" | "activity" | "watch" | "comments";
@@ -83,7 +83,7 @@ export function ProfileView({
   comments = [],
   isOwner,
   showQuitProfile = false,
-  hub,
+  showSocialRail = false,
 }: Props) {
   const [editing, setEditing] = useState(false);
   const [tab, setTab] = useState<ProfileTab>("board");
@@ -480,37 +480,20 @@ export function ProfileView({
         ) : null}
 
         {/*
-          Desktop:
-            [ Profile   ] [ Find people ]
-            [ Community ] [ Discord CTA ]  ← Discord stacked under Find, not sticky
-          Mobile: Profile → Find people → Community → Discord → Partners
+          Desktop: [ Profile ] [ Find people + Discord (fills to profile bottom) ]
+          then partners closer below.
+          Mobile: Profile → Find people → Discord → Partners
         */}
-        {hub ? (
+        {showSocialRail ? (
           <>
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)] lg:items-start lg:gap-x-5 lg:gap-y-5">
-              <div className="order-1 min-w-0 lg:col-start-1 lg:row-start-1">
-                {profileColumn}
-              </div>
-              <aside className="order-2 min-w-0 lg:col-start-2 lg:row-start-1 lg:row-span-2">
-                <div className="flex flex-col gap-5">
-                  <ProfileSearch compact excludeUserId={live.id} />
-                  {/* Desktop: sits directly under Find people */}
-                  <div className="hidden lg:block">
-                    <RailDiscordCta />
-                  </div>
-                </div>
-              </aside>
-              <div className="order-3 min-w-0 lg:col-start-1 lg:row-start-2">
-                <div className="rounded-2xl border border-white/[0.08] bg-[#111214]/55 p-3.5 sm:p-4">
-                  {hub}
-                </div>
-              </div>
-              {/* Mobile: after Community */}
-              <div className="order-4 min-w-0 lg:hidden">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-stretch lg:gap-5">
+              <div className="order-1 min-w-0">{profileColumn}</div>
+              <aside className="order-2 flex min-w-0 flex-col gap-4 lg:gap-5">
+                <ProfileSearch compact excludeUserId={live.id} />
                 <RailDiscordCta />
-              </div>
+              </aside>
             </div>
-            <div className="mt-10 sm:mt-12 lg:mt-14">
+            <div className="mt-5 sm:mt-6">
               <CommunityPartnersMarquee />
             </div>
           </>
@@ -534,7 +517,7 @@ function RailDiscordCta() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Join Anikura Discord for latest updates, feedback, and bugs"
-      className={`group footer-discord-invite pressable relative flex w-full min-h-[4.25rem] items-center gap-3 overflow-hidden rounded-2xl px-3.5 py-3 ${FOCUS_RING}`}
+      className={`group footer-discord-invite pressable relative flex w-full min-h-[11rem] flex-1 flex-col justify-between gap-5 overflow-hidden rounded-2xl px-4 py-4 sm:min-h-[12.5rem] sm:px-5 sm:py-5 ${FOCUS_RING}`}
     >
       <span
         aria-hidden
@@ -544,20 +527,23 @@ function RailDiscordCta() {
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_22%,rgba(255,255,255,0.14)_48%,transparent_72%)] opacity-0 transition duration-500 group-hover:translate-x-1 group-hover:opacity-100"
       />
-      <span className="footer-discord-badge relative grid h-10 w-10 shrink-0 place-items-center rounded-xl text-black transition duration-300 group-hover:scale-[1.05]">
-        <DiscordGlyph />
-        <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#57F287] ring-2 ring-black" />
-      </span>
-      <span className="relative min-w-0 flex-1 leading-tight">
-        <span className="block text-sm font-semibold tracking-[-0.02em] text-white">
-          Get the latest updates
+      <span className="relative flex items-start gap-3.5">
+        <span className="footer-discord-badge relative grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-black transition duration-300 group-hover:scale-[1.05]">
+          <DiscordGlyph />
+          <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#57F287] ring-2 ring-black" />
         </span>
-        <span className="mt-0.5 block text-[0.68rem] text-white/65">
-          Feedback &amp; bugs welcome too
+        <span className="min-w-0 flex-1 pt-0.5 leading-snug">
+          <span className="block text-[0.95rem] font-semibold tracking-[-0.02em] text-white sm:text-base">
+            Get the latest updates
+          </span>
+          <span className="mt-1.5 block text-[0.78rem] leading-relaxed text-white/65">
+            Site news, feedback &amp; bugs — hang out on Discord instead of a
+            feed here.
+          </span>
         </span>
       </span>
-      <span className="footer-discord-cta relative inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-3 text-[0.75rem] font-semibold tracking-[-0.02em] transition duration-300 group-hover:-translate-y-0.5">
-        Join
+      <span className="footer-discord-cta relative inline-flex h-11 w-full shrink-0 items-center justify-center gap-1.5 rounded-full px-4 text-[0.8125rem] font-semibold tracking-[-0.02em] transition duration-300 group-hover:-translate-y-0.5">
+        Join Discord
         <span
           aria-hidden
           className="opacity-80 transition duration-300 group-hover:translate-x-0.5 group-hover:opacity-100"
@@ -572,8 +558,8 @@ function RailDiscordCta() {
 function DiscordGlyph() {
   return (
     <svg
-      width="17"
-      height="17"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="currentColor"
       aria-hidden
