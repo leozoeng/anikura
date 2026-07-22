@@ -1,7 +1,6 @@
 import { AnikuraLogo } from "@/components/anikura-logo";
 import { FooterDonations } from "@/components/footer-donations";
-
-const DISCORD = "https://discord.gg/cm72gXTASn";
+import { ANIKURA_DISCORD_INVITE } from "@/lib/discord-partners";
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
@@ -10,9 +9,9 @@ export function SiteFooter() {
     <footer className="site-chrome site-footer relative z-10 mt-12 pb-[calc(4.25rem+env(safe-area-inset-bottom))] sm:mt-14 md:pb-0">
       <div className="relative overflow-hidden border-t border-white/[0.07]">
         <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-10 bottom-0 h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(255,140,170,0.12),transparent_70%)] blur-2xl" />
-          <div className="absolute right-[8%] top-[-18%] h-32 w-32 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.08),transparent_70%)] blur-2xl" />
-          <div className="site-footer-sheen absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ffb3c7]/30 to-transparent" />
+          <div className="absolute -left-10 bottom-0 h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.06),transparent_70%)] blur-2xl" />
+          <div className="absolute right-[8%] top-[-18%] h-32 w-32 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.05),transparent_70%)] blur-2xl" />
+          <div className="site-footer-sheen absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" />
         </div>
 
         <div className="page-shell relative py-7 sm:py-8">
@@ -42,7 +41,7 @@ export function SiteFooter() {
             <div className="flex w-full min-w-0 flex-col gap-2.5 sm:flex-row sm:items-stretch lg:w-auto lg:shrink-0 lg:justify-end">
               <FooterDonations />
               <a
-                href={DISCORD}
+                href={ANIKURA_DISCORD_INVITE}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group footer-discord-invite pressable relative inline-flex min-h-[3.5rem] shrink-0 items-center gap-3 overflow-hidden rounded-2xl px-3 py-2.5 sm:min-w-[17.5rem]"
@@ -53,22 +52,22 @@ export function SiteFooter() {
                 />
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_22%,rgba(255,179,199,0.16)_48%,transparent_72%)] opacity-0 transition duration-500 group-hover:translate-x-1 group-hover:opacity-100"
+                  className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_22%,rgba(255,255,255,0.14)_48%,transparent_72%)] opacity-0 transition duration-500 group-hover:translate-x-1 group-hover:opacity-100"
                 />
-                <span className="footer-discord-badge relative grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#ffe8ee] transition duration-300 group-hover:scale-[1.05]">
+                <span className="footer-discord-badge relative grid h-10 w-10 shrink-0 place-items-center rounded-xl text-black transition duration-300 group-hover:scale-[1.05]">
                   <DiscordIcon />
-                  <span className="sakura-dot absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#57F287] ring-2 ring-[#1a1014]" />
+                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#57F287] ring-2 ring-black" />
                 </span>
                 <span className="relative min-w-0 flex-1 leading-tight">
-                  <span className="block text-sm font-semibold tracking-[-0.02em] text-sakura-mist">
-                    Soft nights, together
+                  <span className="block text-sm font-semibold tracking-[-0.02em] text-white">
+                    Get the latest updates
                   </span>
-                  <span className="block text-[0.68rem] text-[#ffb3c7]/85">
-                    Share finds · say hi · report bugs
+                  <span className="block text-[0.68rem] text-white/65">
+                    Feedback & bugs welcome too
                   </span>
                 </span>
                 <span className="footer-discord-cta relative inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-3.5 text-[0.78rem] font-semibold tracking-[-0.02em] transition duration-300 group-hover:-translate-y-0.5">
-                  Come in
+                  Join Discord
                   <span
                     aria-hidden
                     className="opacity-80 transition duration-300 group-hover:translate-x-0.5 group-hover:opacity-100"

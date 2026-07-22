@@ -49,43 +49,24 @@ export function FooterDonations() {
   return (
     <div className="footer-cozy relative inline-flex w-full max-w-full flex-col gap-2 overflow-hidden rounded-2xl p-2.5 sm:w-auto sm:flex-row sm:items-center sm:gap-2.5 sm:py-1.5 sm:pl-2.5 sm:pr-1.5">
       <span aria-hidden className="footer-cozy-glow pointer-events-none absolute inset-0" />
-      <span
-        aria-hidden
-        className="footer-petal pointer-events-none absolute -right-1 top-1 text-[0.85rem] text-[#ffb3c7]/55"
-      >
-        ✿
-      </span>
-      <span
-        aria-hidden
-        className="footer-petal-slow pointer-events-none absolute bottom-1 left-[42%] text-[0.7rem] text-[#ff8caa]/40"
-      >
-        ✿
-      </span>
-      <span
-        aria-hidden
-        className="footer-petal pointer-events-none absolute left-3 top-0.5 text-[0.55rem] text-[#ffe8ee]/35"
-        style={{ animationDelay: "1.2s" }}
-      >
-        ♡
-      </span>
 
       <div className="relative inline-flex min-w-0 items-center gap-2.5 px-0.5 sm:pr-1">
-        <span className="footer-heart-badge grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#ff8caa]/20 ring-1 ring-[#ff8caa]/40">
-          <HeartPetal />
+        <span className="footer-heart-badge grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-black">
+          <HeartIcon />
         </span>
         <span className="min-w-0 leading-tight">
-          <span className="block text-[0.72rem] font-semibold tracking-[-0.02em] text-sakura-mist">
-            Keep Anikura cozy
+          <span className="block text-[0.72rem] font-semibold tracking-[-0.02em] text-white">
+            Keep Anikura online
           </span>
-          <span className="block text-[0.62rem] tracking-[-0.01em] text-[#ffb3c7]/90">
-            Tips keep the lights soft ♡
+          <span className="block text-[0.62rem] tracking-[-0.01em] text-white/60">
+            Tips keep updates shipping
           </span>
         </span>
       </div>
 
       <span
         aria-hidden
-        className="relative hidden h-7 w-px shrink-0 bg-[#ff8caa]/25 sm:block"
+        className="relative hidden h-7 w-px shrink-0 bg-white/20 sm:block"
       />
 
       <div className="relative flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-1.5">
@@ -94,7 +75,7 @@ export function FooterDonations() {
           return (
             <div
               key={d.id}
-              className="footer-tip-chip group inline-flex h-10 items-center gap-2 rounded-xl border bg-black/30 py-1 pl-2 pr-1 backdrop-blur-sm"
+              className="footer-tip-chip group inline-flex h-10 items-center gap-2 rounded-xl border bg-black/55 py-1 pl-2 pr-1"
               style={
                 {
                   borderColor: d.accent.border,
@@ -105,7 +86,7 @@ export function FooterDonations() {
               title={`${d.label}: ${d.address}`}
             >
               <span
-                className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-black/45 transition group-hover:brightness-110"
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/[0.08] transition group-hover:bg-white/[0.12]"
                 style={{ boxShadow: `0 0 0 1px ${d.accent.ring}` }}
               >
                 {d.id === "sol" ? <SolanaIcon /> : <EthereumIcon />}
@@ -116,10 +97,10 @@ export function FooterDonations() {
                 rel="noopener noreferrer"
                 className="min-w-0 leading-tight"
               >
-                <span className="block text-[0.68rem] font-medium tracking-[-0.01em] text-snow">
+                <span className="block text-[0.68rem] font-medium tracking-[-0.01em] text-white">
                   {d.label}
                 </span>
-                <span className="block font-mono text-[0.62rem] text-mute">
+                <span className="block font-mono text-[0.62rem] text-white/50">
                   {shortAddress(d.address)}
                 </span>
               </a>
@@ -129,13 +110,13 @@ export function FooterDonations() {
                 aria-label={
                   isCopied ? `${d.label} copied` : `Copy ${d.label} address`
                 }
-                className={`rounded-lg px-2 py-1 text-[0.68rem] font-medium transition duration-300 ${
+                className={`rounded-lg px-2 py-1 text-[0.68rem] font-semibold transition duration-300 ${
                   isCopied
-                    ? "footer-copied bg-[#ff8caa]/25 text-sakura-mist"
-                    : "text-mute hover:bg-white/[0.1] hover:text-snow"
+                    ? "footer-copied bg-white text-black"
+                    : "bg-white/[0.08] text-white/80 hover:bg-white hover:text-black"
                 }`}
               >
-                {isCopied ? "Copied ♡" : "Copy"}
+                {isCopied ? "Copied" : "Copy"}
               </button>
             </div>
           );
@@ -145,14 +126,13 @@ export function FooterDonations() {
   );
 }
 
-function HeartPetal() {
+function HeartIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden>
+    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden>
       <path
-        fill="#ffb3c7"
+        fill="currentColor"
         d="M12 20.4c-.4 0-.7-.1-1-.4C7.2 16.4 4 13.5 4 10.1 4 7.5 6 5.6 8.5 5.6c1.4 0 2.6.6 3.5 1.7.9-1.1 2.1-1.7 3.5-1.7C17.9 5.6 20 7.5 20 10.1c0 3.4-3.2 6.3-7 9.9-.3.3-.6.4-1 .4Z"
       />
-      <circle cx="9.2" cy="9.4" r="0.9" fill="#ffe8ee" opacity="0.85" />
     </svg>
   );
 }
