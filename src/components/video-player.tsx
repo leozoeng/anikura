@@ -11,8 +11,6 @@ import {
 } from "react";
 import type { EmbedServer } from "@/lib/embeds";
 
-type HealthMap = Record<string, "ok" | "down" | "checking" | "unknown">;
-
 type Props = {
   title: string;
   servers: EmbedServer[];
@@ -42,7 +40,6 @@ export function VideoPlayer({
   const [serverId, setServerId] = useState<string | null>(
     preferredServerId || servers[0]?.id || null,
   );
-  const [health, setHealth] = useState<HealthMap>({});
   const [resolving, setResolving] = useState(true);
   const [resolveError, setResolveError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -95,7 +92,6 @@ export function VideoPlayer({
       const gen = ++resolveGen.current;
       setResolving(true);
       setResolveError(null);
-      setHealth(Object.fromEntries(servers.map((s) => [s.id, "checking" as const])));
 
       const preferredId = opts?.preferredId ?? null;
 
@@ -117,16 +113,11 @@ export function VideoPlayer({
 
         if (gen !== resolveGen.current) return;
 
-        const nextHealth: HealthMap = {};
-        for (const result of data.results) {
-          nextHealth[result.id] = result.ok ? "ok" : "down";
-        }
-        for (const server of servers) {
-          if (!nextHealth[server.id]) nextHealth[server.id] = "unknown";
-        }
-        setHealth(nextHealth);
+        const okIds = new Set(
+          data.results.filter((result) => result.ok).map((result) => result.id),
+        );
 
-        if (opts?.forcePreferred && preferredId && nextHealth[preferredId] === "ok") {
+        if (opts?.forcePreferred && preferredId && okIds.has(preferredId)) {
           applyServer(preferredId);
           setResolving(false);
           return;
@@ -150,9 +141,6 @@ export function VideoPlayer({
         setResolving(false);
       } catch {
         if (gen !== resolveGen.current) return;
-        setHealth(
-          Object.fromEntries(servers.map((s) => [s.id, "unknown" as const])),
-        );
         const fallback =
           servers.find((s) => s.id === preferredId) || servers[0];
         if (fallback) applyServer(fallback.id);
@@ -186,7 +174,7 @@ export function VideoPlayer({
     if (!menuOpen) return;
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [menuOpen]);
+  }, [menuOpen, setMenuOpen]);
 
   function selectManual(id: string) {
     applyServer(id);
@@ -196,25 +184,8 @@ export function VideoPlayer({
   function tryNextServer() {
     if (!servers.length || !serverId) return;
     const idx = servers.findIndex((s) => s.id === serverId);
-    const rotated = [...servers.slice(idx + 1), ...servers.slice(0, idx)];
-    const next =
-      rotated.find((s) => health[s.id] === "ok") ||
-      rotated.find((s) => health[s.id] !== "down") ||
-      rotated[0];
+    const next = servers[(idx + 1) % servers.length];
     if (next) selectManual(next.id);
-  }
-
-  function healthDot(id: string) {
-    const state = health[id] || "unknown";
-    const color =
-      state === "ok"
-        ? "bg-emerald-400"
-        : state === "down"
-          ? "bg-red-400"
-          : state === "checking"
-            ? "bg-amber-300 animate-pulse"
-            : "bg-white/30";
-    return <span className={`inline-block h-1.5 w-1.5 rounded-full ${color}`} />;
   }
 
   if (!servers.length) {
@@ -260,7 +231,6 @@ export function VideoPlayer({
       {!hideToolbar && (
         <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-elevated/50 px-3 py-2 backdrop-blur-sm">
           <div className="flex min-w-0 items-center gap-2 text-xs text-mute">
-            {active && healthDot(active.id)}
             <span className="truncate">
               {active?.label ?? "Server"}
               {resolving ? " · connecting" : ""}
@@ -311,21 +281,16 @@ export function VideoPlayer({
         </p>
         {servers.map((server) => {
           const selected = server.id === active?.id;
-          const state = health[server.id] || "unknown";
           return (
             <button
               key={server.id}
               type="button"
               onClick={() => selectManual(server.id)}
-              className={`flex w-full items-center gap-2 px-3.5 py-2 text-left text-sm transition hover:bg-white/5 ${
+              className={`flex w-full items-center px-3.5 py-2 text-left text-sm transition hover:bg-white/5 ${
                 selected ? "text-snow" : "text-cloud"
               }`}
             >
-              {healthDot(server.id)}
-              <span className="flex-1">{server.label}</span>
-              <span className="text-[10px] uppercase text-mute">
-                {state === "ok" ? "ok" : state === "down" ? "down" : ""}
-              </span>
+              {server.label}
             </button>
           );
         })}
