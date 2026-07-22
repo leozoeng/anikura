@@ -26,15 +26,43 @@ type SearchHit = {
 export function ProfileSearch({
   className = "",
   compact = false,
+  excludeUserId = null,
 }: {
   className?: string;
   /** Slimmer chrome for the Social side rail */
   compact?: boolean;
+  /** Own profile id — omit from suggestions */
+  excludeUserId?: string | null;
 }) {
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<SearchHit[]>([]);
+  const [suggestions, setSuggestions] = useState<SearchHit[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const supabase = createClient();
+        const { data, error: err } = await supabase.rpc("suggest_profiles", {
+          p_limit: compact ? 6 : 8,
+          p_exclude: excludeUserId ?? null,
+        });
+        if (cancelled) return;
+        if (err) throw err;
+        setSuggestions((data ?? []) as SearchHit[]);
+      } catch {
+        if (!cancelled) setSuggestions([]);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [compact, excludeUserId]);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
@@ -69,6 +97,10 @@ export function ProfileSearch({
 
     return () => window.clearTimeout(t);
   }, [query]);
+
+  const searching = query.trim().length > 0;
+  const list = searching ? hits : suggestions;
+  const listLabel = searching ? "Search results" : "Suggested people";
 
   return (
     <section
@@ -121,10 +153,11 @@ export function ProfileSearch({
           autoComplete="off"
           spellCheck={false}
           enterKeyHint="search"
-          className={`w-full border border-white/[0.1] bg-black/40 pl-10 pr-3.5 text-snow outline-none transition placeholder:text-mute focus:border-white/25 focus:bg-black/55 ${
+          aria-label="Search profiles by username or display name"
+          className={`w-full border border-white/[0.1] bg-black/40 pl-10 pr-3.5 text-snow outline-none transition placeholder:text-mute focus:border-white/25 focus:bg-black/55 focus-visible:ring-2 focus-visible:ring-white/30 ${
             compact
-              ? "rounded-xl py-2.5 text-sm"
-              : "rounded-[14px] py-3 text-[0.9375rem] sm:rounded-xl sm:py-2.5 sm:text-sm"
+              ? "min-h-11 rounded-xl py-2.5 text-sm"
+              : "min-h-11 rounded-[14px] py-3 text-[0.9375rem] sm:rounded-xl sm:py-2.5 sm:text-sm"
           }`}
         />
       </label>
@@ -135,74 +168,84 @@ export function ProfileSearch({
         </p>
       ) : null}
 
-      {query.trim() ? (
-        <ul className="mt-3 max-h-[min(16rem,40vh)] space-y-2 overflow-y-auto overscroll-contain pr-0.5">
-          {hits.length === 0 && !busy ? (
-            <li className="rounded-xl border border-dashed border-white/10 px-3 py-6 text-center text-sm text-mute">
-              No profiles matched
-            </li>
-          ) : (
-            hits.map((hit) => {
-              const profile = {
-                id: hit.id,
-                username: hit.username,
-                nickname: hit.nickname,
-                badges: hit.badges,
-              } as Pick<
-                PublicProfile,
-                "id" | "username" | "nickname" | "badges"
-              >;
-              const name = displayName(profile);
-              const handle = hit.username ? `@${hit.username}` : name;
-              const badges = resolveProfileBadges({
-                badges: hit.badges,
-              });
-
-              return (
-                <li key={hit.id}>
-                  <Link
-                    href={profileHref(profile)}
-                    className="pressable flex items-center gap-3 rounded-xl border border-white/[0.06] bg-black/25 px-3 py-2.5 transition hover:border-white/15 hover:bg-white/[0.04]"
-                  >
-                    <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/10 sm:h-10 sm:w-10">
-                      {hit.avatar_url ? (
-                        <SafeImage
-                          src={hit.avatar_url}
-                          alt=""
-                          fill
-                          className="object-cover"
-                          sizes="44px"
-                        />
-                      ) : (
-                        <span className="grid h-full w-full place-items-center text-xs font-semibold text-mute">
-                          {name.slice(0, 1).toUpperCase()}
-                        </span>
-                      )}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex flex-wrap items-center gap-2">
-                        <span className="truncate text-sm font-medium text-snow">
-                          {name}
-                        </span>
-                        <ProfileBadges badges={badges} size="sm" />
-                      </span>
-                      <span className="mt-0.5 block truncate text-xs text-mute">
-                        {handle}
-                        {hit.bio ? ` · ${hit.bio}` : ""}
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-xs text-mute">View</span>
-                  </Link>
-                </li>
-              );
-            })
-          )}
-        </ul>
-      ) : compact ? null : (
+      {list.length > 0 || (searching && !busy) ? (
+        <div className="mt-3">
+          {!searching ? (
+            <p className="mb-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-[#6d6f78]">
+              Suggested
+            </p>
+          ) : null}
+          <ul
+            className="max-h-[min(16rem,40vh)] space-y-1.5 overflow-y-auto overscroll-contain pr-0.5 animate-rise"
+            style={{ animationDuration: "0.28s" }}
+            aria-label={listLabel}
+          >
+            {searching && hits.length === 0 && !busy ? (
+              <li className="rounded-xl border border-dashed border-white/10 px-3 py-6 text-center text-sm text-mute">
+                No profiles matched
+              </li>
+            ) : (
+              list.map((hit) => (
+                <PersonRow key={hit.id} hit={hit} />
+              ))
+            )}
+          </ul>
+        </div>
+      ) : !searching && !compact ? (
         <p className="mt-2.5 text-[0.7rem] leading-relaxed text-mute sm:mt-3 sm:text-xs">
           Usernames are unique — once claimed, that @handle is yours.
         </p>
-      )}
+      ) : null}
     </section>
+  );
+}
+
+function PersonRow({ hit }: { hit: SearchHit }) {
+  const profile = {
+    id: hit.id,
+    username: hit.username,
+    nickname: hit.nickname,
+    badges: hit.badges,
+  } as Pick<PublicProfile, "id" | "username" | "nickname" | "badges">;
+  const name = displayName(profile);
+  const handle = hit.username ? `@${hit.username}` : name;
+  const badges = resolveProfileBadges({
+    badges: hit.badges,
+  });
+
+  return (
+    <li>
+      <Link
+        href={profileHref(profile)}
+        aria-label={`View ${name}'s profile`}
+        className="pressable flex min-h-11 items-center gap-3 rounded-xl border border-transparent px-2.5 py-2 transition hover:border-white/[0.08] hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+      >
+        <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/10">
+          {hit.avatar_url ? (
+            <SafeImage
+              src={hit.avatar_url}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="40px"
+            />
+          ) : (
+            <span className="grid h-full w-full place-items-center text-xs font-semibold text-mute">
+              {name.slice(0, 1).toUpperCase()}
+            </span>
+          )}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="truncate text-sm font-medium text-snow">{name}</span>
+            <ProfileBadges badges={badges} size="sm" />
+          </span>
+          <span className="mt-0.5 block truncate text-xs text-mute">
+            {handle}
+            {hit.bio ? ` · ${hit.bio}` : ""}
+          </span>
+        </span>
+      </Link>
+    </li>
   );
 }

@@ -17,20 +17,45 @@ type Props = {
 
 type HubTab = "updates" | "comments";
 
+const FOCUS_RING =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30";
+
+/**
+ * Secondary community block for the Social rail.
+ * Kept flat / less card-heavy so Find people stays the primary discovery job.
+ */
 export function SocialHub({ announcements, comments }: Props) {
   const [tab, setTab] = useState<HubTab>("updates");
+  const [open, setOpen] = useState(false);
   const hasPinned = announcements.some((i) => i.pinned);
+  const previewCount =
+    tab === "updates" ? announcements.length : comments.length;
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03]">
-      <div className="border-b border-white/[0.06] px-3.5 pt-3 sm:px-4">
+    <section className="overflow-hidden rounded-2xl border border-white/[0.06] bg-transparent">
+      <div className="flex items-center justify-between gap-2 px-1 pb-1 pt-0.5 lg:px-0">
         <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-mute">
           Community
         </p>
+        <button
+          type="button"
+          className={`lg:hidden min-h-11 rounded-lg px-2.5 text-[0.75rem] font-medium text-[#949ba4] transition hover:text-snow ${FOCUS_RING}`}
+          aria-expanded={open}
+          aria-controls="social-hub-panel"
+          onClick={() => setOpen((v) => !v)}
+        >
+          {open ? "Hide" : `Show · ${previewCount}`}
+        </button>
+      </div>
+
+      <div
+        id="social-hub-panel"
+        className={`${open ? "block" : "hidden"} lg:block`}
+      >
         <div
           role="tablist"
           aria-label="Community feed"
-          className="mt-2 flex gap-0.5"
+          className="flex gap-0.5 border-b border-white/[0.06] px-0.5"
         >
           <HubTabButton
             active={tab === "updates"}
@@ -50,17 +75,18 @@ export function SocialHub({ announcements, comments }: Props) {
             </span>
           ) : null}
         </div>
-      </div>
 
-      <div
-        className="max-h-[min(22rem,42vh)] overflow-y-auto overscroll-contain lg:max-h-[min(28rem,calc(100vh-11rem))]"
-        role="tabpanel"
-      >
-        {tab === "updates" ? (
-          <AnnouncementsList items={announcements} />
-        ) : (
-          <RecentCommentsList items={comments} />
-        )}
+        <div
+          className="max-h-[min(14rem,36vh)] overflow-y-auto overscroll-contain lg:max-h-[min(22rem,calc(100vh-16rem))]"
+          role="tabpanel"
+          aria-label={tab === "updates" ? "Updates" : "Recent comments"}
+        >
+          {tab === "updates" ? (
+            <AnnouncementsList items={announcements} />
+          ) : (
+            <RecentCommentsList items={comments} />
+          )}
+        </div>
       </div>
     </section>
   );
@@ -83,9 +109,9 @@ function HubTabButton({
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      className={`pressable relative shrink-0 rounded-t-lg px-3 py-2 text-[0.8125rem] font-medium transition ${
+      className={`pressable relative min-h-11 shrink-0 rounded-t-lg px-3 py-2 text-[0.8125rem] font-medium transition lg:min-h-0 ${FOCUS_RING} ${
         active
-          ? "bg-white/[0.08] text-snow"
+          ? "text-snow"
           : "text-[#949ba4] hover:text-[#dbdee1]"
       }`}
     >
@@ -109,19 +135,19 @@ function HubTabButton({
 function AnnouncementsList({ items }: { items: SocialAnnouncement[] }) {
   if (items.length === 0) {
     return (
-      <p className="px-3.5 py-8 text-center text-sm text-mute sm:px-4">
+      <p className="px-1 py-6 text-center text-sm text-mute">
         No announcements yet — check back when the team posts an update.
       </p>
     );
   }
 
   return (
-    <ul className="divide-y divide-white/[0.05]">
+    <ul className="divide-y divide-white/[0.04]">
       {items.map((item) => (
-        <li key={item.id} className="px-3.5 py-3.5 sm:px-4">
+        <li key={item.id} className="px-1 py-3">
           <div className="flex flex-wrap items-center gap-2">
             {item.pinned ? (
-              <span className="rounded-md border border-white/15 bg-white/[0.06] px-1.5 py-0.5 text-[0.58rem] font-semibold uppercase tracking-[0.08em] text-cloud">
+              <span className="text-[0.58rem] font-semibold uppercase tracking-[0.08em] text-mute">
                 Pin
               </span>
             ) : null}
@@ -129,10 +155,10 @@ function AnnouncementsList({ items }: { items: SocialAnnouncement[] }) {
               {item.title}
             </h3>
           </div>
-          <p className="mt-1.5 line-clamp-4 whitespace-pre-wrap text-[0.8125rem] leading-relaxed text-[#dbdee1]">
+          <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-[0.8125rem] leading-relaxed text-[#b5bac1]">
             {item.body}
           </p>
-          <p className="mt-2 text-[0.65rem] text-mute">
+          <p className="mt-1.5 text-[0.65rem] text-mute">
             {item.authorNickname || item.authorUsername
               ? `${item.authorNickname || `@${item.authorUsername}`} · `
               : ""}
@@ -147,14 +173,14 @@ function AnnouncementsList({ items }: { items: SocialAnnouncement[] }) {
 function RecentCommentsList({ items }: { items: SiteCommentItem[] }) {
   if (items.length === 0) {
     return (
-      <p className="px-3.5 py-8 text-center text-sm text-mute sm:px-4">
+      <p className="px-1 py-6 text-center text-sm text-mute">
         No comments yet — finish an episode and leave the first note.
       </p>
     );
   }
 
   return (
-    <ul className="divide-y divide-white/[0.05]">
+    <ul className="divide-y divide-white/[0.04]">
       {items.map((item) => {
         const author = {
           id: item.user_id,
@@ -169,11 +195,12 @@ function RecentCommentsList({ items }: { items: SiteCommentItem[] }) {
         const watchHref = `/watch/${item.anime_id}/${item.animeSlug}?ep=${item.episode}&lang=${item.language}`;
 
         return (
-          <li key={item.id}>
-            <div className="flex gap-2.5 px-3.5 py-3 sm:px-4">
+          <li key={item.id} className="px-1 py-2.5">
+            <div className="flex gap-2.5">
               <Link
                 href={profileHref(author)}
-                className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/10"
+                aria-label={`View ${name}'s profile`}
+                className={`relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/10 ${FOCUS_RING}`}
               >
                 {item.authorAvatarUrl ? (
                   <SafeImage
@@ -194,7 +221,7 @@ function RecentCommentsList({ items }: { items: SiteCommentItem[] }) {
                 <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
                   <Link
                     href={profileHref(author)}
-                    className="truncate text-[0.8125rem] font-medium text-snow hover:underline"
+                    className={`truncate text-[0.8125rem] font-medium text-snow hover:underline ${FOCUS_RING} rounded-sm`}
                   >
                     {name}
                   </Link>
@@ -208,38 +235,18 @@ function RecentCommentsList({ items }: { items: SiteCommentItem[] }) {
 
                 <Link
                   href={watchHref}
-                  className="mt-1.5 block rounded-xl border border-white/[0.06] bg-black/25 p-2 transition hover:border-white/15 hover:bg-white/[0.04]"
+                  className={`mt-1 block rounded-lg py-0.5 transition hover:bg-white/[0.03] ${FOCUS_RING}`}
                 >
-                  <span className="flex gap-2">
-                    <span className="relative h-12 w-8 shrink-0 overflow-hidden rounded-md bg-[#111214] ring-1 ring-white/8">
-                      {item.animePoster ? (
-                        <SafeImage
-                          src={item.animePoster}
-                          alt=""
-                          fill
-                          className="object-cover"
-                          sizes="32px"
-                        />
-                      ) : null}
+                  <span className="flex flex-wrap items-baseline gap-x-1.5">
+                    <span className="truncate text-[0.75rem] font-medium text-[#dbdee1]">
+                      {item.animeTitle}
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex flex-wrap items-baseline gap-x-1.5">
-                        <span className="truncate text-[0.8125rem] font-medium text-snow">
-                          {item.animeTitle}
-                        </span>
-                        <span className="text-[0.65rem] uppercase tracking-[0.06em] text-sakura-soft">
-                          Ep {item.episode} · {item.language}
-                        </span>
-                      </span>
-                      <span className="mt-0.5 line-clamp-2 text-[0.8125rem] leading-relaxed text-[#dbdee1]">
-                        {item.body}
-                      </span>
-                      {item.parent_id ? (
-                        <span className="mt-1 inline-block rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[0.6rem] text-mute">
-                          Reply
-                        </span>
-                      ) : null}
+                    <span className="text-[0.6rem] uppercase tracking-[0.06em] text-sakura-soft">
+                      Ep {item.episode}
                     </span>
+                  </span>
+                  <span className="mt-0.5 line-clamp-2 text-[0.8125rem] leading-relaxed text-[#b5bac1]">
+                    {item.body}
                   </span>
                 </Link>
               </div>
