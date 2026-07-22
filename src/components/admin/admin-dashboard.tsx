@@ -6,6 +6,10 @@ import {
   AdminCommandStrip,
   type AdminNavItem,
 } from "@/components/admin/admin-command-strip";
+import {
+  AdminEquityCurve,
+  type EquitySeries,
+} from "@/components/admin/admin-equity-curve";
 import { AdminFeedbackProvider } from "@/components/admin/admin-feedback";
 import { AdminMetricCard } from "@/components/admin/admin-metric-card";
 import { useAdminManualRefresh } from "@/components/admin/admin-refresh";
@@ -60,8 +64,8 @@ type RangeKey = "today" | "7d" | "30d";
 
 const NAV: AdminNavItem[] = [
   { id: "admin-live", label: "Live", shortcut: "1" },
-  { id: "admin-watch", label: "Watch", shortcut: "2" },
-  { id: "admin-growth", label: "Growth", shortcut: "3" },
+  { id: "admin-growth", label: "Growth", shortcut: "2" },
+  { id: "admin-users", label: "Users", shortcut: "3" },
   { id: "admin-hot", label: "Hot", shortcut: "4" },
   { id: "admin-globe", label: "Globe", shortcut: "5" },
   { id: "admin-members", label: "Members", shortcut: "6" },
@@ -87,102 +91,11 @@ function sumField<T>(arr: T[], pick: (row: T) => number) {
   return arr.reduce((s, row) => s + pick(row), 0);
 }
 
-function SignupChart({
-  series,
-  activeDay,
-  onSelectDay,
-}: {
-  series: SignupDay[];
-  activeDay: string | null;
-  onSelectDay: (day: string | null) => void;
-}) {
-  const max = Math.max(1, ...series.map((d) => d.signups));
-  const total = series.reduce((sum, d) => sum + d.signups, 0);
-
-  if (series.length === 0) {
-    return (
-      <div className="flex h-40 flex-col items-center justify-center rounded-xl border border-dashed border-white/[0.08] bg-black/20 text-center">
-        <p className="text-sm text-cloud">No signup history yet</p>
-        <p className="mt-1 text-xs text-mute">
-          Bars appear as accounts land over the selected range.
-        </p>
-      </div>
-    );
-  }
-
+function visitorLabel(p: PresencePoint) {
   return (
-    <div>
-      <div className="mb-3 flex items-baseline justify-between gap-3">
-        <p className="text-xs text-mute">
-          {activeDay ? (
-            <>
-              <span className="text-cloud">{activeDay}</span>
-              {" · "}
-              <span className="tabular-nums text-snow">
-                {series.find((d) => d.day === activeDay)?.signups ?? 0}
-              </span>{" "}
-              signups
-            </>
-          ) : (
-            <>
-              <span className="tabular-nums text-cloud">{total}</span> across
-              range · click a bar
-            </>
-          )}
-        </p>
-        {activeDay ? (
-          <button
-            type="button"
-            onClick={() => onSelectDay(null)}
-            className="text-[0.65rem] uppercase tracking-[0.12em] text-mute transition hover:text-snow"
-          >
-            Clear
-          </button>
-        ) : null}
-      </div>
-      <div className="flex h-40 items-end gap-1.5">
-        {series.map((d) => {
-          const height = Math.max(4, Math.round((d.signups / max) * 100));
-          const label = d.day.slice(5);
-          const active = activeDay === d.day;
-          return (
-            <button
-              key={d.day}
-              type="button"
-              onClick={() => onSelectDay(active ? null : d.day)}
-              className="group relative flex flex-1 flex-col items-center justify-end outline-none"
-              aria-pressed={active}
-              aria-label={`${d.day}: ${d.signups} signups`}
-            >
-              <span
-                className={`pointer-events-none absolute -top-7 rounded-md border border-white/10 bg-black/85 px-1.5 py-0.5 text-[0.65rem] tabular-nums text-snow transition ${
-                  active
-                    ? "opacity-100"
-                    : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
-                }`}
-              >
-                {d.signups}
-              </span>
-              <span
-                className={`w-full rounded-t-sm transition duration-300 ${
-                  active
-                    ? "bg-gradient-to-t from-white/25 to-white/90"
-                    : "bg-gradient-to-t from-white/12 to-white/45 group-hover:to-white/70 group-focus-visible:to-white/70"
-                }`}
-                style={{ height: `${height}%` }}
-              />
-              <span
-                className={`mt-2 text-[0.6rem] ${
-                  active ? "text-snow" : "text-mute"
-                }`}
-              >
-                {label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
+    p.nickname?.trim() ||
+    p.email?.split("@")[0] ||
+    (p.user_id ? "Signed in" : "Guest")
   );
 }
 
@@ -197,15 +110,23 @@ function AdminDashboardInner({
   topWatched,
 }: AdminDashboardProps) {
   const [range, setRange] = useState<RangeKey>("today");
-  const [chartRange, setChartRange] = useState<"7" | "14" | "30">("14");
+  const [curveRange, setCurveRange] = useState<"7" | "14" | "30">("14");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [activeDay, setActiveDay] = useState<string | null>(null);
   const { refresh, refreshing } = useAdminManualRefresh();
 
   const selected = useMemo(
     () => presence.find((p) => p.id === selectedId) ?? null,
     [presence, selectedId],
+  );
+
+  const globePeople = useMemo(
+    () =>
+      presence.filter(
+        (p): p is PresencePoint & { lat: number; lng: number } =>
+          p.lat != null && p.lng != null,
+      ),
+    [presence],
   );
 
   const openVisitor = useCallback((person: GlobePerson | null) => {
@@ -249,10 +170,50 @@ function AdminDashboardInner({
       .slice(0, 6);
   }, [presence]);
 
-  const filteredSeries = useMemo(() => {
-    const n = Number(chartRange);
-    return lastN(series, n);
-  }, [chartRange, series]);
+  const curveSlice = useMemo(() => {
+    const n = Number(curveRange);
+    return {
+      signups: lastN(series, n),
+      activity: lastN(activity, n),
+    };
+  }, [activity, curveRange, series]);
+
+  const equitySeries = useMemo((): EquitySeries[] => {
+    const watchHours = curveSlice.activity.map((d) => ({
+      day: d.day,
+      value: Math.round((d.watch_seconds / 3600) * 10) / 10,
+    }));
+    return [
+      {
+        id: "signups",
+        label: "Signups",
+        color: "rgba(245,245,247,0.92)",
+        fill: "rgba(245,245,247,0.28)",
+        points: curveSlice.signups.map((d) => ({
+          day: d.day,
+          value: d.signups,
+        })),
+      },
+      {
+        id: "views",
+        label: "Page views",
+        color: "rgba(200,210,230,0.9)",
+        fill: "rgba(200,210,230,0.25)",
+        points: curveSlice.activity.map((d) => ({
+          day: d.day,
+          value: d.page_views,
+        })),
+      },
+      {
+        id: "watch",
+        label: "Watch hours",
+        color: "rgba(180,190,210,0.88)",
+        fill: "rgba(180,190,210,0.22)",
+        points: watchHours,
+        format: (n) => `${n.toFixed(n >= 10 ? 0 : 1)}h`,
+      },
+    ];
+  }, [curveSlice]);
 
   const signupSpark = useMemo(
     () => lastN(series, 7).map((d) => d.signups),
@@ -340,20 +301,20 @@ function AdminDashboardInner({
       : `${metrics.signups_7d} in the last 7 days`;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pb-24 pt-24 sm:px-6">
-      <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="page-shell pb-16 pt-20 sm:pt-22">
+      <header className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[0.7rem] uppercase tracking-[0.2em] text-mute">
+          <p className="text-[0.65rem] uppercase tracking-[0.2em] text-mute">
             Anikura · Admin
           </p>
-          <h1 className="mt-1 text-3xl tracking-[-0.04em] text-snow sm:text-4xl">
+          <h1 className="mt-0.5 text-2xl tracking-[-0.04em] text-snow sm:text-3xl">
             Night desk
           </h1>
-          <p className="mt-1.5 max-w-xl text-sm text-cloud">
-            Live ops console — presence, audience, and growth in one quiet desk.
+          <p className="mt-1 max-w-xl text-xs text-cloud sm:text-sm">
+            Live ops — presence, audience, and growth.
           </p>
         </div>
-        <div className="text-sm text-mute">
+        <div className="text-xs text-mute sm:text-sm">
           Signed in as{" "}
           <span className="text-cloud">{adminEmail ?? "admin"}</span>
         </div>
@@ -365,8 +326,8 @@ function AdminDashboardInner({
         refreshing={refreshing}
       />
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-mute">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[0.7rem] text-mute">
           Metrics range · hot lists stay{" "}
           <span className="text-cloud">today</span>
         </p>
@@ -382,7 +343,7 @@ function AdminDashboardInner({
               key={key}
               type="button"
               onClick={() => setRange(key)}
-              className={`rounded-full px-3 py-1.5 text-xs transition ${
+              className={`rounded-full px-2.5 py-1 text-xs transition ${
                 range === key
                   ? "bg-snow text-void"
                   : "text-mute hover:text-snow"
@@ -394,19 +355,19 @@ function AdminDashboardInner({
         </div>
       </div>
 
-      {/* LIVE */}
-      <section id="admin-live" className="scroll-mt-36">
-        <div className="mb-3 flex items-end justify-between gap-3">
+      {/* LIVE + WATCH metrics — dense strip */}
+      <section id="admin-live" className="scroll-mt-32">
+        <div className="mb-2 flex items-end justify-between gap-3">
           <div>
-            <h2 className="text-[0.7rem] uppercase tracking-[0.16em] text-mute">
-              Live
+            <h2 className="text-[0.65rem] uppercase tracking-[0.16em] text-mute">
+              Live · Watch
             </h2>
-            <p className="mt-0.5 text-sm text-cloud">
-              Heartbeats in the last ~2 minutes
+            <p className="mt-0.5 text-xs text-cloud">
+              Heartbeats ~2 min · {ranged.rangeLabel}
             </p>
           </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
           <AdminMetricCard
             tone="live"
             live={metrics.live_users > 0}
@@ -414,34 +375,46 @@ function AdminDashboardInner({
             value={metrics.live_users}
             hint={
               metrics.live_users > 0
-                ? `${presence.length} on the globe · click a path below`
+                ? `${presence.length} listed · ${globePeople.length} on globe`
                 : "Waiting for heartbeats…"
             }
           />
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 transition duration-300 hover:border-white/[0.14]">
-            <p className="text-[0.68rem] uppercase tracking-[0.16em] text-mute">
+          <AdminMetricCard
+            label="Hours watched"
+            value={formatHours(ranged.watchSeconds)}
+            hint={ranged.watchHint}
+            spark={watchSpark}
+          />
+          <AdminMetricCard
+            label="Unique visitors"
+            value={metrics.unique_visitors_today}
+            hint={`${newVisitors} new · ${metrics.returning_visitors_today} returning`}
+          />
+          <AdminMetricCard
+            label="Page views"
+            value={ranged.pageViews}
+            hint={ranged.pageViewsHint}
+            spark={viewsSpark}
+          />
+          <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 transition duration-300 hover:border-white/[0.14] sm:col-span-2 lg:col-span-1">
+            <p className="text-[0.62rem] uppercase tracking-[0.14em] text-mute">
               Live paths
             </p>
             {liveNowPaths.length === 0 ? (
-              <div className="mt-3 flex min-h-[4.5rem] items-center">
-                <p className="text-sm text-mute">
-                  No active paths — open the site in another tab to seed the
-                  ticker.
-                </p>
-              </div>
+              <p className="mt-2 text-xs text-mute">No active paths</p>
             ) : (
-              <ul className="mt-3 space-y-1">
-                {liveNowPaths.map(({ path, people, n }) => (
+              <ul className="mt-1.5 space-y-0.5">
+                {liveNowPaths.slice(0, 4).map(({ path, people, n }) => (
                   <li key={path}>
                     <button
                       type="button"
                       onClick={() => openVisitor(people[0] ?? null)}
-                      className="group flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left transition hover:bg-white/[0.04]"
+                      className="group flex w-full items-center justify-between gap-2 rounded-md px-1 py-0.5 text-left transition hover:bg-white/[0.04]"
                     >
-                      <span className="truncate font-mono text-xs text-cloud group-hover:text-snow">
+                      <span className="truncate font-mono text-[0.65rem] text-cloud group-hover:text-snow">
                         {path}
                       </span>
-                      <span className="shrink-0 tabular-nums text-xs text-mute group-hover:text-cloud">
+                      <span className="shrink-0 tabular-nums text-[0.65rem] text-mute">
                         {n}
                       </span>
                     </button>
@@ -453,48 +426,36 @@ function AdminDashboardInner({
         </div>
       </section>
 
-      {/* WATCH / AUDIENCE */}
-      <section id="admin-watch" className="mt-8 scroll-mt-36">
-        <div className="mb-3">
-          <h2 className="text-[0.7rem] uppercase tracking-[0.16em] text-mute">
-            Watch · Audience
-          </h2>
-          <p className="mt-0.5 text-sm text-cloud">
-            {ranged.rangeLabel} · unique visitors always show today
-          </p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <AdminMetricCard
-            label="Hours watched"
-            value={formatHours(ranged.watchSeconds)}
-            hint={ranged.watchHint}
-            spark={watchSpark}
-          />
-          <AdminMetricCard
-            label="Unique visitors"
-            value={metrics.unique_visitors_today}
-            hint={`${newVisitors} new · ${metrics.returning_visitors_today} returning · today`}
-          />
-          <AdminMetricCard
-            label="Page views"
-            value={ranged.pageViews}
-            hint={ranged.pageViewsHint}
-            spark={viewsSpark}
-          />
-        </div>
-      </section>
-
       {/* GROWTH */}
-      <section id="admin-growth" className="mt-8 scroll-mt-36">
-        <div className="mb-3">
-          <h2 className="text-[0.7rem] uppercase tracking-[0.16em] text-mute">
-            Growth
-          </h2>
-          <p className="mt-0.5 text-sm text-cloud">
-            Accounts and signup momentum
-          </p>
+      <section id="admin-growth" className="mt-5 scroll-mt-32">
+        <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="text-[0.65rem] uppercase tracking-[0.16em] text-mute">
+              Growth
+            </h2>
+            <p className="mt-0.5 text-xs text-cloud">
+              Equity curves · cumulative over range
+            </p>
+          </div>
+          <div className="flex rounded-full border border-white/10 p-0.5">
+            {(["7", "14", "30"] as const).map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setCurveRange(key)}
+                className={`rounded-full px-2.5 py-1 text-xs transition ${
+                  curveRange === key
+                    ? "bg-snow text-void"
+                    : "text-mute hover:text-snow"
+                }`}
+              >
+                {key}d
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+
+        <div className="mb-2 grid gap-2 sm:grid-cols-2">
           <AdminMetricCard
             label={range === "today" ? "Signups today" : `Signups · ${range}`}
             value={ranged.signups}
@@ -509,53 +470,163 @@ function AdminDashboardInner({
           />
         </div>
 
-        <div className="mt-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 transition duration-300 hover:border-white/[0.12]">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-base tracking-[-0.02em] text-snow">
-                Signup chart
-              </h3>
-              <p className="text-sm text-mute">
-                {metrics.signups_7d} in the last 7 days
-              </p>
-            </div>
-            <div className="flex rounded-full border border-white/10 p-0.5">
-              {(["7", "14", "30"] as const).map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => {
-                    setChartRange(key);
-                    setActiveDay(null);
-                  }}
-                  className={`rounded-full px-2.5 py-1 text-xs transition ${
-                    chartRange === key
-                      ? "bg-snow text-void"
-                      : "text-mute hover:text-snow"
-                  }`}
-                >
-                  {key}d
-                </button>
-              ))}
-            </div>
+        <div className="scroll-mt-32 rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 hover:border-white/[0.12] sm:p-4">
+          <div className="mb-1">
+            <h3 className="text-[0.95rem] tracking-[-0.02em] text-snow">
+              Equity curves
+            </h3>
+            <p className="text-xs text-mute">
+              Cumulative signups, page views, and watch hours · hover to scrub
+            </p>
           </div>
-          <SignupChart
-            series={filteredSeries}
-            activeDay={activeDay}
-            onSelectDay={setActiveDay}
-          />
+          <AdminEquityCurve series={equitySeries} height={200} />
         </div>
       </section>
 
+      {/* USERS — restored on-dashboard presence table */}
+      <section
+        id="admin-users"
+        className="mt-5 scroll-mt-32 rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 hover:border-white/[0.12] sm:p-4"
+      >
+        <div className="mb-2.5 flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="text-[0.95rem] tracking-[-0.02em] text-snow">
+              Live users
+            </h2>
+            <p className="text-xs text-mute">
+              {presence.length} active · click a row for details
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-[0.65rem] text-cloud">
+            <span
+              className={`h-1.5 w-1.5 rounded-full bg-snow ${
+                metrics.live_users > 0 ? "admin-live-pulse" : "opacity-40"
+              }`}
+            />
+            Presence
+          </span>
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden overflow-x-auto md:block">
+          <table className="w-full min-w-[760px] text-left text-sm">
+            <thead className="text-[0.65rem] uppercase tracking-[0.12em] text-mute">
+              <tr className="border-b border-white/[0.06]">
+                <th className="pb-2 pr-3 font-medium">Visitor</th>
+                <th className="pb-2 pr-3 font-medium">Auth</th>
+                <th className="pb-2 pr-3 font-medium">Place</th>
+                <th className="pb-2 pr-3 font-medium">Path</th>
+                <th className="pb-2 font-medium">Last seen</th>
+              </tr>
+            </thead>
+            <tbody>
+              {presence.slice(0, 48).map((p) => {
+                const active = p.id === selectedId && drawerOpen;
+                return (
+                  <tr
+                    key={p.id}
+                    className={`cursor-pointer border-b border-white/[0.04] transition ${
+                      active
+                        ? "bg-white/[0.07] text-snow"
+                        : "text-cloud hover:bg-white/[0.03] hover:text-snow"
+                    }`}
+                    onClick={() => openVisitor(p)}
+                  >
+                    <td className="py-2 pr-3">
+                      <span className="block text-sm">{visitorLabel(p)}</span>
+                      <span className="block text-[0.65rem] text-mute">
+                        {p.email || "Anonymous"}
+                      </span>
+                    </td>
+                    <td className="py-2 pr-3">
+                      <span
+                        className={`inline-block rounded-full border px-2 py-0.5 text-[0.6rem] uppercase tracking-wider ${
+                          p.user_id
+                            ? "border-white/15 text-cloud"
+                            : "border-white/[0.08] text-mute"
+                        }`}
+                      >
+                        {p.user_id ? "Signed in" : "Anon"}
+                      </span>
+                    </td>
+                    <td className="py-2 pr-3 text-xs">
+                      {[p.city, p.country].filter(Boolean).join(", ") || "—"}
+                    </td>
+                    <td className="max-w-[14rem] truncate py-2 pr-3 font-mono text-xs">
+                      {p.path || "/"}
+                    </td>
+                    <td className="py-2 text-xs tabular-nums">
+                      {new Date(p.last_seen).toLocaleString()}
+                    </td>
+                  </tr>
+                );
+              })}
+              {presence.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-6 text-center text-mute">
+                    No live presence yet — open the site in another tab.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile stacked list */}
+        <ul className="space-y-1 md:hidden">
+          {presence.slice(0, 48).map((p) => {
+            const active = p.id === selectedId && drawerOpen;
+            return (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  onClick={() => openVisitor(p)}
+                  className={`flex w-full flex-col gap-0.5 rounded-lg px-2.5 py-2 text-left transition ${
+                    active
+                      ? "bg-white/[0.08] text-snow"
+                      : "text-cloud hover:bg-white/[0.04] hover:text-snow"
+                  }`}
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="truncate text-sm">{visitorLabel(p)}</span>
+                    <span className="shrink-0 text-[0.6rem] uppercase tracking-wider text-mute">
+                      {p.user_id ? "Signed in" : "Anon"}
+                    </span>
+                  </span>
+                  <span className="truncate font-mono text-[0.65rem] text-mute">
+                    {p.path || "/"}
+                  </span>
+                  <span className="flex justify-between gap-2 text-[0.65rem] text-mute">
+                    <span>
+                      {[p.city, p.country].filter(Boolean).join(", ") || "—"}
+                    </span>
+                    <span className="tabular-nums">
+                      {new Date(p.last_seen).toLocaleTimeString()}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+          {presence.length === 0 ? (
+            <li className="rounded-lg border border-dashed border-white/[0.08] px-3 py-5 text-center text-sm text-mute">
+              No live presence yet.
+            </li>
+          ) : null}
+        </ul>
+      </section>
+
       {/* HOT */}
-      <section id="admin-hot" className="mt-8 scroll-mt-36" aria-label="What's hot">
-        <div className="mb-3">
-          <h2 className="text-lg tracking-[-0.02em] text-snow">What&apos;s hot</h2>
-          <p className="text-sm text-mute">
-            Ranked from real watch ticks and page views · today only
+      <section id="admin-hot" className="mt-5 scroll-mt-32" aria-label="What's hot">
+        <div className="mb-2">
+          <h2 className="text-[0.95rem] tracking-[-0.02em] text-snow">
+            What&apos;s hot
+          </h2>
+          <p className="text-xs text-mute">
+            Ranked from watch ticks and page views · today
           </p>
         </div>
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-3 lg:grid-cols-2">
           <HotList
             title="Most watched"
             subtitle="By visible watch time today"
@@ -576,9 +647,9 @@ function AdminDashboardInner({
       {/* GLOBE */}
       <section
         id="admin-globe"
-        className="mt-8 scroll-mt-36 grid gap-4 lg:grid-cols-[1.4fr_1fr]"
+        className="mt-5 scroll-mt-32 grid gap-3 lg:grid-cols-[1.4fr_1fr]"
       >
-        <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#070709] transition duration-300 hover:border-white/[0.12]">
+        <div className="relative overflow-hidden rounded-xl border border-white/[0.08] bg-[#070709] transition duration-300 hover:border-white/[0.12]">
           <div
             className="pointer-events-none absolute inset-0 opacity-50"
             style={{
@@ -587,16 +658,16 @@ function AdminDashboardInner({
             }}
             aria-hidden
           />
-          <div className="relative flex items-center justify-between px-5 pt-5">
+          <div className="relative flex items-center justify-between px-4 pt-3.5">
             <div>
-              <h2 className="text-lg tracking-[-0.02em] text-snow">
+              <h2 className="text-[0.95rem] tracking-[-0.02em] text-snow">
                 Active visitors
               </h2>
-              <p className="text-sm text-mute">
-                {presence.length} geolocated · drag, zoom, click dots
+              <p className="text-xs text-mute">
+                {globePeople.length} geolocated · drag, zoom, click dots
               </p>
             </div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1 text-xs text-cloud">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-[0.65rem] text-cloud">
               <span
                 className={`h-1.5 w-1.5 rounded-full bg-snow ${
                   metrics.live_users > 0 ? "admin-live-pulse" : "opacity-40"
@@ -605,18 +676,17 @@ function AdminDashboardInner({
               Live
             </span>
           </div>
-          <div className="relative mx-auto aspect-square w-full max-w-[560px]">
-            {presence.length === 0 ? (
+          <div className="relative mx-auto aspect-square w-full max-w-[480px]">
+            {globePeople.length === 0 ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center px-8 text-center">
                 <p className="text-sm text-cloud">Globe is quiet</p>
                 <p className="mt-1.5 max-w-xs text-xs leading-relaxed text-mute">
-                  Live visitors with a known location appear as dots. Open the
-                  public site to seed presence.
+                  Live visitors with a known location appear as dots.
                 </p>
               </div>
             ) : (
               <LiveGlobe
-                people={presence}
+                people={globePeople}
                 selectedId={selectedId}
                 onSelect={onSelect}
                 className="absolute inset-0"
@@ -625,109 +695,62 @@ function AdminDashboardInner({
           </div>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <div className="flex-1 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 transition duration-300 hover:border-white/[0.12]">
-            <h2 className="text-lg tracking-[-0.02em] text-snow">Top regions</h2>
-            <p className="mb-4 text-sm text-mute">From live heartbeats</p>
-            {topCountries.length === 0 ? (
-              <div className="flex min-h-[8rem] flex-col items-center justify-center rounded-xl border border-dashed border-white/[0.08] bg-black/20 px-4 text-center">
-                <p className="text-sm text-cloud">No regions yet</p>
-                <p className="mt-1 text-xs text-mute">
-                  Waiting for geolocated heartbeats.
-                </p>
-              </div>
-            ) : (
-              <ul className="space-y-1">
-                {topCountries.map(([country, count], index) => {
-                  const max = topCountries[0]?.[1] ?? 1;
-                  const width = Math.max(8, Math.round((count / max) * 100));
-                  return (
-                    <li
-                      key={country}
-                      className="group flex items-center gap-3 rounded-lg px-1 py-1.5 transition hover:bg-white/[0.03]"
-                    >
-                      <span className="w-4 text-right text-[0.65rem] tabular-nums text-mute">
-                        {index + 1}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-1 flex items-center justify-between gap-2 text-sm">
-                          <span className="truncate text-cloud group-hover:text-snow">
-                            {country}
-                          </span>
-                          <span className="tabular-nums text-snow">{count}</span>
-                        </div>
-                        <div className="h-0.5 overflow-hidden rounded-full bg-white/[0.06]">
-                          <div
-                            className="h-full rounded-full bg-white/35 transition group-hover:bg-white/55"
-                            style={{ width: `${width}%` }}
-                          />
-                        </div>
+        <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 hover:border-white/[0.12] sm:p-4">
+          <h2 className="text-[0.95rem] tracking-[-0.02em] text-snow">
+            Top regions
+          </h2>
+          <p className="mb-3 text-xs text-mute">From live heartbeats</p>
+          {topCountries.length === 0 ? (
+            <div className="flex min-h-[6rem] flex-col items-center justify-center rounded-xl border border-dashed border-white/[0.08] bg-black/20 px-4 text-center">
+              <p className="text-sm text-cloud">No regions yet</p>
+              <p className="mt-1 text-xs text-mute">
+                Waiting for geolocated heartbeats.
+              </p>
+            </div>
+          ) : (
+            <ul className="space-y-0.5">
+              {topCountries.map(([country, count], index) => {
+                const max = topCountries[0]?.[1] ?? 1;
+                const width = Math.max(8, Math.round((count / max) * 100));
+                return (
+                  <li
+                    key={country}
+                    className="group flex items-center gap-3 rounded-lg px-1 py-1.5 transition hover:bg-white/[0.03]"
+                  >
+                    <span className="w-4 text-right text-[0.65rem] tabular-nums text-mute">
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex items-center justify-between gap-2 text-sm">
+                        <span className="truncate text-cloud group-hover:text-snow">
+                          {country}
+                        </span>
+                        <span className="tabular-nums text-snow">{count}</span>
                       </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 transition duration-300 hover:border-white/[0.12]">
-            <h2 className="text-base tracking-[-0.02em] text-snow">
-              Recent presence
-            </h2>
-            <p className="mb-3 text-sm text-mute">
-              Tap a row to open the visitor drawer
-            </p>
-            {presence.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-white/[0.08] bg-black/20 px-3 py-6 text-center text-sm text-mute">
-                No live dots yet.
-              </div>
-            ) : (
-              <ul className="max-h-56 space-y-0.5 overflow-y-auto pr-1">
-                {presence.slice(0, 24).map((p) => {
-                  const active = p.id === selectedId && drawerOpen;
-                  const label =
-                    p.nickname?.trim() ||
-                    p.email?.split("@")[0] ||
-                    (p.user_id ? "Signed in" : "Guest");
-                  return (
-                    <li key={p.id}>
-                      <button
-                        type="button"
-                        onClick={() => openVisitor(p)}
-                        className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-2 text-left transition ${
-                          active
-                            ? "bg-white/[0.08] text-snow"
-                            : "text-cloud hover:bg-white/[0.04] hover:text-snow"
-                        }`}
-                      >
-                        <span className="min-w-0">
-                          <span className="block truncate text-sm">{label}</span>
-                          <span className="block truncate font-mono text-[0.65rem] text-mute">
-                            {p.path || "/"}
-                          </span>
-                        </span>
-                        <span className="shrink-0 text-[0.65rem] text-mute">
-                          {[p.city, p.country].filter(Boolean).join(", ") || "—"}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
+                      <div className="h-0.5 overflow-hidden rounded-full bg-white/[0.06]">
+                        <div
+                          className="h-full rounded-full bg-white/35 transition group-hover:bg-white/55"
+                          style={{ width: `${width}%` }}
+                        />
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
       </section>
 
-      <div id="admin-members" className="scroll-mt-36">
+      <div id="admin-members" className="scroll-mt-32">
         <BadgeManager />
       </div>
 
-      <div id="admin-announcements" className="scroll-mt-36">
+      <div id="admin-announcements" className="scroll-mt-32">
         <AnnouncementManager initialItems={announcements} />
       </div>
 
-      <p className="mt-10 text-center text-[0.7rem] text-mute">
+      <p className="mt-8 text-center text-[0.65rem] text-mute">
         Shortcuts ·{" "}
         <span className="text-cloud">1–7</span> jump ·{" "}
         <span className="text-cloud">R</span> refresh ·{" "}

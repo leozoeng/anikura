@@ -112,7 +112,9 @@ export function VisitorDrawer({ person, open, onClose }: VisitorDrawerProps) {
               <div className="flex justify-between gap-4">
                 <dt className="text-mute">Coords</dt>
                 <dd className="font-mono text-xs tabular-nums text-cloud">
-                  {person.lat.toFixed(2)}, {person.lng.toFixed(2)}
+                  {person.lat != null && person.lng != null
+                    ? `${person.lat.toFixed(2)}, ${person.lng.toFixed(2)}`
+                    : "—"}
                 </dd>
               </div>
             </dl>

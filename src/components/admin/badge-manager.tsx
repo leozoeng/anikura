@@ -250,11 +250,11 @@ export function BadgeManager() {
   const list = tab === "signups" ? signups : badged;
 
   return (
-    <section className="mt-8 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 transition duration-300 hover:border-white/[0.12]">
-      <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+    <section className="mt-5 rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 hover:border-white/[0.12] sm:p-4">
+      <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-lg tracking-[-0.02em] text-snow">Members</h2>
-          <p className="text-sm text-mute">
+          <h2 className="text-[0.95rem] tracking-[-0.02em] text-snow">Members</h2>
+          <p className="text-xs text-mute">
             Browse signups, open profiles, assign OG / Partner / Dev / VIP.
           </p>
         </div>

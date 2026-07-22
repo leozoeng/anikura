@@ -14,8 +14,8 @@ export function AdminSparkline({
 }: AdminSparklineProps) {
   if (values.length < 2) return null;
 
-  const w = 72;
-  const h = 22;
+  const w = 56;
+  const h = 18;
   const max = Math.max(1, ...values);
   const min = Math.min(...values);
   const span = Math.max(1, max - min);

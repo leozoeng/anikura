@@ -126,12 +126,12 @@ export function AnnouncementManager({ initialItems }: Props) {
   }
 
   return (
-    <section className="mt-8 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 transition duration-300 hover:border-white/[0.12]">
-      <div className="mb-4">
-        <h2 className="text-lg tracking-[-0.02em] text-snow">
+    <section className="mt-5 rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 hover:border-white/[0.12] sm:p-4">
+      <div className="mb-3">
+        <h2 className="text-[0.95rem] tracking-[-0.02em] text-snow">
           Social announcements
         </h2>
-        <p className="mt-1 text-sm text-mute">
+        <p className="mt-0.5 text-xs text-mute">
           Pinned updates appear on the Social tab for every signed-in viewer.
         </p>
       </div>

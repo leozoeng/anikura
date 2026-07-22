@@ -74,8 +74,8 @@ export function AdminCommandStrip({
   }, [items]);
 
   return (
-    <div className="sticky top-16 z-40 -mx-4 mb-6 border-y border-white/[0.06] bg-black/70 px-4 backdrop-blur-xl sm:-mx-6 sm:px-6">
-      <div className="flex items-center gap-2 py-2">
+    <div className="sticky top-16 z-40 -mx-5 mb-3 border-y border-white/[0.06] bg-black/70 px-5 backdrop-blur-xl sm:-mx-8 sm:px-8">
+      <div className="flex items-center gap-2 py-1.5">
         <nav
           className="flex min-w-0 flex-1 gap-1 overflow-x-auto scrollbar-none"
           aria-label="Admin sections"

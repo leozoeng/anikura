@@ -5,8 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 export type GlobePerson = {
   id: string;
-  lat: number;
-  lng: number;
+  lat: number | null;
+  lng: number | null;
   country: string | null;
   city: string | null;
   path: string | null;
@@ -83,22 +83,27 @@ export function LiveGlobe({
     selectedRef.current = selectedId;
     if (!selectedId) return;
     const person = people.find((p) => p.id === selectedId);
-    if (!person) return;
+    if (!person || person.lat == null || person.lng == null) return;
     focusTargetRef.current = focusAngles(person.lat, person.lng);
     autoSpinRef.current = false;
   }, [selectedId, people]);
 
   const markers = useMemo(
     () =>
-      people.map((p) => ({
-        location: [p.lat, p.lng] as [number, number],
-        size: selectedId === p.id ? 0.085 : 0.045,
-        color:
-          selectedId === p.id
-            ? ([1, 1, 1] as [number, number, number])
-            : ([0.92, 0.92, 0.95] as [number, number, number]),
-        id: p.id,
-      })),
+      people
+        .filter(
+          (p): p is GlobePerson & { lat: number; lng: number } =>
+            p.lat != null && p.lng != null,
+        )
+        .map((p) => ({
+          location: [p.lat, p.lng] as [number, number],
+          size: selectedId === p.id ? 0.085 : 0.045,
+          color:
+            selectedId === p.id
+              ? ([1, 1, 1] as [number, number, number])
+              : ([0.92, 0.92, 0.95] as [number, number, number]),
+          id: p.id,
+        })),
     [people, selectedId],
   );
   const markersRef = useRef(markers);
@@ -175,6 +180,7 @@ export function LiveGlobe({
       const cy = size / 2;
       const out: Projected[] = [];
       for (const person of peopleRef.current) {
+        if (person.lat == null || person.lng == null) continue;
         const p = projectMarker(
           person.lat,
           person.lng,
@@ -241,8 +247,10 @@ export function LiveGlobe({
       if (!movedRef.current) {
         const hit = nearestAt(e.clientX, e.clientY);
         onSelect(hit);
-        if (hit) {
+        if (hit && hit.lat != null && hit.lng != null) {
           focusTargetRef.current = focusAngles(hit.lat, hit.lng);
+          setHint("Visitor selected");
+        } else if (hit) {
           setHint("Visitor selected");
         } else {
           setHint("Drag to explore · click a dot");

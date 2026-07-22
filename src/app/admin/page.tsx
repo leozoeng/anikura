@@ -140,10 +140,7 @@ export default async function AdminPage() {
           watch_seconds_today: Number(metrics.watch_seconds_today ?? 0),
         }}
         presence={presenceRows
-          .filter(
-            (p): p is typeof p & { lat: number; lng: number; id: string } =>
-              Boolean(p.id) && p.lat != null && p.lng != null,
-          )
+          .filter((p) => Boolean(p.id))
           .map((p) => ({
             id: p.id,
             session_id: p.session_id,

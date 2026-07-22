@@ -23,7 +23,7 @@ export function AdminMetricCard({
 
   return (
     <div
-      className={`admin-metric group relative overflow-hidden rounded-2xl border p-4 transition duration-300 ease-[var(--ease-out-soft)] hover:-translate-y-0.5 hover:border-white/[0.18] hover:bg-white/[0.055] focus-within:border-white/[0.2] ${
+      className={`admin-metric group relative overflow-hidden rounded-xl border px-3 py-2.5 transition duration-300 ease-[var(--ease-out-soft)] hover:-translate-y-px hover:border-white/[0.18] hover:bg-white/[0.055] focus-within:border-white/[0.2] ${
         isLive
           ? "border-white/[0.14] bg-white/[0.05]"
           : "border-white/[0.08] bg-white/[0.03]"
@@ -41,17 +41,17 @@ export function AdminMetricCard({
         <div className="flex items-center gap-2">
           {isLive ? (
             <span
-              className={`relative flex h-2 w-2 ${
+              className={`relative flex h-1.5 w-1.5 ${
                 typeof value === "number" && value > 0
                   ? "admin-live-pulse"
                   : ""
               }`}
             >
               <span className="absolute inset-0 rounded-full bg-snow/70 opacity-60" />
-              <span className="relative h-2 w-2 rounded-full bg-snow" />
+              <span className="relative h-1.5 w-1.5 rounded-full bg-snow" />
             </span>
           ) : null}
-          <p className="text-[0.68rem] uppercase tracking-[0.16em] text-mute">
+          <p className="text-[0.62rem] uppercase tracking-[0.14em] text-mute">
             {label}
           </p>
         </div>
@@ -59,10 +59,10 @@ export function AdminMetricCard({
           <AdminSparkline values={spark} active={isLive} />
         ) : null}
       </div>
-      <p className="relative mt-2 text-3xl tracking-[-0.04em] text-snow tabular-nums transition duration-300">
+      <p className="relative mt-1 text-2xl tracking-[-0.04em] text-snow tabular-nums transition duration-300 sm:text-[1.65rem]">
         {value}
       </p>
-      <p className="relative mt-1.5 text-xs leading-snug text-cloud">{hint}</p>
+      <p className="relative mt-0.5 text-[0.7rem] leading-snug text-cloud">{hint}</p>
     </div>
   );
 }
