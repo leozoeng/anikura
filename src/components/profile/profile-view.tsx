@@ -247,9 +247,6 @@ export function ProfileView({
     }
   }
 
-  const scrollLockTab =
-    tab === "activity" || tab === "watch" || tab === "comments";
-
   const profileColumn = (
     <>
       <div
@@ -263,7 +260,7 @@ export function ProfileView({
             : undefined,
         }}
       >
-        <div className="grid h-full lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)]">
+        <div className="grid h-full lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)] lg:items-stretch">
           <aside className="relative border-b border-white/[0.06] lg:border-b-0 lg:border-r lg:border-white/[0.06]">
             <div className="relative h-[120px] sm:h-[148px]">
               {live.banner_url ? (
@@ -416,7 +413,7 @@ export function ProfileView({
             </div>
           </aside>
 
-          <div className="flex min-h-[300px] min-w-0 flex-col bg-[#0e0f12]/40 sm:min-h-[340px] lg:min-h-0 lg:overflow-hidden">
+          <div className="flex min-h-[300px] min-w-0 flex-col bg-[#0e0f12]/40 sm:min-h-[340px] lg:h-0 lg:min-h-full lg:overflow-hidden">
             <div className="sticky top-14 z-20 shrink-0 border-b border-white/[0.06] bg-[#0e0f12]/92 backdrop-blur-xl sm:top-16 lg:static lg:bg-transparent lg:backdrop-blur-none">
               <div
                 role="tablist"
@@ -462,11 +459,7 @@ export function ProfileView({
               id={`profile-panel-${tab}`}
               role="tabpanel"
               aria-labelledby={`profile-tab-${tab}`}
-              className={`min-h-0 p-3.5 animate-rise ${
-                scrollLockTab
-                  ? "max-h-[min(26rem,calc(100vh-18rem))] overflow-y-auto overscroll-contain sm:max-h-[min(28rem,calc(100vh-16rem))]"
-                  : "overflow-y-auto"
-              }`}
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3.5 animate-rise"
               style={{ animationDuration: "0.28s" }}
             >
               {tab === "board" ? (
