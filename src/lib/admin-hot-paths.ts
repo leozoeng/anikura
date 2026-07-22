@@ -31,6 +31,7 @@ export type HotListItem = {
   href: string;
   value: number;
   valueLabel: string;
+  poster?: string | null;
 };
 
 function prettifySlug(slug: string) {
@@ -103,6 +104,15 @@ export function labelAdminPath(
   };
 }
 
+function posterForPath(
+  path: string,
+  byId: Map<number, CatalogAnime>,
+): string | null {
+  const matched = matchAnime(path.split("?")[0] || "/", byId);
+  const poster = matched.anime?.poster?.trim();
+  return poster || null;
+}
+
 export function enrichHotPages(
   rows: HotPageRow[],
   catalog: CatalogAnime[],
@@ -117,6 +127,7 @@ export function enrichHotPages(
       href: labeled.href,
       value: row.views,
       valueLabel: `${row.views} view${row.views === 1 ? "" : "s"}`,
+      poster: posterForPath(row.path, byId),
     };
   });
 }
@@ -144,6 +155,7 @@ export function enrichHotWatched(
       href: labeled.href,
       value: row.seconds,
       valueLabel,
+      poster: posterForPath(row.path, byId),
     };
   });
 }

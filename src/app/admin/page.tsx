@@ -62,6 +62,7 @@ export default async function AdminPage() {
     { data: metricsRaw },
     { data: presence },
     { data: series },
+    { data: activityRaw },
     { data: hotRaw },
     announcements,
     catalog,
@@ -69,6 +70,7 @@ export default async function AdminPage() {
     supabase.rpc("admin_dashboard_metrics", { p_live_seconds: 120 }),
     supabase.rpc("admin_live_presence", { p_live_seconds: 120 }),
     supabase.rpc("admin_signup_series", { p_days: 30 }),
+    supabase.rpc("admin_activity_series", { p_days: 30 }),
     supabase.rpc("admin_hot_activity", { p_limit: 8 }),
     fetchAllSocialAnnouncements(),
     getCatalog(),
@@ -81,7 +83,6 @@ export default async function AdminPage() {
     signups_7d?: number;
     page_views_today?: number;
     page_views_7d?: number;
-    sessions_live?: number;
     unique_visitors_today?: number;
     returning_visitors_today?: number;
     watch_seconds_today?: number | string;
@@ -106,12 +107,25 @@ export default async function AdminPage() {
     path: string | null;
   }>;
 
+  const activity = (
+    (activityRaw ?? []) as Array<{
+      day: string;
+      page_views: number;
+      watch_seconds: number | string;
+    }>
+  ).map((row) => ({
+    day: String(row.day).slice(0, 10),
+    page_views: Number(row.page_views ?? 0),
+    watch_seconds: Number(row.watch_seconds ?? 0),
+  }));
+
   return (
     <>
       <AdminRefresh intervalMs={45_000} />
       <AdminDashboard
         adminEmail={profile.email}
         announcements={announcements}
+        activity={activity}
         topPages={enrichHotPages(hot.top_pages ?? [], catalog)}
         topWatched={enrichHotWatched(hot.top_watched ?? [], catalog)}
         metrics={{
@@ -121,7 +135,6 @@ export default async function AdminPage() {
           signups_7d: metrics.signups_7d ?? 0,
           page_views_today: metrics.page_views_today ?? 0,
           page_views_7d: metrics.page_views_7d ?? 0,
-          sessions_live: metrics.sessions_live ?? 0,
           unique_visitors_today: metrics.unique_visitors_today ?? 0,
           returning_visitors_today: metrics.returning_visitors_today ?? 0,
           watch_seconds_today: Number(metrics.watch_seconds_today ?? 0),

@@ -10,6 +10,7 @@ import {
   setProfileBadges,
   type AdminBadgeUser,
 } from "@/app/admin/badge-actions";
+import { useAdminFeedback } from "@/components/admin/admin-feedback";
 import {
   ProfileBadges,
   PROFILE_BADGE_META,
@@ -40,7 +41,7 @@ function UserRow({
   const handle = handleFromProfile(user);
 
   return (
-    <li className="flex flex-col gap-2.5 rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+    <li className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
       <div className="flex min-w-0 items-center gap-2.5">
         <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/10">
           {user.avatar_url ? (
@@ -120,17 +121,31 @@ function UserRow({
   );
 }
 
+function SkeletonRows({ n = 4 }: { n?: number }) {
+  return (
+    <ul className="space-y-2" aria-hidden>
+      {Array.from({ length: n }).map((_, i) => (
+        <li
+          key={i}
+          className="h-[3.25rem] animate-pulse rounded-xl border border-white/[0.05] bg-white/[0.03]"
+        />
+      ))}
+    </ul>
+  );
+}
+
 export function BadgeManager() {
+  const { toast } = useAdminFeedback();
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<ListTab>("signups");
   const [results, setResults] = useState<AdminBadgeUser[]>([]);
   const [signups, setSignups] = useState<AdminBadgeUser[]>([]);
   const [badged, setBadged] = useState<AdminBadgeUser[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [loaded, setLoaded] = useState(false);
 
   const refreshLists = useCallback(() => {
     startTransition(async () => {
@@ -141,8 +156,10 @@ export function BadgeManager() {
         ]);
         setSignups(signupRows);
         setBadged(badgedRows);
+        setLoaded(true);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Couldn’t load users");
+        setLoaded(true);
       }
     });
   }, []);
@@ -210,11 +227,10 @@ export function BadgeManager() {
 
     setBusyId(userId);
     setError(null);
-    setMessage(null);
     try {
       const updated = await setProfileBadges(userId, nextBadges);
       patchUser(updated);
-      setMessage(
+      toast(
         `${displayName(updated)} · ${
           nextBadges.length
             ? nextBadges.map((b) => b.toUpperCase()).join(", ")
@@ -222,7 +238,9 @@ export function BadgeManager() {
         }`,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Update failed");
+      const msg = err instanceof Error ? err.message : "Update failed";
+      setError(msg);
+      toast(msg, "err");
     } finally {
       setBusyId(null);
     }
@@ -232,7 +250,7 @@ export function BadgeManager() {
   const list = tab === "signups" ? signups : badged;
 
   return (
-    <section className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
+    <section className="mt-8 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 transition duration-300 hover:border-white/[0.12]">
       <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-lg tracking-[-0.02em] text-snow">Members</h2>
@@ -257,12 +275,12 @@ export function BadgeManager() {
       </label>
 
       {error ? (
-        <p className="mt-3 text-sm text-[#ff6b6b]" role="alert">
+        <div
+          className="mt-3 rounded-xl border border-red-400/20 bg-red-400/5 px-3 py-2.5 text-sm text-red-200"
+          role="alert"
+        >
           {error}
-        </p>
-      ) : null}
-      {message ? (
-        <p className="mt-3 text-sm text-cloud">{message}</p>
+        </div>
       ) : null}
 
       {showResults ? (
@@ -271,10 +289,17 @@ export function BadgeManager() {
             Search results
             {searching ? " · searching…" : ` · ${results.length}`}
           </p>
-          {results.length === 0 && !searching ? (
-            <p className="text-sm text-mute">No profiles matched.</p>
+          {searching && results.length === 0 ? (
+            <SkeletonRows n={3} />
+          ) : results.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-white/[0.08] bg-black/20 px-4 py-8 text-center">
+              <p className="text-sm text-cloud">No profiles matched</p>
+              <p className="mt-1 text-xs text-mute">
+                Try another email or nickname fragment.
+              </p>
+            </div>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               {results.map((user) => (
                 <UserRow
                   key={user.id}
@@ -314,25 +339,38 @@ export function BadgeManager() {
             <button
               type="button"
               onClick={refreshLists}
-              className="text-xs text-mute transition hover:text-cloud"
+              disabled={pending}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-2.5 py-1 text-xs text-mute transition hover:border-white/20 hover:text-cloud disabled:opacity-50"
             >
-              Refresh
+              <span
+                className={`h-1.5 w-1.5 rounded-full bg-snow ${
+                  pending ? "animate-pulse" : "opacity-40"
+                }`}
+              />
+              {pending ? "Loading" : "Refresh"}
             </button>
           </div>
 
           <p className="mb-2 text-[0.7rem] uppercase tracking-[0.14em] text-mute">
             {tab === "signups" ? "Newest accounts" : "Currently badged"}
-            {pending ? " · loading…" : ` · ${list.length}`}
+            {pending && !loaded ? " · loading…" : ` · ${list.length}`}
           </p>
 
-          {list.length === 0 ? (
-            <p className="text-sm text-mute">
-              {tab === "signups"
-                ? "No signups yet."
-                : "No badges assigned yet. Open Recent signups or search a user."}
-            </p>
+          {!loaded && pending ? (
+            <SkeletonRows />
+          ) : list.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-white/[0.08] bg-black/20 px-4 py-8 text-center">
+              <p className="text-sm text-cloud">
+                {tab === "signups" ? "No signups yet" : "No badges assigned"}
+              </p>
+              <p className="mt-1 text-xs text-mute">
+                {tab === "signups"
+                  ? "New accounts will land here as people join."
+                  : "Open Recent signups or search a user to assign badges."}
+              </p>
+            </div>
           ) : (
-            <ul className="max-h-[28rem] space-y-2 overflow-y-auto pr-1">
+            <ul className="max-h-[28rem] space-y-1.5 overflow-y-auto pr-1">
               {list.map((user) => (
                 <UserRow
                   key={user.id}

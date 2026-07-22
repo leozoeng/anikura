@@ -1256,3 +1256,50 @@ body[data-theater="true"] .site-atmosphere {
   }
 }
 
+/* —— Night desk (admin) —— */
+@keyframes admin-live-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 245, 247, 0.45);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(245, 245, 247, 0);
+    opacity: 0.85;
+  }
+}
+
+.admin-live-pulse {
+  animation: admin-live-pulse 2.2s var(--ease-out-soft) infinite;
+}
+
+@keyframes admin-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-toast {
+  animation: admin-toast-in 0.28s var(--ease-out-soft) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-live-pulse,
+  .admin-toast {
+    animation: none;
+  }
+
+  .admin-metric {
+    transition: none !important;
+  }
+
+  .admin-metric:hover {
+    transform: none !important;
+  }
+}
+

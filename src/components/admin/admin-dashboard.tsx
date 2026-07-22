@@ -3,11 +3,20 @@
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import {
+  AdminCommandStrip,
+  type AdminNavItem,
+} from "@/components/admin/admin-command-strip";
+import { AdminFeedbackProvider } from "@/components/admin/admin-feedback";
+import { AdminMetricCard } from "@/components/admin/admin-metric-card";
+import { useAdminManualRefresh } from "@/components/admin/admin-refresh";
+import { AnnouncementManager } from "@/components/admin/announcement-manager";
+import { BadgeManager } from "@/components/admin/badge-manager";
+import { HotList } from "@/components/admin/hot-list";
+import {
   LiveGlobe,
   type GlobePerson,
 } from "@/components/admin/live-globe";
-import { AnnouncementManager } from "@/components/admin/announcement-manager";
-import { BadgeManager } from "@/components/admin/badge-manager";
+import { VisitorDrawer } from "@/components/admin/visitor-drawer";
 import type { HotListItem } from "@/lib/admin-hot-paths";
 import type { SocialAnnouncement } from "@/lib/announcements";
 
@@ -18,7 +27,6 @@ export type DashboardMetrics = {
   signups_7d: number;
   page_views_today: number;
   page_views_7d: number;
-  sessions_live: number;
   unique_visitors_today: number;
   returning_visitors_today: number;
   watch_seconds_today: number;
@@ -31,17 +39,34 @@ export type SignupDay = {
   signups: number;
 };
 
+export type ActivityDay = {
+  day: string;
+  page_views: number;
+  watch_seconds: number;
+};
+
 type AdminDashboardProps = {
   metrics: DashboardMetrics;
   presence: PresencePoint[];
   series: SignupDay[];
+  activity: ActivityDay[];
   adminEmail: string | null;
   announcements: SocialAnnouncement[];
   topPages: HotListItem[];
   topWatched: HotListItem[];
 };
 
-type RangeKey = "7" | "14" | "30";
+type RangeKey = "today" | "7d" | "30d";
+
+const NAV: AdminNavItem[] = [
+  { id: "admin-live", label: "Live", shortcut: "1" },
+  { id: "admin-watch", label: "Watch", shortcut: "2" },
+  { id: "admin-growth", label: "Growth", shortcut: "3" },
+  { id: "admin-hot", label: "Hot", shortcut: "4" },
+  { id: "admin-globe", label: "Globe", shortcut: "5" },
+  { id: "admin-members", label: "Members", shortcut: "6" },
+  { id: "admin-announcements", label: "Announcements", shortcut: "7" },
+];
 
 function formatHours(seconds: number) {
   const h = seconds / 3600;
@@ -54,39 +79,12 @@ function formatSigned(n: number) {
   return String(n);
 }
 
-function MetricCard({
-  label,
-  value,
-  hint,
-  tone = "default",
-}: {
-  label: string;
-  value: string | number;
-  hint: string;
-  tone?: "default" | "live";
-}) {
-  return (
-    <div
-      className={`rounded-2xl border p-4 transition duration-300 focus-within:border-white/[0.2] hover:border-white/[0.16] hover:bg-white/[0.05] ${
-        tone === "live"
-          ? "border-white/[0.12] bg-white/[0.045]"
-          : "border-white/[0.08] bg-white/[0.03]"
-      }`}
-    >
-      <div className="flex items-center gap-2">
-        {tone === "live" ? (
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-snow" />
-        ) : null}
-        <p className="text-[0.68rem] uppercase tracking-[0.16em] text-mute">
-          {label}
-        </p>
-      </div>
-      <p className="mt-2 text-3xl tracking-[-0.04em] text-snow tabular-nums">
-        {value}
-      </p>
-      <p className="mt-1.5 text-xs leading-snug text-cloud">{hint}</p>
-    </div>
-  );
+function lastN<T>(arr: T[], n: number) {
+  return arr.slice(-n);
+}
+
+function sumField<T>(arr: T[], pick: (row: T) => number) {
+  return arr.reduce((s, row) => s + pick(row), 0);
 }
 
 function SignupChart({
@@ -100,6 +98,17 @@ function SignupChart({
 }) {
   const max = Math.max(1, ...series.map((d) => d.signups));
   const total = series.reduce((sum, d) => sum + d.signups, 0);
+
+  if (series.length === 0) {
+    return (
+      <div className="flex h-40 flex-col items-center justify-center rounded-xl border border-dashed border-white/[0.08] bg-black/20 text-center">
+        <p className="text-sm text-cloud">No signup history yet</p>
+        <p className="mt-1 text-xs text-mute">
+          Bars appear as accounts land over the selected range.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -117,7 +126,7 @@ function SignupChart({
           ) : (
             <>
               <span className="tabular-nums text-cloud">{total}</span> across
-              selected range · click a bar
+              range · click a bar
             </>
           )}
         </p>
@@ -177,147 +186,42 @@ function SignupChart({
   );
 }
 
-function HotList({
-  title,
-  subtitle,
-  items,
-  empty,
-}: {
-  title: string;
-  subtitle: string;
-  items: HotListItem[];
-  empty: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 transition duration-300 hover:border-white/[0.12]">
-      <h2 className="text-lg tracking-[-0.02em] text-snow">{title}</h2>
-      <p className="mb-4 text-sm text-mute">{subtitle}</p>
-      {items.length === 0 ? (
-        <p className="text-sm text-mute">{empty}</p>
-      ) : (
-        <ol className="space-y-1">
-          {items.map((item, index) => (
-            <li key={`${item.path}-${index}`}>
-              <Link
-                href={item.href}
-                className="group flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-white/[0.04] focus-visible:bg-white/[0.04] focus-visible:outline-none"
-              >
-                <span className="w-5 shrink-0 text-right text-[0.7rem] tabular-nums text-mute group-hover:text-cloud">
-                  {index + 1}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm text-snow group-hover:underline group-hover:underline-offset-2">
-                    {item.label}
-                  </span>
-                  <span className="block truncate text-[0.7rem] text-mute">
-                    {item.meta}
-                  </span>
-                </span>
-                <span className="shrink-0 text-xs tabular-nums text-cloud">
-                  {item.valueLabel}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ol>
-      )}
-    </div>
-  );
-}
-
-function VisitorCard({
-  person,
-  onClear,
-}: {
-  person: PresencePoint;
-  onClear: () => void;
-}) {
-  const place =
-    [person.city, person.country].filter(Boolean).join(", ") || "Unknown place";
-  const name =
-    person.nickname?.trim() ||
-    person.email?.split("@")[0] ||
-    (person.user_id ? "Signed-in guest" : "Anonymous");
-
-  return (
-    <div className="rounded-2xl border border-white/[0.12] bg-black/55 p-4 backdrop-blur-md">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[0.65rem] uppercase tracking-[0.14em] text-mute">
-            Selected
-          </p>
-          <p className="mt-1 text-lg tracking-[-0.03em] text-snow">{name}</p>
-          <p className="mt-0.5 text-sm text-cloud">{place}</p>
-        </div>
-        <button
-          type="button"
-          onClick={onClear}
-          className="rounded-full border border-white/10 px-2.5 py-1 text-xs text-mute transition hover:border-white/25 hover:text-snow"
-        >
-          Clear
-        </button>
-      </div>
-      <dl className="mt-3 grid gap-2 text-sm">
-        <div className="flex justify-between gap-3">
-          <dt className="text-mute">Path</dt>
-          <dd className="max-w-[14rem] truncate font-mono text-xs text-snow">
-            {person.path || "/"}
-          </dd>
-        </div>
-        <div className="flex justify-between gap-3">
-          <dt className="text-mute">Account</dt>
-          <dd className="truncate text-cloud">
-            {person.email || "Not signed in"}
-          </dd>
-        </div>
-        <div className="flex justify-between gap-3">
-          <dt className="text-mute">Session</dt>
-          <dd className="font-mono text-xs text-cloud">
-            {(person.session_id || "—").slice(0, 10)}
-          </dd>
-        </div>
-        <div className="flex justify-between gap-3">
-          <dt className="text-mute">Last seen</dt>
-          <dd className="text-xs text-cloud">
-            {new Date(person.last_seen).toLocaleString()}
-          </dd>
-        </div>
-        <div className="flex justify-between gap-3">
-          <dt className="text-mute">Coords</dt>
-          <dd className="font-mono text-xs tabular-nums text-cloud">
-            {person.lat.toFixed(2)}, {person.lng.toFixed(2)}
-          </dd>
-        </div>
-      </dl>
-    </div>
-  );
-}
-
-export function AdminDashboard({
+function AdminDashboardInner({
   metrics,
   presence,
   series,
+  activity,
   adminEmail,
   announcements,
   topPages,
   topWatched,
 }: AdminDashboardProps) {
-  const [range, setRange] = useState<RangeKey>("14");
+  const [range, setRange] = useState<RangeKey>("today");
+  const [chartRange, setChartRange] = useState<"7" | "14" | "30">("14");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeDay, setActiveDay] = useState<string | null>(null);
-
-  const filteredSeries = useMemo(() => {
-    const n = Number(range);
-    return series.slice(-n);
-  }, [range, series]);
+  const { refresh, refreshing } = useAdminManualRefresh();
 
   const selected = useMemo(
     () => presence.find((p) => p.id === selectedId) ?? null,
     [presence, selectedId],
   );
 
-  const onSelect = useCallback((person: GlobePerson | null) => {
+  const openVisitor = useCallback((person: GlobePerson | null) => {
     setSelectedId(person?.id ?? null);
+    setDrawerOpen(Boolean(person));
+  }, []);
+
+  const onSelect = useCallback(
+    (person: GlobePerson | null) => {
+      openVisitor(person);
+    },
+    [openVisitor],
+  );
+
+  const closeDrawer = useCallback(() => {
+    setDrawerOpen(false);
   }, []);
 
   const topCountries = useMemo(() => {
@@ -332,48 +236,112 @@ export function AdminDashboard({
   }, [presence]);
 
   const liveNowPaths = useMemo(() => {
-    const counts = new Map<string, number>();
+    const byPath = new Map<string, PresencePoint[]>();
     for (const p of presence) {
       const key = p.path?.trim() || "/";
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+      const list = byPath.get(key) ?? [];
+      list.push(p);
+      byPath.set(key, list);
     }
-    return [...counts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+    return [...byPath.entries()]
+      .map(([path, people]) => ({ path, people, n: people.length }))
+      .sort((a, b) => b.n - a.n)
+      .slice(0, 6);
   }, [presence]);
+
+  const filteredSeries = useMemo(() => {
+    const n = Number(chartRange);
+    return lastN(series, n);
+  }, [chartRange, series]);
+
+  const signupSpark = useMemo(
+    () => lastN(series, 7).map((d) => d.signups),
+    [series],
+  );
+  const viewsSpark = useMemo(
+    () => lastN(activity, 7).map((d) => d.page_views),
+    [activity],
+  );
+  const watchSpark = useMemo(
+    () => lastN(activity, 7).map((d) => d.watch_seconds),
+    [activity],
+  );
+
+  const ranged = useMemo(() => {
+    const act7 = lastN(activity, 7);
+    const act30 = lastN(activity, 30);
+    const sig7 = lastN(series, 7);
+    const sig30 = lastN(series, 30);
+
+    if (range === "today") {
+      return {
+        signups: metrics.signups_today,
+        signupsHint: (() => {
+          const yDate = new Date();
+          yDate.setUTCDate(yDate.getUTCDate() - 1);
+          const yKey = yDate.toISOString().slice(0, 10);
+          const yCount = series.find((d) => d.day === yKey)?.signups;
+          if (yCount == null) return `${metrics.signups_7d} in last 7 days`;
+          if (yCount === metrics.signups_today) {
+            return `Same as yesterday · ${metrics.signups_7d} in 7d`;
+          }
+          return `${formatSigned(metrics.signups_today - yCount)} vs yesterday · ${metrics.signups_7d} in 7d`;
+        })(),
+        pageViews: metrics.page_views_today,
+        pageViewsHint:
+          metrics.page_views_7d > 0
+            ? `${metrics.page_views_7d} in 7d · ~${Math.round(metrics.page_views_7d / 7)}/day`
+            : "Since midnight UTC",
+        watchSeconds: metrics.watch_seconds_today,
+        watchHint: "Visible time on /watch today",
+        rangeLabel: "Today",
+      };
+    }
+
+    if (range === "7d") {
+      const watch = sumField(act7, (d) => d.watch_seconds) || metrics.watch_seconds_today;
+      const views =
+        sumField(act7, (d) => d.page_views) || metrics.page_views_7d;
+      const signups = sumField(sig7, (d) => d.signups) || metrics.signups_7d;
+      return {
+        signups,
+        signupsHint: `~${(signups / 7).toFixed(1)}/day · ${metrics.total_signups} total`,
+        pageViews: views,
+        pageViewsHint: `~${Math.round(views / 7)}/day average`,
+        watchSeconds: watch,
+        watchHint: "Sum of visible /watch time · 7 days",
+        rangeLabel: "Last 7 days",
+      };
+    }
+
+    const watch = sumField(act30, (d) => d.watch_seconds);
+    const views = sumField(act30, (d) => d.page_views);
+    const signups = sumField(sig30, (d) => d.signups);
+    return {
+      signups,
+      signupsHint: `~${(signups / 30).toFixed(1)}/day · ${metrics.total_signups} total`,
+      pageViews: views,
+      pageViewsHint:
+        views > 0 ? `~${Math.round(views / 30)}/day average` : "No views in range",
+      watchSeconds: watch,
+      watchHint: "Sum of visible /watch time · 30 days",
+      rangeLabel: "Last 30 days",
+    };
+  }, [activity, metrics, range, series]);
 
   const newVisitors = Math.max(
     0,
     metrics.unique_visitors_today - metrics.returning_visitors_today,
   );
 
-  const signupHints = useMemo(() => {
-    const yDate = new Date();
-    yDate.setUTCDate(yDate.getUTCDate() - 1);
-    const yKey = yDate.toISOString().slice(0, 10);
-    const yCount = series.find((d) => d.day === yKey)?.signups;
-
-    const todayHint =
-      yCount == null
-        ? `${metrics.signups_7d} in last 7 days`
-        : yCount === metrics.signups_today
-          ? `Same as yesterday · ${metrics.signups_7d} in 7d`
-          : `${formatSigned(metrics.signups_today - yCount)} vs yesterday · ${metrics.signups_7d} in 7d`;
-
-    const avg7 = metrics.signups_7d / 7;
-    const totalHint =
-      avg7 >= 0.1
-        ? `${metrics.signups_7d} this week · ~${avg7.toFixed(1)}/day`
-        : `${metrics.signups_7d} in the last 7 days`;
-
-    return { todayHint, totalHint };
-  }, [metrics.signups_7d, metrics.signups_today, series]);
-
-  const viewsPerDay7 = metrics.page_views_7d / 7;
+  const avg7 =
+    metrics.signups_7d / 7 >= 0.1
+      ? `${metrics.signups_7d} this week · ~${(metrics.signups_7d / 7).toFixed(1)}/day`
+      : `${metrics.signups_7d} in the last 7 days`;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pb-20 pt-24 sm:px-6">
-      <header className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto w-full max-w-6xl px-4 pb-24 pt-24 sm:px-6">
+      <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[0.7rem] uppercase tracking-[0.2em] text-mute">
             Anikura · Admin
@@ -382,8 +350,7 @@ export function AdminDashboard({
             Night desk
           </h1>
           <p className="mt-1.5 max-w-xl text-sm text-cloud">
-            Live presence, today’s audience, and what’s getting watched —
-            composed for a quiet night shift.
+            Live ops console — presence, audience, and growth in one quiet desk.
           </p>
         </div>
         <div className="text-sm text-mute">
@@ -392,97 +359,225 @@ export function AdminDashboard({
         </div>
       </header>
 
-      <section aria-label="Live pulse" className="grid gap-3 sm:grid-cols-3">
-        <MetricCard
-          tone="live"
-          label="Live now"
-          value={metrics.live_users}
-          hint={
-            metrics.sessions_live !== metrics.live_users
-              ? `${metrics.sessions_live} browser sessions · heartbeats ~2 min`
-              : "Heartbeats in the last ~2 minutes"
-          }
-        />
-        <MetricCard
-          label="Hours watched"
-          value={formatHours(metrics.watch_seconds_today)}
-          hint="Visible time on /watch today"
-        />
-        <MetricCard
-          label="Unique visitors"
-          value={metrics.unique_visitors_today}
-          hint={`${newVisitors} new · ${metrics.returning_visitors_today} returning`}
-        />
-      </section>
+      <AdminCommandStrip
+        items={NAV}
+        onRefresh={refresh}
+        refreshing={refreshing}
+      />
 
-      <section
-        aria-label="Today and growth"
-        className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
-      >
-        <MetricCard
-          label="Signups today"
-          value={metrics.signups_today}
-          hint={signupHints.todayHint}
-        />
-        <MetricCard
-          label="Total accounts"
-          value={metrics.total_signups}
-          hint={signupHints.totalHint}
-        />
-        <MetricCard
-          label="Page views today"
-          value={metrics.page_views_today}
-          hint={
-            viewsPerDay7 >= 1
-              ? `${metrics.page_views_7d} in 7d · ~${Math.round(viewsPerDay7)}/day`
-              : `${metrics.page_views_7d} in the last 7 days`
-          }
-        />
-        <MetricCard
-          label="Returning today"
-          value={metrics.returning_visitors_today}
-          hint={
-            metrics.unique_visitors_today > 0
-              ? `${Math.round((metrics.returning_visitors_today / metrics.unique_visitors_today) * 100)}% of unique visitors`
-              : "Saw the site before today"
-          }
-        />
-      </section>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs text-mute">
+          Metrics range · hot lists stay{" "}
+          <span className="text-cloud">today</span>
+        </p>
+        <div className="flex rounded-full border border-white/10 p-0.5">
+          {(
+            [
+              ["today", "Today"],
+              ["7d", "7d"],
+              ["30d", "30d"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setRange(key)}
+              className={`rounded-full px-3 py-1.5 text-xs transition ${
+                range === key
+                  ? "bg-snow text-void"
+                  : "text-mute hover:text-snow"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      <section className="mt-6" aria-label="What's hot">
-        <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+      {/* LIVE */}
+      <section id="admin-live" className="scroll-mt-36">
+        <div className="mb-3 flex items-end justify-between gap-3">
           <div>
-            <h2 className="text-lg tracking-[-0.02em] text-snow">
-              What&apos;s hot
+            <h2 className="text-[0.7rem] uppercase tracking-[0.16em] text-mute">
+              Live
             </h2>
-            <p className="text-sm text-mute">
-              Ranked from real watch ticks and page views today
+            <p className="mt-0.5 text-sm text-cloud">
+              Heartbeats in the last ~2 minutes
             </p>
           </div>
-          {liveNowPaths.length > 0 ? (
-            <p className="max-w-md truncate text-xs text-cloud">
-              <span className="text-mute">Right now · </span>
-              {liveNowPaths.map(([path, n]) => `${path} (${n})`).join(" · ")}
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <AdminMetricCard
+            tone="live"
+            live={metrics.live_users > 0}
+            label="Live now"
+            value={metrics.live_users}
+            hint={
+              metrics.live_users > 0
+                ? `${presence.length} on the globe · click a path below`
+                : "Waiting for heartbeats…"
+            }
+          />
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 transition duration-300 hover:border-white/[0.14]">
+            <p className="text-[0.68rem] uppercase tracking-[0.16em] text-mute">
+              Live paths
             </p>
-          ) : null}
+            {liveNowPaths.length === 0 ? (
+              <div className="mt-3 flex min-h-[4.5rem] items-center">
+                <p className="text-sm text-mute">
+                  No active paths — open the site in another tab to seed the
+                  ticker.
+                </p>
+              </div>
+            ) : (
+              <ul className="mt-3 space-y-1">
+                {liveNowPaths.map(({ path, people, n }) => (
+                  <li key={path}>
+                    <button
+                      type="button"
+                      onClick={() => openVisitor(people[0] ?? null)}
+                      className="group flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left transition hover:bg-white/[0.04]"
+                    >
+                      <span className="truncate font-mono text-xs text-cloud group-hover:text-snow">
+                        {path}
+                      </span>
+                      <span className="shrink-0 tabular-nums text-xs text-mute group-hover:text-cloud">
+                        {n}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* WATCH / AUDIENCE */}
+      <section id="admin-watch" className="mt-8 scroll-mt-36">
+        <div className="mb-3">
+          <h2 className="text-[0.7rem] uppercase tracking-[0.16em] text-mute">
+            Watch · Audience
+          </h2>
+          <p className="mt-0.5 text-sm text-cloud">
+            {ranged.rangeLabel} · unique visitors always show today
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <AdminMetricCard
+            label="Hours watched"
+            value={formatHours(ranged.watchSeconds)}
+            hint={ranged.watchHint}
+            spark={watchSpark}
+          />
+          <AdminMetricCard
+            label="Unique visitors"
+            value={metrics.unique_visitors_today}
+            hint={`${newVisitors} new · ${metrics.returning_visitors_today} returning · today`}
+          />
+          <AdminMetricCard
+            label="Page views"
+            value={ranged.pageViews}
+            hint={ranged.pageViewsHint}
+            spark={viewsSpark}
+          />
+        </div>
+      </section>
+
+      {/* GROWTH */}
+      <section id="admin-growth" className="mt-8 scroll-mt-36">
+        <div className="mb-3">
+          <h2 className="text-[0.7rem] uppercase tracking-[0.16em] text-mute">
+            Growth
+          </h2>
+          <p className="mt-0.5 text-sm text-cloud">
+            Accounts and signup momentum
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <AdminMetricCard
+            label={range === "today" ? "Signups today" : `Signups · ${range}`}
+            value={ranged.signups}
+            hint={ranged.signupsHint}
+            spark={signupSpark}
+          />
+          <AdminMetricCard
+            label="Total accounts"
+            value={metrics.total_signups}
+            hint={avg7}
+            spark={signupSpark}
+          />
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 transition duration-300 hover:border-white/[0.12]">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base tracking-[-0.02em] text-snow">
+                Signup chart
+              </h3>
+              <p className="text-sm text-mute">
+                {metrics.signups_7d} in the last 7 days
+              </p>
+            </div>
+            <div className="flex rounded-full border border-white/10 p-0.5">
+              {(["7", "14", "30"] as const).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => {
+                    setChartRange(key);
+                    setActiveDay(null);
+                  }}
+                  className={`rounded-full px-2.5 py-1 text-xs transition ${
+                    chartRange === key
+                      ? "bg-snow text-void"
+                      : "text-mute hover:text-snow"
+                  }`}
+                >
+                  {key}d
+                </button>
+              ))}
+            </div>
+          </div>
+          <SignupChart
+            series={filteredSeries}
+            activeDay={activeDay}
+            onSelectDay={setActiveDay}
+          />
+        </div>
+      </section>
+
+      {/* HOT */}
+      <section id="admin-hot" className="mt-8 scroll-mt-36" aria-label="What's hot">
+        <div className="mb-3">
+          <h2 className="text-lg tracking-[-0.02em] text-snow">What&apos;s hot</h2>
+          <p className="text-sm text-mute">
+            Ranked from real watch ticks and page views · today only
+          </p>
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
           <HotList
             title="Most watched"
             subtitle="By visible watch time today"
             items={topWatched}
-            empty="No /watch time recorded yet today."
+            emptyTitle="Quiet on the player"
+            emptyBody="No /watch time recorded yet today. Heat shows up as people stream."
           />
           <HotList
             title="Top pages"
             subtitle="By page views since midnight UTC"
             items={topPages}
-            empty="No page views recorded yet today."
+            emptyTitle="No page heat yet"
+            emptyBody="Views will rank here once traffic lands after midnight UTC."
           />
         </div>
       </section>
 
-      <section className="mt-6 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+      {/* GLOBE */}
+      <section
+        id="admin-globe"
+        className="mt-8 scroll-mt-36 grid gap-4 lg:grid-cols-[1.4fr_1fr]"
+      >
         <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#070709] transition duration-300 hover:border-white/[0.12]">
           <div
             className="pointer-events-none absolute inset-0 opacity-50"
@@ -502,75 +597,45 @@ export function AdminDashboard({
               </p>
             </div>
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1 text-xs text-cloud">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-snow" />
+              <span
+                className={`h-1.5 w-1.5 rounded-full bg-snow ${
+                  metrics.live_users > 0 ? "admin-live-pulse" : "opacity-40"
+                }`}
+              />
               Live
             </span>
           </div>
           <div className="relative mx-auto aspect-square w-full max-w-[560px]">
-            <LiveGlobe
-              people={presence}
-              selectedId={selectedId}
-              onSelect={onSelect}
-              className="absolute inset-0"
-            />
-            {selected ? (
-              <div className="absolute left-3 right-3 top-3 z-10 sm:left-auto sm:right-4 sm:w-[17.5rem]">
-                <VisitorCard
-                  person={selected}
-                  onClear={() => setSelectedId(null)}
-                />
+            {presence.length === 0 ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center px-8 text-center">
+                <p className="text-sm text-cloud">Globe is quiet</p>
+                <p className="mt-1.5 max-w-xs text-xs leading-relaxed text-mute">
+                  Live visitors with a known location appear as dots. Open the
+                  public site to seed presence.
+                </p>
               </div>
-            ) : null}
+            ) : (
+              <LiveGlobe
+                people={presence}
+                selectedId={selectedId}
+                onSelect={onSelect}
+                className="absolute inset-0"
+              />
+            )}
           </div>
         </div>
 
         <div className="flex flex-col gap-4">
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 transition duration-300 hover:border-white/[0.12]">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg tracking-[-0.02em] text-snow">
-                  Signups
-                </h2>
-                <p className="text-sm text-mute">
-                  {metrics.signups_7d} in the last 7 days
-                </p>
-              </div>
-              <div className="flex rounded-full border border-white/10 p-0.5">
-                {(["7", "14", "30"] as RangeKey[]).map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => {
-                      setRange(key);
-                      setActiveDay(null);
-                    }}
-                    className={`rounded-full px-2.5 py-1 text-xs transition ${
-                      range === key
-                        ? "bg-snow text-void"
-                        : "text-mute hover:text-snow"
-                    }`}
-                  >
-                    {key}d
-                  </button>
-                ))}
-              </div>
-            </div>
-            <SignupChart
-              series={filteredSeries}
-              activeDay={activeDay}
-              onSelectDay={setActiveDay}
-            />
-          </div>
-
           <div className="flex-1 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 transition duration-300 hover:border-white/[0.12]">
-            <h2 className="text-lg tracking-[-0.02em] text-snow">
-              Top regions
-            </h2>
+            <h2 className="text-lg tracking-[-0.02em] text-snow">Top regions</h2>
             <p className="mb-4 text-sm text-mute">From live heartbeats</p>
             {topCountries.length === 0 ? (
-              <p className="text-sm text-mute">
-                Waiting for visitors… open the site in another tab.
-              </p>
+              <div className="flex min-h-[8rem] flex-col items-center justify-center rounded-xl border border-dashed border-white/[0.08] bg-black/20 px-4 text-center">
+                <p className="text-sm text-cloud">No regions yet</p>
+                <p className="mt-1 text-xs text-mute">
+                  Waiting for geolocated heartbeats.
+                </p>
+              </div>
             ) : (
               <ul className="space-y-1">
                 {topCountries.map(([country, count], index) => {
@@ -604,76 +669,86 @@ export function AdminDashboard({
               </ul>
             )}
           </div>
+
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 transition duration-300 hover:border-white/[0.12]">
+            <h2 className="text-base tracking-[-0.02em] text-snow">
+              Recent presence
+            </h2>
+            <p className="mb-3 text-sm text-mute">
+              Tap a row to open the visitor drawer
+            </p>
+            {presence.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-white/[0.08] bg-black/20 px-3 py-6 text-center text-sm text-mute">
+                No live dots yet.
+              </div>
+            ) : (
+              <ul className="max-h-56 space-y-0.5 overflow-y-auto pr-1">
+                {presence.slice(0, 24).map((p) => {
+                  const active = p.id === selectedId && drawerOpen;
+                  const label =
+                    p.nickname?.trim() ||
+                    p.email?.split("@")[0] ||
+                    (p.user_id ? "Signed in" : "Guest");
+                  return (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        onClick={() => openVisitor(p)}
+                        className={`flex w-full items-center justify-between gap-3 rounded-lg px-2 py-2 text-left transition ${
+                          active
+                            ? "bg-white/[0.08] text-snow"
+                            : "text-cloud hover:bg-white/[0.04] hover:text-snow"
+                        }`}
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm">{label}</span>
+                          <span className="block truncate font-mono text-[0.65rem] text-mute">
+                            {p.path || "/"}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-[0.65rem] text-mute">
+                          {[p.city, p.country].filter(Boolean).join(", ") || "—"}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         </div>
       </section>
 
-      <BadgeManager />
+      <div id="admin-members" className="scroll-mt-36">
+        <BadgeManager />
+      </div>
 
-      <AnnouncementManager initialItems={announcements} />
+      <div id="admin-announcements" className="scroll-mt-36">
+        <AnnouncementManager initialItems={announcements} />
+      </div>
 
-      <section className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 transition duration-300 hover:border-white/[0.12]">
-        <h2 className="text-lg tracking-[-0.02em] text-snow">
-          Recent presence
-        </h2>
-        <p className="mb-4 text-sm text-mute">
-          Click a row to focus that visitor on the globe
-        </p>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-sm">
-            <thead className="text-[0.7rem] uppercase tracking-[0.12em] text-mute">
-              <tr className="border-b border-white/[0.06]">
-                <th className="pb-2 pr-3 font-medium">Visitor</th>
-                <th className="pb-2 pr-3 font-medium">Location</th>
-                <th className="pb-2 pr-3 font-medium">Path</th>
-                <th className="pb-2 font-medium">Last seen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {presence.slice(0, 40).map((p) => {
-                const active = p.id === selectedId;
-                const label =
-                  p.nickname?.trim() ||
-                  p.email?.split("@")[0] ||
-                  (p.user_id ? "Signed in" : "Guest");
-                return (
-                  <tr
-                    key={p.id}
-                    className={`cursor-pointer border-b border-white/[0.04] transition ${
-                      active
-                        ? "bg-white/[0.07] text-snow"
-                        : "text-cloud hover:bg-white/[0.03] hover:text-snow"
-                    }`}
-                    onClick={() => setSelectedId(p.id)}
-                  >
-                    <td className="py-2.5 pr-3">
-                      <span className="block">{label}</span>
-                      <span className="block text-[0.7rem] text-mute">
-                        {p.email || "Anonymous"}
-                      </span>
-                    </td>
-                    <td className="py-2.5 pr-3">
-                      {[p.city, p.country].filter(Boolean).join(", ") || "—"}
-                    </td>
-                    <td className="py-2.5 pr-3 font-mono text-xs">
-                      {p.path || "/"}
-                    </td>
-                    <td className="py-2.5 text-xs">
-                      {new Date(p.last_seen).toLocaleString()}
-                    </td>
-                  </tr>
-                );
-              })}
-              {presence.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="py-6 text-mute">
-                    No live dots yet.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <p className="mt-10 text-center text-[0.7rem] text-mute">
+        Shortcuts ·{" "}
+        <span className="text-cloud">1–7</span> jump ·{" "}
+        <span className="text-cloud">R</span> refresh ·{" "}
+        <Link href="/" className="text-cloud transition hover:text-snow">
+          View site
+        </Link>
+      </p>
+
+      <VisitorDrawer
+        person={selected}
+        open={drawerOpen}
+        onClose={closeDrawer}
+      />
     </div>
+  );
+}
+
+export function AdminDashboard(props: AdminDashboardProps) {
+  return (
+    <AdminFeedbackProvider>
+      <AdminDashboardInner {...props} />
+    </AdminFeedbackProvider>
   );
 }
