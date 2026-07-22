@@ -10,9 +10,17 @@ type Props = {
   subtitle?: string;
   href?: string;
   anime: AnimeSummary[];
+  /** How many leading posters to preload (keep low — home has many rows). */
+  priorityCount?: number;
 };
 
-export function AnimeRow({ title, subtitle, href, anime }: Props) {
+export function AnimeRow({
+  title,
+  subtitle,
+  href,
+  anime,
+  priorityCount = 0,
+}: Props) {
   const scroller = useRef<HTMLDivElement>(null);
 
   if (!anime.length) return null;
@@ -64,7 +72,11 @@ export function AnimeRow({ title, subtitle, href, anime }: Props) {
               key={item.id}
               className="w-[118px] shrink-0 snap-start sm:w-[156px]"
             >
-              <AnimePoster anime={item} priority={i < 5} index={i} />
+              <AnimePoster
+                anime={item}
+                priority={i < priorityCount}
+                index={i}
+              />
             </div>
           ))}
         </div>

@@ -53,6 +53,7 @@ export function AnimePoster({
           fill
           sizes="(max-width: 768px) 42vw, 180px"
           priority={priority}
+          loading={priority ? "eager" : "lazy"}
           className="poster-image object-cover"
         />
         <div className="poster-veil absolute inset-0" />

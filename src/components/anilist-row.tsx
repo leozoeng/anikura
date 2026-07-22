@@ -9,9 +9,17 @@ type Props = {
   subtitle?: string;
   media: AniListMedia[];
   hrefForId: (aniListId: number) => string | null;
+  /** How many leading posters to preload (default none — rows are below the fold). */
+  priorityCount?: number;
 };
 
-export function AniListRow({ title, subtitle, media, hrefForId }: Props) {
+export function AniListRow({
+  title,
+  subtitle,
+  media,
+  hrefForId,
+  priorityCount = 0,
+}: Props) {
   const items = media
     .map((m) => ({ media: m, href: hrefForId(m.id) }))
     .filter((x) => x.href);
@@ -41,14 +49,15 @@ export function AniListRow({ title, subtitle, media, hrefForId }: Props) {
               style={{ animationDelay: `${Math.min(i, 12) * 18}ms` }}
             >
               <div className="poster-frame relative aspect-[2/3] overflow-hidden rounded-[1.1rem] bg-raised">
-                {(m.coverImage?.extraLarge || m.coverImage?.large) && (
+                {(m.coverImage?.large || m.coverImage?.extraLarge) && (
                   <Image
-                    src={m.coverImage.extraLarge || m.coverImage.large || ""}
+                    src={m.coverImage.large || m.coverImage.extraLarge || ""}
                     alt={displayTitle(m.title)}
                     fill
                     sizes="160px"
-                    priority={i < 4}
+                    priority={i < priorityCount}
                     className="poster-image object-cover"
+                    loading={i < priorityCount ? "eager" : "lazy"}
                   />
                 )}
                 <div className="poster-veil absolute inset-0" />

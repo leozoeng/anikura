@@ -148,6 +148,7 @@ async function HomeRows() {
         subtitle="What people are watching"
         media={trending}
         hrefForId={hrefForAniList}
+        priorityCount={3}
       />
 
       <AniListRow

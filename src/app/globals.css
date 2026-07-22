@@ -256,7 +256,11 @@ button {
   .footer-petal,
   .footer-petal-slow,
   .sakura-dot,
-  .animate-soft-zoom {
+  .animate-soft-zoom,
+  .mood-cloud,
+  .mood-cloud-slow,
+  .featured-drift,
+  .featured-wave {
     animation: none !important;
   }
 
@@ -714,6 +718,12 @@ button {
 
 .page-enter {
   animation: rise 0.55s var(--ease-out-soft) both;
+}
+
+/* Skip layout/paint for off-screen shelves — big win on long home/browse pages */
+.page-shell section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
 }
 
 .filter-rail {
@@ -1203,6 +1213,18 @@ body[data-theater="true"] .site-atmosphere {
 
 .mood-cloud-slow {
   animation: ghibli-drift-slow 26s ease-in-out infinite;
+}
+
+/* Mobile: drop continuous blur drifts — cheaper paint while scrolling */
+@media (max-width: 640px) {
+  .mood-cloud,
+  .mood-cloud-slow,
+  .featured-wave,
+  .featured-wave-slow,
+  .footer-petal,
+  .footer-petal-slow {
+    animation: none !important;
+  }
 }
 
 .mood-film-card {

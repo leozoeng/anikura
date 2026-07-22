@@ -2,8 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // Vercel image optimization quota exceeded (402). Serve originals directly.
-    unoptimized: true,
+    // Bypass Vercel Image Optimization (402 quota) — resize via wsrv.nl instead.
+    loader: "custom",
+    loaderFile: "./image-loader.ts",
     remotePatterns: [
       { protocol: "https", hostname: "cdn.anipixcdn.co" },
       { protocol: "https", hostname: "s4.anilist.co" },
@@ -18,6 +19,9 @@ const nextConfig: NextConfig = {
       // YouTube trailer / banner fallbacks
       { protocol: "https", hostname: "i.ytimg.com" },
       { protocol: "https", hostname: "img.youtube.com" },
+      // Image resize proxy
+      { protocol: "https", hostname: "wsrv.nl" },
+      { protocol: "https", hostname: "images.weserv.nl" },
       // Supabase storage (avatars / banners)
       {
         protocol: "https",

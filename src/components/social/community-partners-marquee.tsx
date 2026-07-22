@@ -52,7 +52,16 @@ export function CommunityPartnersMarquee({
     const group = groupRef.current;
     if (!track || !group) return;
 
+    let running = true;
+    const visibleRef = { current: true };
+
     const tick = (ts: number) => {
+      if (!running) return;
+      if (!visibleRef.current) {
+        lastTsRef.current = 0;
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
       if (!lastTsRef.current) lastTsRef.current = ts;
       const dt = Math.min((ts - lastTsRef.current) / 1000, 0.05);
       lastTsRef.current = ts;
@@ -69,10 +78,24 @@ export function CommunityPartnersMarquee({
       rafRef.current = requestAnimationFrame(tick);
     };
 
+    const root = track.closest("section");
+    const io =
+      root &&
+      new IntersectionObserver(
+        ([entry]) => {
+          visibleRef.current = entry?.isIntersecting ?? true;
+          if (!visibleRef.current) lastTsRef.current = 0;
+        },
+        { rootMargin: "80px", threshold: 0 },
+      );
+    if (root && io) io.observe(root);
+
     rafRef.current = requestAnimationFrame(tick);
     return () => {
+      running = false;
       cancelAnimationFrame(rafRef.current);
       lastTsRef.current = 0;
+      io?.disconnect();
     };
   }, [reducedMotion, partners.length, strip.length]);
 

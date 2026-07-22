@@ -11,7 +11,7 @@ const DATA_DIR = path.join(process.cwd(), "data");
 const CATALOG_PATH = path.join(DATA_DIR, "catalog.json");
 const GENRES_PATH = path.join(DATA_DIR, "genres.json");
 const META_PATH = path.join(DATA_DIR, "sync-meta.json");
-const CATALOG_MEM_TTL_MS = 60_000;
+const CATALOG_MEM_TTL_MS = 5 * 60_000;
 
 let catalogMem: { data: CatalogAnime[]; at: number } | null = null;
 
