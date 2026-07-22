@@ -5,11 +5,24 @@ export type ListStatus =
   | "dropped"
   | "on_hold";
 
-export const LIST_STATUSES: { id: ListStatus; label: string }[] = [
+/**
+ * Board shelves + series list dropdown statuses.
+ * Favourites is a separate `is_favorite` flag (not a status).
+ * `planned` / `dropped` remain in the DB type for legacy rows only.
+ */
+export const BOARD_LIST_STATUSES: {
+  id: Extract<ListStatus, "watching" | "completed" | "on_hold">;
+  label: string;
+}[] = [
   { id: "watching", label: "Watching" },
   { id: "completed", label: "Completed" },
+  { id: "on_hold", label: "On Hold" },
+];
+
+/** Labels for any known status, including legacy planned/dropped. */
+export const LIST_STATUSES: { id: ListStatus; label: string }[] = [
+  ...BOARD_LIST_STATUSES,
   { id: "planned", label: "Plan to watch" },
-  { id: "on_hold", label: "On hold" },
   { id: "dropped", label: "Dropped" },
 ];
 

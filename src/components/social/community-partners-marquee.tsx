@@ -107,7 +107,7 @@ export function CommunityPartnersMarquee({
 
   return (
     <section
-      className="mt-6 overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] via-[#111214]/80 to-[#0a0b0e] sm:mt-8"
+      className="overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] via-[#111214]/80 to-[#0a0b0e]"
       aria-label="Communities that trust Anikura"
     >
       <div className="border-b border-white/[0.06] px-3.5 py-3 sm:px-4 sm:py-3.5">

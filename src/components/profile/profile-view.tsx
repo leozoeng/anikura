@@ -173,7 +173,7 @@ export function ProfileView({
       },
       {
         id: "on_hold",
-        title: "On hold",
+        title: "On Hold",
         addLabel: "Park a title",
         emptyHint: "Nothing on hold",
         items: onHold,
@@ -181,6 +181,270 @@ export function ProfileView({
       },
     ],
     [favorites, watching, completed, onHold],
+  );
+
+  const profileColumn = (
+    <>
+      <div
+        className="overflow-hidden rounded-[1.25rem] border border-white/[0.08] shadow-[0_40px_100px_rgba(0,0,0,0.55)] sm:rounded-[28px]"
+        style={{
+          background: ambient
+            ? `linear-gradient(165deg, rgba(${rgb}, 0.14) 0%, #111214 28%, #0e0f12 100%)`
+            : "#111214",
+          boxShadow: ambient
+            ? `0 40px 100px rgba(0,0,0,0.55), 0 0 80px rgba(${rgb}, 0.12)`
+            : undefined,
+        }}
+      >
+        <div className="grid lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)]">
+          <aside className="relative border-b border-white/[0.06] lg:border-b-0 lg:border-r lg:border-white/[0.06]">
+            <div className="relative h-[120px] sm:h-[148px]">
+              {live.banner_url ? (
+                <SafeImage
+                  src={live.banner_url}
+                  alt=""
+                  fill
+                  priority
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 300px"
+                />
+              ) : (
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: `linear-gradient(135deg, rgba(${rgb}, 0.75), #1a1b1e 70%)`,
+                  }}
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#111214]/80 via-transparent to-black/10" />
+            </div>
+
+            <div className="relative px-3.5 pb-4 pt-0 sm:px-3.5 sm:pb-5">
+              <div
+                className="-mt-10 inline-flex rounded-full p-[4px] sm:-mt-11 sm:p-[5px]"
+                style={{
+                  background: "#111214",
+                  boxShadow: ambient
+                    ? `0 0 0 3px rgba(${rgb}, 0.55), 0 0 28px rgba(${rgb}, 0.35)`
+                    : `0 0 0 3px ${accent}`,
+                }}
+              >
+                <div className="relative h-[76px] w-[76px] overflow-hidden rounded-full bg-[#1e1f22] sm:h-[84px] sm:w-[84px]">
+                  {live.avatar_url ? (
+                    <SafeImage
+                      src={live.avatar_url}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      sizes="84px"
+                    />
+                  ) : (
+                    <div
+                      className="grid h-full w-full place-items-center text-3xl font-semibold"
+                      style={{ color: accent }}
+                    >
+                      {name.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-2.5 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
+                    <h1 className="truncate text-[1.35rem] font-bold leading-tight tracking-[-0.03em] text-snow sm:text-[1.45rem]">
+                      {name}
+                    </h1>
+                    <ProfileBadges badges={badges} />
+                  </div>
+                  <p className="mt-0.5 truncate text-sm text-[#b5bac1]">
+                    {handle}
+                  </p>
+                  <p className="mt-1 text-[0.7rem] text-[#6d6f78]">
+                    Anikura · {memberSince}
+                  </p>
+                </div>
+                {isOwner ? (
+                  <button
+                    type="button"
+                    onClick={() => setEditing(true)}
+                    aria-label="Edit profile"
+                    className={`pressable mt-0.5 min-h-11 shrink-0 rounded-full bg-white/[0.06] px-3.5 py-2 text-[0.8rem] font-medium text-[#dbdee1] ring-1 ring-white/[0.08] transition hover:bg-white/[0.1] hover:text-snow ${FOCUS_RING}`}
+                  >
+                    Edit
+                  </button>
+                ) : null}
+              </div>
+
+              <section className="mt-3 rounded-xl bg-[#1e1f22]/90 px-3 py-2.5 ring-1 ring-white/[0.04]">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#949ba4]">
+                  About Me
+                </p>
+                {live.bio ? (
+                  <p className="mt-1.5 whitespace-pre-wrap text-[0.875rem] leading-relaxed text-[#dbdee1]">
+                    {live.bio}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-sm text-[#6d6f78]">
+                    {isOwner ? "Add a short bio from Edit." : "No bio yet."}
+                  </p>
+                )}
+              </section>
+
+              {isOwner && continueStrip.length > 0 ? (
+                <section className="mt-2.5 rounded-xl bg-[#1e1f22]/90 px-3 py-2.5 ring-1 ring-white/[0.04]">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#949ba4]">
+                      Continue watching
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setTab("activity")}
+                      aria-label="See all continue watching"
+                      className={`min-h-8 rounded-md px-1.5 text-[0.65rem] font-medium text-[#949ba4] transition hover:text-[#dbdee1] ${FOCUS_RING}`}
+                    >
+                      See all
+                    </button>
+                  </div>
+                  <div className="scrollbar-none -mx-0.5 flex snap-x snap-mandatory gap-2 overflow-x-auto px-0.5 pb-0.5">
+                    {continueStrip.map((item) => (
+                      <Link
+                        key={`${item.id}-${item.episode}-${item.language}`}
+                        href={`/watch/${item.id}/${item.slug}?ep=${item.episode}&lang=${item.language}`}
+                        aria-label={`Continue ${item.title}, episode ${item.episode}`}
+                        className={`pressable group w-[4.75rem] shrink-0 snap-start sm:w-[4.5rem] ${FOCUS_RING} rounded-md`}
+                        title={`${item.title} · Episode ${item.episode}`}
+                      >
+                        <div className="relative aspect-[2/3] overflow-hidden rounded-md bg-[#111214] ring-1 ring-white/8 transition group-hover:ring-white/25">
+                          {item.poster ? (
+                            <SafeImage
+                              src={item.poster}
+                              alt=""
+                              fill
+                              className="object-cover"
+                              sizes="76px"
+                            />
+                          ) : null}
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent px-1 pb-1 pt-5">
+                            <p className="truncate text-center text-[0.55rem] font-semibold text-white/95">
+                              E{item.episode}
+                            </p>
+                            {item.percent > 0 && item.percent < 100 ? (
+                              <div className="mt-0.5 h-0.5 overflow-hidden rounded-full bg-white/20">
+                                <div
+                                  className="h-full rounded-full bg-white"
+                                  style={{
+                                    width: `${Math.min(100, item.percent)}%`,
+                                  }}
+                                />
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+            </div>
+          </aside>
+
+          <div className="flex min-h-[300px] flex-col bg-[#0e0f12]/40 sm:min-h-[340px]">
+            <div className="sticky top-14 z-20 border-b border-white/[0.06] bg-[#0e0f12]/92 backdrop-blur-xl sm:top-16 lg:static lg:bg-transparent lg:backdrop-blur-none">
+              <div
+                role="tablist"
+                aria-label="Profile sections"
+                className="scrollbar-none flex gap-0.5 overflow-x-auto px-3 py-2 sm:gap-1 sm:px-3.5 sm:pt-2.5 sm:pb-0"
+              >
+                {TABS.map((t) => {
+                  const active = tab === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      ref={(el) => {
+                        tabRefs.current[t.id] = el;
+                      }}
+                      type="button"
+                      role="tab"
+                      id={`profile-tab-${t.id}`}
+                      aria-selected={active}
+                      aria-controls={`profile-panel-${t.id}`}
+                      tabIndex={active ? 0 : -1}
+                      onClick={() => setTab(t.id)}
+                      className={`pressable relative min-h-11 shrink-0 rounded-full px-3.5 py-2 text-[0.8125rem] font-medium transition sm:rounded-none sm:min-h-0 sm:px-3 sm:py-2.5 sm:text-sm ${FOCUS_RING} ${
+                        active
+                          ? "bg-white/[0.12] text-snow sm:bg-transparent"
+                          : "text-[#949ba4] hover:text-[#dbdee1]"
+                      }`}
+                    >
+                      {t.label}
+                      {active ? (
+                        <span
+                          className="absolute inset-x-2.5 -bottom-px hidden h-0.5 rounded-full sm:block"
+                          style={{ background: accent }}
+                        />
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div
+              key={tab}
+              id={`profile-panel-${tab}`}
+              role="tabpanel"
+              aria-labelledby={`profile-tab-${tab}`}
+              className="flex-1 overflow-y-auto p-3.5 animate-rise"
+              style={{ animationDuration: "0.28s" }}
+            >
+              {tab === "board" ? (
+                <BoardTab
+                  widgets={widgets}
+                  isOwner={isOwner}
+                  accent={accent}
+                  rgb={rgb}
+                />
+              ) : null}
+              {tab === "activity" ? (
+                <ActivityTab
+                  items={episodes}
+                  isOwner={isOwner}
+                  accent={accent}
+                />
+              ) : null}
+              {tab === "watch" ? (
+                <WatchTab
+                  items={planned}
+                  isOwner={isOwner}
+                  accent={accent}
+                />
+              ) : null}
+              {tab === "comments" ? (
+                <CommentsTab
+                  items={comments}
+                  isOwner={isOwner}
+                  accent={accent}
+                />
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {editing && isOwner ? (
+        <div className="mt-4 sm:mt-6">
+          <ProfileEditPanel
+            profile={live}
+            onSaved={(next) => {
+              setLive(next);
+              setEditing(false);
+            }}
+            onCancel={() => setEditing(false)}
+          />
+        </div>
+      ) : null}
+    </>
   );
 
   return (
@@ -215,7 +479,13 @@ export function ProfileView({
           </div>
         ) : null}
 
-        {/* Mobile: Profile → Board → People; Community below. Desktop: profile + discovery rail */}
+        {/*
+          Desktop 2×2:
+            [ Profile ] [ Find people ]
+            [ Community ] [ Discord CTA ]
+          then full-width partners below with breathing room.
+          Mobile: Profile → Find people → Community → Discord → Partners
+        */}
         <div
           className={
             hub
@@ -223,312 +493,98 @@ export function ProfileView({
               : undefined
           }
         >
-          <div className="min-w-0 order-1">
-            <div
-              className="overflow-hidden rounded-[1.25rem] border border-white/[0.08] shadow-[0_40px_100px_rgba(0,0,0,0.55)] sm:rounded-[28px]"
-              style={{
-                background: ambient
-                  ? `linear-gradient(165deg, rgba(${rgb}, 0.14) 0%, #111214 28%, #0e0f12 100%)`
-                  : "#111214",
-                boxShadow: ambient
-                  ? `0 40px 100px rgba(0,0,0,0.55), 0 0 80px rgba(${rgb}, 0.12)`
-                  : undefined,
-              }}
-            >
-              <div className="grid lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)]">
-                <aside className="relative border-b border-white/[0.06] lg:border-b-0 lg:border-r lg:border-white/[0.06]">
-                  <div className="relative h-[120px] sm:h-[148px]">
-                    {live.banner_url ? (
-                      <SafeImage
-                        src={live.banner_url}
-                        alt=""
-                        fill
-                        priority
-                        className="object-cover"
-                        sizes="(max-width: 1024px) 100vw, 300px"
-                      />
-                    ) : (
-                      <div
-                        className="absolute inset-0"
-                        style={{
-                          background: `linear-gradient(135deg, rgba(${rgb}, 0.75), #1a1b1e 70%)`,
-                        }}
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#111214]/80 via-transparent to-black/10" />
-                  </div>
-
-                  <div className="relative px-3.5 pb-4 pt-0 sm:px-3.5 sm:pb-5">
-                    <div
-                      className="-mt-10 inline-flex rounded-full p-[4px] sm:-mt-11 sm:p-[5px]"
-                      style={{
-                        background: "#111214",
-                        boxShadow: ambient
-                          ? `0 0 0 3px rgba(${rgb}, 0.55), 0 0 28px rgba(${rgb}, 0.35)`
-                          : `0 0 0 3px ${accent}`,
-                      }}
-                    >
-                      <div className="relative h-[76px] w-[76px] overflow-hidden rounded-full bg-[#1e1f22] sm:h-[84px] sm:w-[84px]">
-                        {live.avatar_url ? (
-                          <SafeImage
-                            src={live.avatar_url}
-                            alt=""
-                            fill
-                            className="object-cover"
-                            sizes="84px"
-                          />
-                        ) : (
-                          <div
-                            className="grid h-full w-full place-items-center text-3xl font-semibold"
-                            style={{ color: accent }}
-                          >
-                            {name.slice(0, 1).toUpperCase()}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mt-2.5 flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
-                          <h1 className="truncate text-[1.35rem] font-bold leading-tight tracking-[-0.03em] text-snow sm:text-[1.45rem]">
-                            {name}
-                          </h1>
-                          <ProfileBadges badges={badges} />
-                        </div>
-                        <p className="mt-0.5 truncate text-sm text-[#b5bac1]">
-                          {handle}
-                        </p>
-                        <p className="mt-1 text-[0.7rem] text-[#6d6f78]">
-                          Anikura · {memberSince}
-                        </p>
-                      </div>
-                      {isOwner ? (
-                        <button
-                          type="button"
-                          onClick={() => setEditing(true)}
-                          aria-label="Edit profile"
-                          className={`pressable mt-0.5 min-h-11 shrink-0 rounded-full bg-white/[0.06] px-3.5 py-2 text-[0.8rem] font-medium text-[#dbdee1] ring-1 ring-white/[0.08] transition hover:bg-white/[0.1] hover:text-snow ${FOCUS_RING}`}
-                        >
-                          Edit
-                        </button>
-                      ) : null}
-                    </div>
-
-                    <section className="mt-3 rounded-xl bg-[#1e1f22]/90 px-3 py-2.5 ring-1 ring-white/[0.04]">
-                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#949ba4]">
-                        About Me
-                      </p>
-                      {live.bio ? (
-                        <p className="mt-1.5 whitespace-pre-wrap text-[0.875rem] leading-relaxed text-[#dbdee1]">
-                          {live.bio}
-                        </p>
-                      ) : (
-                        <p className="mt-1 text-sm text-[#6d6f78]">
-                          {isOwner ? "Add a short bio from Edit." : "No bio yet."}
-                        </p>
-                      )}
-                    </section>
-
-                    {isOwner && continueStrip.length > 0 ? (
-                      <section className="mt-2.5 rounded-xl bg-[#1e1f22]/90 px-3 py-2.5 ring-1 ring-white/[0.04]">
-                        <div className="mb-2 flex items-center justify-between gap-2">
-                          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#949ba4]">
-                            Continue watching
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => setTab("activity")}
-                            aria-label="See all continue watching"
-                            className={`min-h-8 rounded-md px-1.5 text-[0.65rem] font-medium text-[#949ba4] transition hover:text-[#dbdee1] ${FOCUS_RING}`}
-                          >
-                            See all
-                          </button>
-                        </div>
-                        <div className="scrollbar-none -mx-0.5 flex snap-x snap-mandatory gap-2 overflow-x-auto px-0.5 pb-0.5">
-                          {continueStrip.map((item) => (
-                            <Link
-                              key={`${item.id}-${item.episode}-${item.language}`}
-                              href={`/watch/${item.id}/${item.slug}?ep=${item.episode}&lang=${item.language}`}
-                              aria-label={`Continue ${item.title}, episode ${item.episode}`}
-                              className={`pressable group w-[4.75rem] shrink-0 snap-start sm:w-[4.5rem] ${FOCUS_RING} rounded-md`}
-                              title={`${item.title} · Episode ${item.episode}`}
-                            >
-                              <div className="relative aspect-[2/3] overflow-hidden rounded-md bg-[#111214] ring-1 ring-white/8 transition group-hover:ring-white/25">
-                                {item.poster ? (
-                                  <SafeImage
-                                    src={item.poster}
-                                    alt=""
-                                    fill
-                                    className="object-cover"
-                                    sizes="76px"
-                                  />
-                                ) : null}
-                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent px-1 pb-1 pt-5">
-                                  <p className="truncate text-center text-[0.55rem] font-semibold text-white/95">
-                                    E{item.episode}
-                                  </p>
-                                  {item.percent > 0 && item.percent < 100 ? (
-                                    <div className="mt-0.5 h-0.5 overflow-hidden rounded-full bg-white/20">
-                                      <div
-                                        className="h-full rounded-full bg-white"
-                                        style={{
-                                          width: `${Math.min(100, item.percent)}%`,
-                                        }}
-                                      />
-                                    </div>
-                                  ) : null}
-                                </div>
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
-                      </section>
-                    ) : null}
-                  </div>
-                </aside>
-
-                <div className="flex min-h-[300px] flex-col bg-[#0e0f12]/40 sm:min-h-[340px]">
-                  <div className="sticky top-14 z-20 border-b border-white/[0.06] bg-[#0e0f12]/92 backdrop-blur-xl sm:top-16 lg:static lg:bg-transparent lg:backdrop-blur-none">
-                    <div
-                      role="tablist"
-                      aria-label="Profile sections"
-                      className="scrollbar-none flex gap-0.5 overflow-x-auto px-3 py-2 sm:gap-1 sm:px-3.5 sm:pt-2.5 sm:pb-0"
-                    >
-                      {TABS.map((t) => {
-                        const active = tab === t.id;
-                        return (
-                          <button
-                            key={t.id}
-                            ref={(el) => {
-                              tabRefs.current[t.id] = el;
-                            }}
-                            type="button"
-                            role="tab"
-                            id={`profile-tab-${t.id}`}
-                            aria-selected={active}
-                            aria-controls={`profile-panel-${t.id}`}
-                            tabIndex={active ? 0 : -1}
-                            onClick={() => setTab(t.id)}
-                            className={`pressable relative min-h-11 shrink-0 rounded-full px-3.5 py-2 text-[0.8125rem] font-medium transition sm:rounded-none sm:min-h-0 sm:px-3 sm:py-2.5 sm:text-sm ${FOCUS_RING} ${
-                              active
-                                ? "bg-white/[0.12] text-snow sm:bg-transparent"
-                                : "text-[#949ba4] hover:text-[#dbdee1]"
-                            }`}
-                          >
-                            {t.label}
-                            {active ? (
-                              <span
-                                className="absolute inset-x-2.5 -bottom-px hidden h-0.5 rounded-full sm:block"
-                                style={{ background: accent }}
-                              />
-                            ) : null}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div
-                    key={tab}
-                    id={`profile-panel-${tab}`}
-                    role="tabpanel"
-                    aria-labelledby={`profile-tab-${tab}`}
-                    className="flex-1 overflow-y-auto p-3.5 animate-rise"
-                    style={{ animationDuration: "0.28s" }}
-                  >
-                    {tab === "board" ? (
-                      <BoardTab
-                        widgets={widgets}
-                        isOwner={isOwner}
-                        accent={accent}
-                        rgb={rgb}
-                      />
-                    ) : null}
-                    {tab === "activity" ? (
-                      <ActivityTab
-                        items={episodes}
-                        isOwner={isOwner}
-                        accent={accent}
-                      />
-                    ) : null}
-                    {tab === "watch" ? (
-                      <WatchTab
-                        items={planned}
-                        isOwner={isOwner}
-                        accent={accent}
-                      />
-                    ) : null}
-                    {tab === "comments" ? (
-                      <CommentsTab
-                        items={comments}
-                        isOwner={isOwner}
-                        accent={accent}
-                      />
-                    ) : null}
+          {hub ? (
+            <>
+              <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-5">
+                <div className="order-1 min-w-0">{profileColumn}</div>
+                <div className="order-3 min-w-0 lg:order-none">
+                  <div className="rounded-2xl border border-white/[0.08] bg-[#111214]/55 p-3.5 sm:p-4">
+                    {hub}
                   </div>
                 </div>
               </div>
-            </div>
-
-            {editing && isOwner ? (
-              <div className="mt-4 sm:mt-6">
-                <ProfileEditPanel
-                  profile={live}
-                  onSaved={(next) => {
-                    setLive(next);
-                    setEditing(false);
-                  }}
-                  onCancel={() => setEditing(false)}
-                />
+              <div className="contents lg:sticky lg:top-[4.75rem] lg:flex lg:min-w-0 lg:flex-col lg:gap-5 lg:self-start">
+                <aside className="order-2 min-w-0 lg:order-none">
+                  <ProfileSearch compact excludeUserId={live.id} />
+                </aside>
+                <div className="order-4 min-w-0 lg:order-none">
+                  <RailDiscordCta />
+                </div>
               </div>
-            ) : null}
-
-            {!hub ? (
+            </>
+          ) : (
+            <div className="min-w-0">
+              {profileColumn}
               <div className="mt-4">
                 <ProfileSearch excludeUserId={live.id} />
               </div>
-            ) : null}
-          </div>
-
-          {hub ? (
-            <aside className="order-2 space-y-3 lg:sticky lg:top-[4.75rem] lg:self-start">
-              <ProfileSearch compact excludeUserId={live.id} />
-              <QuietDiscordLine />
-              <div className="lg:block">{hub}</div>
-            </aside>
-          ) : null}
+            </div>
+          )}
         </div>
 
-        {hub ? <CommunityPartnersMarquee /> : null}
+        {hub ? (
+          <div className="mt-10 sm:mt-12 lg:mt-14">
+            <CommunityPartnersMarquee />
+          </div>
+        ) : null}
       </div>
     </div>
   );
 }
 
-function QuietDiscordLine() {
+function RailDiscordCta() {
   return (
     <a
       href={ANIKURA_DISCORD_INVITE}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Updates and bugs — Join Anikura Discord"
-      className={`group flex min-h-11 items-center justify-between gap-3 rounded-xl px-1 py-1.5 text-[0.8125rem] text-[#949ba4] transition hover:text-[#dbdee1] ${FOCUS_RING}`}
+      aria-label="Join Anikura Discord for latest updates, feedback, and bugs"
+      className={`group footer-discord-invite pressable relative flex w-full min-h-[4.25rem] items-center gap-3 overflow-hidden rounded-2xl px-3.5 py-3 ${FOCUS_RING}`}
     >
-      <span className="min-w-0 truncate">
-        Updates &amp; bugs{" "}
-        <span className="text-[#6d6f78]">—</span>{" "}
-        <span className="font-medium text-[#dbdee1] group-hover:text-snow">
-          Join
-        </span>
-      </span>
       <span
         aria-hidden
-        className="shrink-0 text-[#6d6f78] transition group-hover:translate-x-0.5 group-hover:text-[#dbdee1]"
-      >
-        →
+        className="footer-discord-glow pointer-events-none absolute inset-0"
+      />
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_22%,rgba(255,255,255,0.14)_48%,transparent_72%)] opacity-0 transition duration-500 group-hover:translate-x-1 group-hover:opacity-100"
+      />
+      <span className="footer-discord-badge relative grid h-10 w-10 shrink-0 place-items-center rounded-xl text-black transition duration-300 group-hover:scale-[1.05]">
+        <DiscordGlyph />
+        <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#57F287] ring-2 ring-black" />
+      </span>
+      <span className="relative min-w-0 flex-1 leading-tight">
+        <span className="block text-sm font-semibold tracking-[-0.02em] text-white">
+          Get the latest updates
+        </span>
+        <span className="mt-0.5 block text-[0.68rem] text-white/65">
+          Feedback &amp; bugs welcome too
+        </span>
+      </span>
+      <span className="footer-discord-cta relative inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-3 text-[0.75rem] font-semibold tracking-[-0.02em] transition duration-300 group-hover:-translate-y-0.5">
+        Join
+        <span
+          aria-hidden
+          className="opacity-80 transition duration-300 group-hover:translate-x-0.5 group-hover:opacity-100"
+        >
+          →
+        </span>
       </span>
     </a>
+  );
+}
+
+function DiscordGlyph() {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+    >
+      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+    </svg>
   );
 }
 
@@ -811,8 +867,8 @@ function WatchTab({
           title="Queue is empty"
           body={
             isOwner
-              ? "Mark titles as Plan to watch from the heart menu."
-              : "Nothing planned yet."
+              ? "Older Plan to watch entries appear here. Use Favourites, Watching, Completed, or On Hold from the heart menu."
+              : "Nothing in this queue yet."
           }
           compact
           action={

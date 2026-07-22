@@ -21,72 +21,60 @@ const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30";
 
 /**
- * Secondary community block for the Social rail.
- * Kept flat / less card-heavy so Find people stays the primary discovery job.
+ * Community block — sits under Profile at matching column width.
+ * Updates / Comments tabs with room to breathe (not rail-cramped).
  */
 export function SocialHub({ announcements, comments }: Props) {
   const [tab, setTab] = useState<HubTab>("updates");
-  const [open, setOpen] = useState(false);
   const hasPinned = announcements.some((i) => i.pinned);
-  const previewCount =
-    tab === "updates" ? announcements.length : comments.length;
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-white/[0.06] bg-transparent">
-      <div className="flex items-center justify-between gap-2 px-1 pb-1 pt-0.5 lg:px-0">
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-mute">
-          Community
-        </p>
-        <button
-          type="button"
-          className={`lg:hidden min-h-11 rounded-lg px-2.5 text-[0.75rem] font-medium text-[#949ba4] transition hover:text-snow ${FOCUS_RING}`}
-          aria-expanded={open}
-          aria-controls="social-hub-panel"
-          onClick={() => setOpen((v) => !v)}
-        >
-          {open ? "Hide" : `Show · ${previewCount}`}
-        </button>
+    <section className="min-w-0" aria-label="Community">
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-mute">
+            Community
+          </p>
+          <h2 className="mt-1 text-[0.95rem] font-semibold tracking-[-0.02em] text-snow sm:text-base">
+            Updates &amp; recent comments
+          </h2>
+        </div>
+        {hasPinned && tab === "updates" ? (
+          <span className="rounded-full border border-sakura/25 bg-sakura/10 px-2.5 py-1 text-[0.58rem] font-medium uppercase tracking-[0.08em] text-sakura-soft">
+            Pinned
+          </span>
+        ) : null}
       </div>
 
       <div
-        id="social-hub-panel"
-        className={`${open ? "block" : "hidden"} lg:block`}
+        role="tablist"
+        aria-label="Community feed"
+        className="flex gap-1 border-b border-white/[0.08]"
       >
-        <div
-          role="tablist"
-          aria-label="Community feed"
-          className="flex gap-0.5 border-b border-white/[0.06] px-0.5"
-        >
-          <HubTabButton
-            active={tab === "updates"}
-            onClick={() => setTab("updates")}
-            label="Updates"
-            count={announcements.length}
-          />
-          <HubTabButton
-            active={tab === "comments"}
-            onClick={() => setTab("comments")}
-            label="Comments"
-            count={comments.length}
-          />
-          {hasPinned && tab === "updates" ? (
-            <span className="ml-auto self-center rounded-full border border-sakura/25 bg-sakura/10 px-2 py-0.5 text-[0.58rem] font-medium uppercase tracking-[0.08em] text-sakura-soft">
-              Pinned
-            </span>
-          ) : null}
-        </div>
+        <HubTabButton
+          active={tab === "updates"}
+          onClick={() => setTab("updates")}
+          label="Updates"
+          count={announcements.length}
+        />
+        <HubTabButton
+          active={tab === "comments"}
+          onClick={() => setTab("comments")}
+          label="Comments"
+          count={comments.length}
+        />
+      </div>
 
-        <div
-          className="max-h-[min(14rem,36vh)] overflow-y-auto overscroll-contain lg:max-h-[min(22rem,calc(100vh-16rem))]"
-          role="tabpanel"
-          aria-label={tab === "updates" ? "Updates" : "Recent comments"}
-        >
-          {tab === "updates" ? (
-            <AnnouncementsList items={announcements} />
-          ) : (
-            <RecentCommentsList items={comments} />
-          )}
-        </div>
+      <div
+        className="mt-1 max-h-[min(28rem,52vh)] overflow-y-auto overscroll-contain sm:max-h-[min(32rem,56vh)] lg:max-h-[min(36rem,calc(100vh-18rem))]"
+        role="tabpanel"
+        aria-label={tab === "updates" ? "Updates" : "Recent comments"}
+      >
+        {tab === "updates" ? (
+          <AnnouncementsList items={announcements} />
+        ) : (
+          <RecentCommentsList items={comments} />
+        )}
       </div>
     </section>
   );
@@ -109,24 +97,20 @@ function HubTabButton({
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      className={`pressable relative min-h-11 shrink-0 rounded-t-lg px-3 py-2 text-[0.8125rem] font-medium transition lg:min-h-0 ${FOCUS_RING} ${
-        active
-          ? "text-snow"
-          : "text-[#949ba4] hover:text-[#dbdee1]"
+      className={`pressable relative min-h-11 shrink-0 rounded-t-lg px-3.5 py-2.5 text-[0.8125rem] font-medium transition sm:min-h-0 sm:py-2 ${FOCUS_RING} ${
+        active ? "text-snow" : "text-[#949ba4] hover:text-[#dbdee1]"
       }`}
     >
       {label}
-      {count > 0 ? (
-        <span
-          className={`ml-1.5 text-[0.65rem] tabular-nums ${
-            active ? "text-mute" : "text-[#6d6f78]"
-          }`}
-        >
-          {count}
-        </span>
-      ) : null}
+      <span
+        className={`ml-1.5 text-[0.65rem] tabular-nums ${
+          active ? "text-mute" : "text-[#6d6f78]"
+        }`}
+      >
+        {count}
+      </span>
       {active ? (
-        <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-sakura/80" />
+        <span className="absolute inset-x-2.5 -bottom-px h-0.5 rounded-full bg-sakura/80" />
       ) : null}
     </button>
   );
@@ -135,30 +119,33 @@ function HubTabButton({
 function AnnouncementsList({ items }: { items: SocialAnnouncement[] }) {
   if (items.length === 0) {
     return (
-      <p className="px-1 py-6 text-center text-sm text-mute">
-        No announcements yet — check back when the team posts an update.
-      </p>
+      <div className="mx-0.5 my-4 rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-10 text-center">
+        <p className="text-sm font-medium text-[#dbdee1]">No updates yet</p>
+        <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-[#6d6f78]">
+          Site news and notes will show up here when the team posts.
+        </p>
+      </div>
     );
   }
 
   return (
-    <ul className="divide-y divide-white/[0.04]">
+    <ul className="divide-y divide-white/[0.05]">
       {items.map((item) => (
-        <li key={item.id} className="px-1 py-3">
+        <li key={item.id} className="px-0.5 py-3.5 first:pt-3">
           <div className="flex flex-wrap items-center gap-2">
             {item.pinned ? (
-              <span className="text-[0.58rem] font-semibold uppercase tracking-[0.08em] text-mute">
+              <span className="rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[0.58rem] font-semibold uppercase tracking-[0.08em] text-mute">
                 Pin
               </span>
             ) : null}
-            <h3 className="text-sm font-semibold tracking-[-0.02em] text-snow">
+            <h3 className="text-[0.9375rem] font-semibold tracking-[-0.02em] text-snow">
               {item.title}
             </h3>
           </div>
-          <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-[0.8125rem] leading-relaxed text-[#b5bac1]">
+          <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-[#b5bac1]">
             {item.body}
           </p>
-          <p className="mt-1.5 text-[0.65rem] text-mute">
+          <p className="mt-2 text-[0.7rem] text-mute">
             {item.authorNickname || item.authorUsername
               ? `${item.authorNickname || `@${item.authorUsername}`} · `
               : ""}
@@ -173,14 +160,17 @@ function AnnouncementsList({ items }: { items: SocialAnnouncement[] }) {
 function RecentCommentsList({ items }: { items: SiteCommentItem[] }) {
   if (items.length === 0) {
     return (
-      <p className="px-1 py-6 text-center text-sm text-mute">
-        No comments yet — finish an episode and leave the first note.
-      </p>
+      <div className="mx-0.5 my-4 rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-10 text-center">
+        <p className="text-sm font-medium text-[#dbdee1]">No comments yet</p>
+        <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-[#6d6f78]">
+          Finish an episode and leave the first note — it’ll land here.
+        </p>
+      </div>
     );
   }
 
   return (
-    <ul className="divide-y divide-white/[0.04]">
+    <ul className="divide-y divide-white/[0.05]">
       {items.map((item) => {
         const author = {
           id: item.user_id,
@@ -195,12 +185,12 @@ function RecentCommentsList({ items }: { items: SiteCommentItem[] }) {
         const watchHref = `/watch/${item.anime_id}/${item.animeSlug}?ep=${item.episode}&lang=${item.language}`;
 
         return (
-          <li key={item.id} className="px-1 py-2.5">
-            <div className="flex gap-2.5">
+          <li key={item.id} className="px-0.5 py-3 first:pt-3">
+            <div className="flex gap-3">
               <Link
                 href={profileHref(author)}
                 aria-label={`View ${name}'s profile`}
-                className={`relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/10 ${FOCUS_RING}`}
+                className={`relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/10 ${FOCUS_RING}`}
               >
                 {item.authorAvatarUrl ? (
                   <SafeImage
@@ -208,10 +198,10 @@ function RecentCommentsList({ items }: { items: SiteCommentItem[] }) {
                     alt=""
                     fill
                     className="object-cover"
-                    sizes="32px"
+                    sizes="36px"
                   />
                 ) : (
-                  <span className="grid h-full w-full place-items-center text-[0.65rem] font-semibold text-mute">
+                  <span className="grid h-full w-full place-items-center text-[0.7rem] font-semibold text-mute">
                     {name.slice(0, 1).toUpperCase()}
                   </span>
                 )}
@@ -221,7 +211,7 @@ function RecentCommentsList({ items }: { items: SiteCommentItem[] }) {
                 <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
                   <Link
                     href={profileHref(author)}
-                    className={`truncate text-[0.8125rem] font-medium text-snow hover:underline ${FOCUS_RING} rounded-sm`}
+                    className={`truncate text-sm font-medium text-snow hover:underline ${FOCUS_RING} rounded-sm`}
                   >
                     {name}
                   </Link>
@@ -235,17 +225,17 @@ function RecentCommentsList({ items }: { items: SiteCommentItem[] }) {
 
                 <Link
                   href={watchHref}
-                  className={`mt-1 block rounded-lg py-0.5 transition hover:bg-white/[0.03] ${FOCUS_RING}`}
+                  className={`mt-1.5 block rounded-lg py-0.5 transition hover:bg-white/[0.03] ${FOCUS_RING}`}
                 >
                   <span className="flex flex-wrap items-baseline gap-x-1.5">
-                    <span className="truncate text-[0.75rem] font-medium text-[#dbdee1]">
+                    <span className="truncate text-[0.8125rem] font-medium text-[#dbdee1]">
                       {item.animeTitle}
                     </span>
-                    <span className="text-[0.6rem] uppercase tracking-[0.06em] text-sakura-soft">
+                    <span className="text-[0.65rem] uppercase tracking-[0.06em] text-sakura-soft">
                       Ep {item.episode}
                     </span>
                   </span>
-                  <span className="mt-0.5 line-clamp-2 text-[0.8125rem] leading-relaxed text-[#b5bac1]">
+                  <span className="mt-1 line-clamp-3 text-sm leading-relaxed text-[#b5bac1]">
                     {item.body}
                   </span>
                 </Link>

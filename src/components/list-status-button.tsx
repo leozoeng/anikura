@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  LIST_STATUSES,
+  BOARD_LIST_STATUSES,
   labelForStatus,
   type AnimeListInput,
   type ListStatus,
@@ -54,12 +54,12 @@ export function ListStatusButton({
   useEffect(() => {
     if (!isSupabaseConfigured()) {
       setEntry({
-        status: isInMyList(anime_id) ? "planned" : null,
+        status: isInMyList(anime_id) ? "watching" : null,
         isFavorite: false,
       });
       const sync = () =>
         setEntry({
-          status: isInMyList(anime_id) ? "planned" : null,
+          status: isInMyList(anime_id) ? "watching" : null,
           isFavorite: false,
         });
       window.addEventListener("anikura:mylist", sync);
@@ -77,7 +77,7 @@ export function ListStatusButton({
       setUserId(user?.id ?? null);
       if (!user) {
         setEntry({
-          status: isInMyList(anime_id) ? "planned" : null,
+          status: isInMyList(anime_id) ? "watching" : null,
           isFavorite: false,
         });
         return;
@@ -218,7 +218,7 @@ export function ListStatusButton({
     setBusy(true);
     const prev = entry;
     const nextFav = !entry.isFavorite;
-    const status = entry.status ?? "planned";
+    const status = entry.status ?? "watching";
     setEntry({ status, isFavorite: nextFav });
     try {
       const supabase = createClient();
@@ -275,7 +275,21 @@ export function ListStatusButton({
               e.stopPropagation();
             }}
           >
-            {LIST_STATUSES.map((s) => (
+            {userId ? (
+              <button
+                type="button"
+                role="menuitem"
+                aria-pressed={entry.isFavorite}
+                onClick={() => void toggleFavorite()}
+                className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm transition hover:bg-white/[0.06] ${
+                  entry.isFavorite ? "text-snow" : "text-cloud"
+                }`}
+              >
+                <span>Favourites</span>
+                <span aria-hidden>{entry.isFavorite ? "✓" : "☆"}</span>
+              </button>
+            ) : null}
+            {BOARD_LIST_STATUSES.map((s) => (
               <button
                 key={s.id}
                 type="button"
@@ -289,26 +303,12 @@ export function ListStatusButton({
                 {entry.status === s.id ? <span aria-hidden>✓</span> : null}
               </button>
             ))}
-            {userId ? (
-              <button
-                type="button"
-                role="menuitem"
-                aria-pressed={entry.isFavorite}
-                onClick={() => void toggleFavorite()}
-                className={`mt-1 flex w-full items-center justify-between border-t border-white/[0.06] px-3 py-2 text-left text-sm transition hover:bg-white/[0.06] ${
-                  entry.isFavorite ? "text-snow" : "text-cloud"
-                }`}
-              >
-                <span>Favourite</span>
-                <span aria-hidden>{entry.isFavorite ? "✓" : "☆"}</span>
-              </button>
-            ) : null}
             {entry.status ? (
               <button
                 type="button"
                 role="menuitem"
                 onClick={() => void setStatus(null)}
-                className="flex w-full px-3 py-2 text-left text-sm text-mute transition hover:bg-white/[0.06] hover:text-snow"
+                className="mt-1 flex w-full border-t border-white/[0.06] px-3 py-2 text-left text-sm text-mute transition hover:bg-white/[0.06] hover:text-snow"
               >
                 Remove from list
               </button>
