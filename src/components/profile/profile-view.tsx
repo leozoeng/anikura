@@ -23,10 +23,17 @@ import {
   getContinueWatching,
   type WatchProgress,
 } from "@/lib/progress";
+import {
+  BoardShelfPicker,
+  type BoardShelfId,
+} from "@/components/profile/board-shelf-picker";
 import { ProfileBadges } from "@/components/profile/profile-badges";
 import { ProfileEditPanel } from "@/components/profile/profile-edit-panel";
 import { ProfileSearch } from "@/components/profile/profile-search";
 import { CommunityPartnersMarquee } from "@/components/social/community-partners-marquee";
+import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { preferHighResPoster } from "@/lib/cover-image";
 
 type Props = {
   profile: PublicProfile;
@@ -42,7 +49,7 @@ type Props = {
 type ProfileTab = "board" | "activity" | "watch" | "comments";
 
 type WidgetDef = {
-  id: string;
+  id: BoardShelfId;
   title: string;
   /** Owner-facing action label for empty / + slots */
   addLabel: string;
@@ -88,7 +95,10 @@ export function ProfileView({
   const [editing, setEditing] = useState(false);
   const [tab, setTab] = useState<ProfileTab>("board");
   const [live, setLive] = useState(profile);
+  const [liveList, setLiveList] = useState(list);
   const [episodes, setEpisodes] = useState<WatchProgress[]>([]);
+  const [pickerShelf, setPickerShelf] = useState<BoardShelfId | null>(null);
+  const [shelfBusyId, setShelfBusyId] = useState<string | null>(null);
   const tabRefs = useRef<Partial<Record<ProfileTab, HTMLButtonElement | null>>>(
     {},
   );
@@ -100,6 +110,14 @@ export function ProfileView({
   const rgb = hexToRgbChannels(accent);
   const memberSince = formatMemberSince(live.created_at);
   const badges = resolveProfileBadges(live);
+
+  useEffect(() => {
+    setLiveList(list);
+  }, [list]);
+
+  useEffect(() => {
+    setLive(profile);
+  }, [profile]);
 
   useEffect(() => {
     if (!isOwner) {
@@ -123,24 +141,24 @@ export function ProfileView({
   }, [tab]);
 
   const favorites = useMemo(
-    () => list.filter((x) => x.is_favorite),
-    [list],
+    () => liveList.filter((x) => x.is_favorite),
+    [liveList],
   );
   const watching = useMemo(
-    () => list.filter((x) => x.status === "watching"),
-    [list],
+    () => liveList.filter((x) => x.status === "watching"),
+    [liveList],
   );
   const completed = useMemo(
-    () => list.filter((x) => x.status === "completed"),
-    [list],
+    () => liveList.filter((x) => x.status === "completed"),
+    [liveList],
   );
   const planned = useMemo(
-    () => list.filter((x) => x.status === "planned"),
-    [list],
+    () => liveList.filter((x) => x.status === "planned"),
+    [liveList],
   );
   const onHold = useMemo(
-    () => list.filter((x) => x.status === "on_hold"),
-    [list],
+    () => liveList.filter((x) => x.status === "on_hold"),
+    [liveList],
   );
 
   const continueStrip = useMemo(() => episodes.slice(0, 5), [episodes]);
@@ -182,6 +200,55 @@ export function ProfileView({
     ],
     [favorites, watching, completed, onHold],
   );
+
+  const pickerWidget = widgets.find((w) => w.id === pickerShelf) ?? null;
+
+  async function removeFromShelf(shelf: BoardShelfId, entry: AnimeListEntry) {
+    if (!isOwner || shelfBusyId) return;
+    if (!isSupabaseConfigured()) return;
+    setShelfBusyId(entry.id);
+    const prev = liveList;
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      if (shelf === "favorites") {
+        setLiveList((rows) =>
+          rows.map((r) =>
+            r.id === entry.id ? { ...r, is_favorite: false } : r,
+          ),
+        );
+        const { error } = await supabase
+          .from("anime_list")
+          .update({
+            is_favorite: false,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", user.id)
+          .eq("anime_id", entry.anime_id);
+        if (error) throw error;
+      } else {
+        setLiveList((rows) => rows.filter((r) => r.id !== entry.id));
+        const { error } = await supabase
+          .from("anime_list")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("anime_id", entry.anime_id);
+        if (error) throw error;
+      }
+      window.dispatchEvent(new CustomEvent("anikura:animelist"));
+    } catch {
+      setLiveList(prev);
+    } finally {
+      setShelfBusyId(null);
+    }
+  }
+
+  const scrollLockTab =
+    tab === "activity" || tab === "watch" || tab === "comments";
 
   const profileColumn = (
     <>
@@ -349,8 +416,8 @@ export function ProfileView({
             </div>
           </aside>
 
-          <div className="flex min-h-[300px] flex-col bg-[#0e0f12]/40 sm:min-h-[340px]">
-            <div className="sticky top-14 z-20 border-b border-white/[0.06] bg-[#0e0f12]/92 backdrop-blur-xl sm:top-16 lg:static lg:bg-transparent lg:backdrop-blur-none">
+          <div className="flex min-h-[300px] min-w-0 flex-col bg-[#0e0f12]/40 sm:min-h-[340px] lg:min-h-0 lg:overflow-hidden">
+            <div className="sticky top-14 z-20 shrink-0 border-b border-white/[0.06] bg-[#0e0f12]/92 backdrop-blur-xl sm:top-16 lg:static lg:bg-transparent lg:backdrop-blur-none">
               <div
                 role="tablist"
                 aria-label="Profile sections"
@@ -395,7 +462,11 @@ export function ProfileView({
               id={`profile-panel-${tab}`}
               role="tabpanel"
               aria-labelledby={`profile-tab-${tab}`}
-              className="flex-1 overflow-y-auto p-3.5 animate-rise"
+              className={`min-h-0 p-3.5 animate-rise ${
+                scrollLockTab
+                  ? "max-h-[min(26rem,calc(100vh-18rem))] overflow-y-auto overscroll-contain sm:max-h-[min(28rem,calc(100vh-16rem))]"
+                  : "overflow-y-auto"
+              }`}
               style={{ animationDuration: "0.28s" }}
             >
               {tab === "board" ? (
@@ -404,6 +475,11 @@ export function ProfileView({
                   isOwner={isOwner}
                   accent={accent}
                   rgb={rgb}
+                  busyId={shelfBusyId}
+                  onAdd={(shelf) => setPickerShelf(shelf)}
+                  onRemove={(shelf, entry) => {
+                    void removeFromShelf(shelf, entry);
+                  }}
                 />
               ) : null}
               {tab === "activity" ? (
@@ -443,6 +519,22 @@ export function ProfileView({
             onCancel={() => setEditing(false)}
           />
         </div>
+      ) : null}
+
+      {pickerWidget && isOwner ? (
+        <BoardShelfPicker
+          shelf={pickerWidget.id}
+          title={pickerWidget.title}
+          accent={accent}
+          existingIds={new Set(pickerWidget.items.map((i) => i.anime_id))}
+          onClose={() => setPickerShelf(null)}
+          onAdded={(entry) => {
+            setLiveList((rows) => {
+              const without = rows.filter((r) => r.anime_id !== entry.anime_id);
+              return [entry, ...without];
+            });
+          }}
+        />
       ) : null}
     </>
   );
@@ -631,11 +723,17 @@ function BoardTab({
   isOwner,
   accent,
   rgb,
+  busyId,
+  onAdd,
+  onRemove,
 }: {
   widgets: WidgetDef[];
   isOwner: boolean;
   accent: string;
   rgb: string;
+  busyId: string | null;
+  onAdd: (shelf: BoardShelfId) => void;
+  onRemove: (shelf: BoardShelfId, entry: AnimeListEntry) => void;
 }) {
   return (
     <div>
@@ -645,7 +743,7 @@ function BoardTab({
         </h2>
         <p className="mt-0.5 text-[0.8125rem] text-[#949ba4]">
           {isOwner
-            ? "Shelves from your list."
+            ? "Shelves from your list — search to add, hover to remove."
             : "Shelves from this viewer’s list."}
         </p>
       </div>
@@ -658,6 +756,9 @@ function BoardTab({
             isOwner={isOwner}
             accent={accent}
             rgb={rgb}
+            busyId={busyId}
+            onAdd={() => onAdd(w.id)}
+            onRemove={(entry) => onRemove(w.id, entry)}
           />
         ))}
       </div>
@@ -670,11 +771,17 @@ function WidgetCard({
   isOwner,
   accent,
   rgb,
+  busyId,
+  onAdd,
+  onRemove,
 }: {
   widget: WidgetDef;
   isOwner: boolean;
   accent: string;
   rgb: string;
+  busyId: string | null;
+  onAdd: () => void;
+  onRemove: (entry: AnimeListEntry) => void;
 }) {
   const filled = widget.items.slice(0, widget.max);
   const showAdd = isOwner && filled.length < widget.max;
@@ -702,6 +809,7 @@ function WidgetCard({
             label={widget.addLabel}
             accent={accent}
             expanded
+            onClick={onAdd}
           />
         ) : (
           <p className="py-1 text-xs leading-snug text-[#6d6f78]">
@@ -711,25 +819,45 @@ function WidgetCard({
       ) : (
         <div className="scrollbar-none -mx-0.5 flex snap-x snap-mandatory gap-1.5 overflow-x-auto px-0.5 pb-0.5">
           {filled.map((item) => (
-            <Link
+            <div
               key={item.id}
-              href={`/anime/${item.anime_id}/${item.slug}`}
-              aria-label={item.title}
-              className={`pressable group relative aspect-[2/3] w-[4.25rem] shrink-0 snap-start overflow-hidden rounded-lg bg-[#111214] ring-1 ring-white/8 transition hover:ring-white/25 sm:w-[4.5rem] ${FOCUS_RING}`}
+              className="group relative aspect-[2/3] w-[4.25rem] shrink-0 snap-start sm:w-[4.5rem]"
             >
-              {item.poster ? (
-                <SafeImage
-                  src={item.poster}
-                  alt=""
-                  fill
-                  className="object-cover transition duration-500 group-hover:scale-[1.04]"
-                  sizes="72px"
-                />
+              <Link
+                href={`/anime/${item.anime_id}/${item.slug}`}
+                aria-label={item.title}
+                className={`pressable relative block h-full overflow-hidden rounded-lg bg-[#111214] ring-1 ring-white/8 transition hover:ring-white/25 ${FOCUS_RING}`}
+              >
+                {item.poster ? (
+                  <SafeImage
+                    src={preferHighResPoster(item.poster) || item.poster}
+                    alt=""
+                    fill
+                    className="object-cover transition duration-500 group-hover:scale-[1.04]"
+                    sizes="72px"
+                  />
+                ) : null}
+              </Link>
+              {isOwner ? (
+                <button
+                  type="button"
+                  disabled={busyId === item.id}
+                  aria-label={`Remove ${item.title} from ${widget.title}`}
+                  title="Remove"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onRemove(item);
+                  }}
+                  className={`absolute right-1 top-1 z-[2] grid h-6 w-6 place-items-center rounded-full bg-black/75 text-[0.7rem] text-snow opacity-100 shadow-sm ring-1 ring-white/20 transition hover:bg-[#ff5c5c] sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 ${FOCUS_RING} disabled:opacity-50`}
+                >
+                  ✕
+                </button>
               ) : null}
-            </Link>
+            </div>
           ))}
           {showAdd ? (
-            <EmptySlot label={widget.addLabel} accent={accent} />
+            <EmptySlot label={widget.addLabel} accent={accent} onClick={onAdd} />
           ) : null}
         </div>
       )}
@@ -741,21 +869,24 @@ function EmptySlot({
   label,
   accent,
   expanded = false,
+  onClick,
 }: {
   label: string;
   accent: string;
   expanded?: boolean;
+  onClick: () => void;
 }) {
   if (expanded) {
     return (
-      <Link
-        href="/browse"
+      <button
+        type="button"
+        onClick={onClick}
         aria-label={label}
-        className={`group flex min-h-11 items-center gap-2.5 rounded-lg bg-white/[0.03] px-2.5 py-2 ring-1 ring-dashed ring-white/15 transition hover:bg-white/[0.06] hover:text-snow ${FOCUS_RING}`}
+        className={`group flex min-h-11 w-full items-center gap-2.5 rounded-lg bg-white/[0.03] px-2.5 py-2 ring-1 ring-dashed ring-white/15 transition hover:bg-white/[0.06] hover:text-snow ${FOCUS_RING}`}
         style={{ borderColor: `${accent}33` }}
       >
         <span
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-white/[0.04] text-lg text-[#949ba4] transition group-hover:text-snow group-hover:scale-105"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-white/[0.04] text-lg text-[#949ba4] transition group-hover:scale-105 group-hover:text-snow"
           style={{ color: accent }}
           aria-hidden
         >
@@ -764,20 +895,21 @@ function EmptySlot({
         <span className="min-w-0 flex-1 text-left text-[0.8125rem] font-medium leading-snug text-[#dbdee1] transition group-hover:text-snow">
           {label}
         </span>
-      </Link>
+      </button>
     );
   }
 
   return (
-    <Link
-      href="/browse"
+    <button
+      type="button"
+      onClick={onClick}
       aria-label={label}
       title={label}
-      className={`grid aspect-[2/3] w-[4.25rem] shrink-0 place-items-center rounded-lg bg-white/[0.03] text-lg text-[#6d6f78] ring-1 ring-dashed ring-white/15 transition hover:bg-white/[0.06] hover:text-snow hover:scale-[1.02] sm:w-[4.5rem] ${FOCUS_RING}`}
+      className={`grid aspect-[2/3] w-[4.25rem] shrink-0 place-items-center rounded-lg bg-white/[0.03] text-lg text-[#6d6f78] ring-1 ring-dashed ring-white/15 transition hover:scale-[1.02] hover:bg-white/[0.06] hover:text-snow sm:w-[4.5rem] ${FOCUS_RING}`}
       style={{ borderColor: `${accent}33`, transitionDuration: "0.2s" }}
     >
       <span aria-hidden>+</span>
-    </Link>
+    </button>
   );
 }
 
