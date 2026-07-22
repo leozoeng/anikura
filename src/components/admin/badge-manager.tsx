@@ -10,7 +10,10 @@ import {
   setProfileBadges,
   type AdminBadgeUser,
 } from "@/app/admin/badge-actions";
-import { ProfileBadges } from "@/components/profile/profile-badges";
+import {
+  ProfileBadges,
+  PROFILE_BADGE_META,
+} from "@/components/profile/profile-badges";
 import {
   PROFILE_BADGE_ORDER,
   displayName,
@@ -19,38 +22,6 @@ import {
   profileHref,
   type ProfileBadgeId,
 } from "@/lib/profile";
-
-const BADGE_OPTIONS: {
-  id: ProfileBadgeId;
-  label: string;
-  hint: string;
-  activeClass: string;
-}[] = [
-  {
-    id: "og",
-    label: "OG",
-    hint: "Original / early member",
-    activeClass: "border-white/30 bg-white/[0.12] text-snow",
-  },
-  {
-    id: "partner",
-    label: "Partner",
-    hint: "Official partner",
-    activeClass: "border-emerald-400/35 bg-emerald-400/15 text-emerald-100",
-  },
-  {
-    id: "dev",
-    label: "Dev",
-    hint: "Staff / developer",
-    activeClass: "border-sky-400/35 bg-sky-400/15 text-sky-100",
-  },
-  {
-    id: "vip",
-    label: "VIP",
-    hint: "VIP member",
-    activeClass: "border-amber-400/35 bg-amber-400/15 text-amber-100",
-  },
-];
 
 type ListTab = "signups" | "badged";
 
@@ -69,25 +40,25 @@ function UserRow({
   const handle = handleFromProfile(user);
 
   return (
-    <li className="flex flex-col gap-3 rounded-xl border border-white/[0.06] bg-black/20 p-3.5 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/10">
+    <li className="flex flex-col gap-2.5 rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/10">
           {user.avatar_url ? (
             <SafeImage
               src={user.avatar_url}
               alt=""
               fill
               className="object-cover"
-              sizes="40px"
+              sizes="36px"
             />
           ) : (
-            <div className="grid h-full w-full place-items-center text-xs font-semibold text-mute">
+            <div className="grid h-full w-full place-items-center text-[0.7rem] font-semibold text-mute">
               {name.slice(0, 1).toUpperCase()}
             </div>
           )}
         </div>
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             <Link
               href={profileHref(user)}
               className="truncate text-sm font-medium text-snow transition hover:underline"
@@ -96,45 +67,54 @@ function UserRow({
             </Link>
             <ProfileBadges badges={user.badges} size="sm" />
           </div>
-          <p className="truncate text-xs text-mute">
+          <p className="truncate text-[0.7rem] text-mute">
             {handle}
             {user.email ? ` · ${user.email}` : ""}
             {user.role === "admin" ? " · admin" : ""}
           </p>
           {showJoined && user.created_at ? (
-            <p className="mt-0.5 text-[0.68rem] text-mute/80">
+            <p className="mt-0.5 text-[0.65rem] text-mute/80">
               Joined {formatMemberSince(user.created_at)}
             </p>
           ) : null}
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+      <div className="flex shrink-0 items-center gap-1.5 sm:justify-end">
         <Link
           href={profileHref(user)}
-          className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-cloud transition hover:border-white/25 hover:text-snow"
+          className="mr-0.5 rounded-md px-2 py-1 text-[0.7rem] text-mute transition hover:bg-white/[0.06] hover:text-snow"
         >
           Profile
         </Link>
-        {BADGE_OPTIONS.map((opt) => {
-          const on = user.badges.includes(opt.id);
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              disabled={busy}
-              title={opt.hint}
-              onClick={() => onToggle(user.id, opt.id, !on)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.06em] transition disabled:opacity-50 ${
-                on
-                  ? opt.activeClass
-                  : "border-white/10 bg-white/[0.03] text-mute hover:border-white/20 hover:text-cloud"
-              }`}
-            >
-              {on ? `− ${opt.label}` : `+ ${opt.label}`}
-            </button>
-          );
-        })}
+        <div
+          className="flex items-center gap-1 rounded-lg border border-white/[0.06] bg-black/25 p-1"
+          role="group"
+          aria-label="Assign badges"
+        >
+          {PROFILE_BADGE_ORDER.map((id) => {
+            const meta = PROFILE_BADGE_META[id];
+            const on = user.badges.includes(id);
+            return (
+              <button
+                key={id}
+                type="button"
+                disabled={busy}
+                title={`${on ? "Remove" : "Add"} ${meta.title}`}
+                aria-pressed={on}
+                aria-label={`${on ? "Remove" : "Add"} ${meta.title}`}
+                onClick={() => onToggle(user.id, id, !on)}
+                className={`inline-flex h-7 w-7 items-center justify-center rounded-md border transition disabled:opacity-50 [&_svg]:h-[12px] [&_svg]:w-[12px] ${
+                  on
+                    ? `${meta.className} ring-1`
+                    : "border-transparent bg-transparent text-mute/70 ring-0 hover:bg-white/[0.06] hover:text-cloud"
+                }`}
+              >
+                {meta.icon}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </li>
   );

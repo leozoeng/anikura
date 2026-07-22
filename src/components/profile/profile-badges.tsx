@@ -19,7 +19,7 @@ function BadgeIcon({ children }: { children: ReactNode }) {
   );
 }
 
-const BADGE_META: Record<
+export const PROFILE_BADGE_META: Record<
   ProfileBadgeId,
   { label: string; title: string; className: string; icon: ReactNode }
 > = {
@@ -160,7 +160,7 @@ export function ProfileBadges({
       aria-label="Profile badges"
     >
       {badges.map((id) => {
-        const meta = BADGE_META[id];
+        const meta = PROFILE_BADGE_META[id];
         if (!meta) return null;
         return (
           <span
