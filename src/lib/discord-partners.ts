@@ -24,9 +24,16 @@ export const DISCORD_PARTNERS: DiscordPartner[] = [
     id: "anikura",
     name: "Anikura",
     iconUrl: "/discord/anikura.png",
-    memberCount: 1280,
+    memberCount: 21,
     inviteUrl: ANIKURA_DISCORD_INVITE,
     featured: true,
+  },
+  {
+    id: "kaneki",
+    name: "/kaneki",
+    iconUrl: "/discord/kaneki.gif",
+    memberCount: 138,
+    inviteUrl: "https://discord.gg/TzW5vMXG2S",
   },
 ];
 
