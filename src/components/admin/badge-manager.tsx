@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import {
@@ -73,7 +73,7 @@ function UserRow({
       <div className="flex min-w-0 items-center gap-3">
         <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/10">
           {user.avatar_url ? (
-            <Image
+            <SafeImage
               src={user.avatar_url}
               alt=""
               fill

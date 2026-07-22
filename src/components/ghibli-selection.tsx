@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import {
   ghibliMiyazakiCount,
@@ -28,7 +28,7 @@ export function GhibliSelection({ entries }: Props) {
     >
       <div aria-hidden className="absolute inset-0">
         {hero?.anime.background_image || hero?.anime.poster ? (
-          <Image
+          <SafeImage
             src={hero.anime.background_image || hero.anime.poster}
             alt=""
             fill
@@ -97,7 +97,7 @@ export function GhibliSelection({ entries }: Props) {
                 title={`${def.title} (${def.year})`}
               >
                 <div className="relative aspect-[2/3] overflow-hidden rounded-[0.95rem] bg-[#152018] shadow-[0_14px_32px_rgba(0,0,0,0.5)] ring-1 ring-[#c5d4b8]/20 transition duration-400 group-hover:-translate-y-1.5 group-hover:rotate-0 group-hover:ring-[#e8f0dc]/45">
-                  <Image
+                  <SafeImage
                     src={anime.poster}
                     alt={def.title}
                     fill

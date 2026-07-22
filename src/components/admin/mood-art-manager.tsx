@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import { useMemo, useRef, useState, useTransition } from "react";
 import {
   resetMoodArtOverride,
@@ -118,13 +118,12 @@ export function MoodArtManager({ initialOverrides }: MoodArtManagerProps) {
             >
               <div className="relative aspect-[16/10] bg-elevated">
                 {src ? (
-                  <Image
+                  <SafeImage
                     src={src}
                     alt=""
                     fill
                     sizes="280px"
                     className={`object-cover ${defaultArt?.position ?? "object-center"}`}
-                    unoptimized={isCustom}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-xs text-mute">

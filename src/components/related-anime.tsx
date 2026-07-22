@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import { SectionHeading } from "@/components/section-heading";
 import type { RelatedEntry, RelatedMediaCard } from "@/lib/related";
@@ -60,7 +60,7 @@ export function RelatedAnimeGrid({
             >
               <div className="poster-card relative aspect-[2/3]">
                 {poster ? (
-                  <Image
+                  <SafeImage
                     src={poster}
                     alt={displayTitle(item.media.title)}
                     fill
@@ -116,7 +116,7 @@ export function RelatedAnimeList({
                 className="flex gap-3 rounded-xl p-1.5 transition duration-300 hover:bg-[#ff8caa]/08"
               >
                 <span className="relative h-[72px] w-[52px] shrink-0 overflow-hidden rounded-lg bg-raised ring-1 ring-white/10">
-                  <Image
+                  <SafeImage
                     src={poster}
                     alt=""
                     fill

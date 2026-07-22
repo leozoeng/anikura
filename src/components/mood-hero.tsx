@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import { moodAccent, moodCopy, moodVeil } from "@/lib/genre-moods";
 
@@ -31,7 +31,7 @@ export function MoodHero({
       <div aria-hidden className="absolute inset-0">
         {coverSrc ? (
           <>
-            <Image
+            <SafeImage
               src={coverSrc}
               alt=""
               fill
@@ -39,7 +39,7 @@ export function MoodHero({
               sizes="100vw"
               className={`scale-110 object-cover opacity-50 blur-[2px] sm:opacity-[0.55] ${coverPosition ?? "object-center"}`}
             />
-            <Image
+            <SafeImage
               src={coverSrc}
               alt=""
               fill

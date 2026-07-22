@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DISCORD_PARTNERS,
@@ -184,7 +184,7 @@ function PartnerChip({ partner }: { partner: DiscordPartner }) {
       className="community-partner-chip pressable group inline-flex shrink-0 items-center gap-2.5 rounded-2xl border border-white/[0.08] bg-[#1a1b1e]/90 px-2.5 py-2 pr-3.5 transition hover:border-sakura/35 hover:bg-[#222428] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sakura/60"
     >
       <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl bg-[#111214] ring-1 ring-white/10">
-        <Image
+        <SafeImage
           src={partner.iconUrl}
           alt=""
           fill
@@ -194,7 +194,7 @@ function PartnerChip({ partner }: { partner: DiscordPartner }) {
       </span>
       <span className="min-w-0">
         <span className="flex min-w-0 items-center gap-1.5">
-          <Image
+          <SafeImage
             src={PARTNER_BADGE}
             alt=""
             width={16}

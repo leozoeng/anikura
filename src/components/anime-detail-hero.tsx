@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import { CinematicBackdrop } from "@/components/cinematic-backdrop";
 import { ListStatusButton } from "@/components/list-status-button";
@@ -50,7 +50,7 @@ export function AnimeDetailHero({
     >
       <div className="page-shell relative flex flex-col gap-8 py-14 sm:flex-row sm:items-end">
         <div className="relative mx-auto h-[280px] w-[190px] shrink-0 overflow-hidden rounded-[1.35rem] shadow-[0_24px_60px_rgba(0,0,0,0.45)] ring-1 ring-white/15 sm:mx-0 sm:h-[340px] sm:w-[230px]">
-          <Image
+          <SafeImage
             src={poster}
             alt={title}
             fill

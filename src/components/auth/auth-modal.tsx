@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import { useEffect, useMemo, useState } from "react";
 import { AnikuraMark } from "@/components/anikura-logo";
 import { MOOD_ART } from "@/lib/genre-moods";
@@ -147,7 +147,7 @@ export function AuthModal({
       >
         {/* Anime panel */}
         <div className="relative min-h-[9.5rem] overflow-hidden md:min-h-full">
-          <Image
+          <SafeImage
             key={art.src}
             src={art.src}
             alt=""

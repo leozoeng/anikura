@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import type { AnimeSummary, CatalogAnime } from "@/lib/types";
 import { animeHref } from "@/lib/anikoto";
@@ -47,7 +47,7 @@ export function AnimePoster({
       style={delay}
     >
       <div className="poster-frame relative aspect-[2/3] overflow-hidden rounded-[1.1rem] bg-raised">
-        <Image
+        <SafeImage
           src={anime.poster}
           alt={anime.title}
           fill

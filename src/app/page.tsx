@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import { AniListRow } from "@/components/anilist-row";
 import { AnimeRow } from "@/components/anime-row";
@@ -220,7 +220,7 @@ async function HomeRows() {
               >
                 <div className="absolute inset-0 bg-elevated" />
                 {cover ? (
-                  <Image
+                  <SafeImage
                     src={cover.src}
                     alt=""
                     fill

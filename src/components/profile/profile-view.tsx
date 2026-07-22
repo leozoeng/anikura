@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { AnimeListEntry } from "@/lib/anime-list";
@@ -227,7 +227,7 @@ export function ProfileView({
             <aside className="relative border-b border-white/[0.06] lg:border-b-0 lg:border-r lg:border-white/[0.06]">
               <div className="relative h-[128px] sm:h-[160px]">
                 {live.banner_url ? (
-                  <Image
+                  <SafeImage
                     src={live.banner_url}
                     alt=""
                     fill
@@ -258,7 +258,7 @@ export function ProfileView({
                 >
                   <div className="relative h-[84px] w-[84px] overflow-hidden rounded-full bg-[#1e1f22] sm:h-[92px] sm:w-[92px]">
                     {live.avatar_url ? (
-                      <Image
+                      <SafeImage
                         src={live.avatar_url}
                         alt=""
                         fill
@@ -341,7 +341,7 @@ export function ProfileView({
                         >
                           <div className="relative aspect-[2/3] overflow-hidden rounded-md bg-[#111214] ring-1 ring-white/8 transition group-hover:ring-white/25">
                             {item.poster ? (
-                              <Image
+                              <SafeImage
                                 src={item.poster}
                                 alt=""
                                 fill
@@ -573,7 +573,7 @@ function WidgetCard({
               className="pressable group relative aspect-[2/3] w-[4.5rem] shrink-0 snap-start overflow-hidden rounded-lg bg-[#111214] ring-1 ring-white/8 transition hover:ring-white/25 sm:w-[4.75rem]"
             >
               {item.poster ? (
-                <Image
+                <SafeImage
                   src={item.poster}
                   alt=""
                   fill
@@ -661,7 +661,7 @@ function ActivityTab({
             >
               <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-[#111214]">
                 {item.poster ? (
-                  <Image
+                  <SafeImage
                     src={item.poster}
                     alt=""
                     fill
@@ -767,7 +767,7 @@ function PosterGrid({
         >
           <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-[#1e1f22] ring-1 ring-white/8 transition duration-500 group-hover:-translate-y-0.5 group-hover:ring-white/25">
             {item.poster ? (
-              <Image
+              <SafeImage
                 src={item.poster}
                 alt=""
                 fill
@@ -834,7 +834,7 @@ function CommentsTab({
                 >
                   <span className="relative h-[4.25rem] w-[3rem] shrink-0 overflow-hidden rounded-lg bg-[#111214] ring-1 ring-white/8">
                     {item.animePoster ? (
-                      <Image
+                      <SafeImage
                         src={item.animePoster}
                         alt=""
                         fill

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AuthModal } from "@/components/auth/auth-modal";
@@ -177,7 +177,7 @@ function ChipFace({
   return (
     <span className="relative grid h-6 w-6 place-items-center overflow-hidden rounded-full bg-white/[0.08] text-snow ring-1 ring-white/12 transition group-hover:bg-white/[0.14]">
       {avatarUrl ? (
-        <Image
+        <SafeImage
           src={avatarUrl}
           alt=""
           fill

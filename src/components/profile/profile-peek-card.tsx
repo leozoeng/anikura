@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -87,7 +87,7 @@ export function ProfilePeekCard({ userId }: { userId: string }) {
     >
       <div className="relative h-12 bg-[#1e1f22]">
         {profile.banner_url ? (
-          <Image
+          <SafeImage
             src={profile.banner_url}
             alt=""
             fill
@@ -111,7 +111,7 @@ export function ProfilePeekCard({ userId }: { userId: string }) {
           }}
         >
           {profile.avatar_url ? (
-            <Image
+            <SafeImage
               src={profile.avatar_url}
               alt=""
               fill

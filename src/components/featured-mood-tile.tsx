@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { genreWash, moodAccent, moodCopy } from "@/lib/genre-moods";
@@ -43,7 +43,7 @@ export function FeaturedMoodTile({
     >
       <div className="absolute inset-0 bg-elevated" />
       {cover ? (
-        <Image
+        <SafeImage
           src={cover.src}
           alt=""
           fill

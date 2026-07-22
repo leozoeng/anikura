@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 
 type Props = {
@@ -17,13 +17,12 @@ export function AnikuraMark({
   className?: string;
 }) {
   return (
-    <Image
+    <SafeImage
       src="/anikura-mark.png"
       alt=""
       width={size}
       height={size}
       sizes={`${size}px`}
-      unoptimized
       className={`object-contain ${className}`}
       style={{ width: size, height: size }}
       priority

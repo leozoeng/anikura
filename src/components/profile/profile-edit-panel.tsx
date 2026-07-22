@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -262,7 +262,7 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
               style={{ boxShadow: `0 0 0 3px ${previewHex}` }}
             >
               {avatarUrl ? (
-                <Image src={avatarUrl} alt="" fill className="object-cover" />
+                <SafeImage src={avatarUrl} alt="" fill className="object-cover" />
               ) : null}
             </div>
             <label className="cursor-pointer rounded-full border border-white/15 px-3 py-1.5 text-sm text-[#dbdee1] transition hover:border-white/30 hover:text-snow">
@@ -285,7 +285,7 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
           <div className="mt-2">
             <div className="relative mb-2 h-16 overflow-hidden rounded-xl bg-[#1e1f22]">
               {bannerUrl ? (
-                <Image src={bannerUrl} alt="" fill className="object-cover" />
+                <SafeImage src={bannerUrl} alt="" fill className="object-cover" />
               ) : (
                 <div
                   className="absolute inset-0"

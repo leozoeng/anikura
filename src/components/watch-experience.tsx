@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AnimeComments } from "@/components/anime-comments";
@@ -243,7 +243,7 @@ export function WatchExperience(props: Props) {
 
       {!settings.theaterMode && (
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[min(70vh,520px)] overflow-hidden">
-          <Image
+          <SafeImage
             src={banner}
             alt=""
             fill
@@ -375,7 +375,7 @@ export function WatchExperience(props: Props) {
                       className="flex min-w-0 items-center gap-3"
                     >
                       <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full ring-1 ring-white/15">
-                        <Image
+                        <SafeImage
                           src={poster}
                           alt=""
                           fill

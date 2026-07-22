@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import { SectionHeading } from "@/components/section-heading";
 import type { SeasonEntry } from "@/lib/related";
@@ -41,7 +41,7 @@ export function SeasonsSection({ seasons, className = "mt-16" }: Props) {
                 }`}
               >
                 {poster ? (
-                  <Image
+                  <SafeImage
                     src={poster}
                     alt={title}
                     fill

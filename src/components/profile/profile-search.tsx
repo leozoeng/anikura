@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ProfileBadges } from "@/components/profile/profile-badges";
@@ -168,7 +168,7 @@ export function ProfileSearch({
                   >
                     <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/10 sm:h-10 sm:w-10">
                       {hit.avatar_url ? (
-                        <Image
+                        <SafeImage
                           src={hit.avatar_url}
                           alt=""
                           fill

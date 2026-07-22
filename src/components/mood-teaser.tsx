@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import { animeHref } from "@/lib/anikoto";
 import {
@@ -44,7 +44,7 @@ export function MoodTeaser({
     >
       <div aria-hidden className="absolute inset-0">
         {coverSrc ? (
-          <Image
+          <SafeImage
             src={coverSrc}
             alt=""
             fill
@@ -107,7 +107,7 @@ export function MoodTeaser({
                 title={item.title}
               >
                 <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-black/40 shadow-[0_10px_24px_rgba(0,0,0,0.45)] ring-1 ring-white/12 transition duration-400 group-hover:-translate-y-1 group-hover:ring-white/30">
-                  <Image
+                  <SafeImage
                     src={item.poster}
                     alt=""
                     fill

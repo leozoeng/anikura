@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import { SectionHeading } from "@/components/section-heading";
 import type { AniListCharacterEdge } from "@/lib/anilist";
 
@@ -75,7 +75,7 @@ export function AnimeCharacters({
           >
             <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl ring-1 ring-white/10 sm:h-[4.5rem] sm:w-[4.5rem]">
               {c.image ? (
-                <Image
+                <SafeImage
                   src={c.image}
                   alt={c.name}
                   fill
@@ -100,7 +100,7 @@ export function AnimeCharacters({
                 <div className="mt-2 flex items-center gap-2">
                   <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full ring-1 ring-white/12">
                     {c.voiceActor.image ? (
-                      <Image
+                      <SafeImage
                         src={c.voiceActor.image}
                         alt={c.voiceActor.name}
                         fill

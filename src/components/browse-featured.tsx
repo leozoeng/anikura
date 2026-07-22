@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { animeHref } from "@/lib/anikoto";
@@ -162,7 +162,7 @@ export function BrowseFeatured({ slides }: Props) {
     >
       <div aria-hidden className="absolute inset-0">
         {slide.heroSrc ? (
-          <Image
+          <SafeImage
             key={slide.heroSrc}
             src={slide.heroSrc}
             alt=""
@@ -245,7 +245,7 @@ export function BrowseFeatured({ slides }: Props) {
                 <div
                   className={`relative aspect-[2/3] overflow-hidden rounded-[0.95rem] bg-black/40 shadow-[0_14px_32px_rgba(0,0,0,0.5)] ring-1 transition duration-400 group-hover:-translate-y-1.5 group-hover:rotate-0 ${theme.ring}`}
                 >
-                  <Image
+                  <SafeImage
                     src={item.poster}
                     alt={item.title}
                     fill

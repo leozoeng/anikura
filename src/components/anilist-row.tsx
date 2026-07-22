@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import type { AniListMedia } from "@/lib/anilist";
 import { displayTitle } from "@/lib/anilist";
@@ -50,7 +50,7 @@ export function AniListRow({
             >
               <div className="poster-frame relative aspect-[2/3] overflow-hidden rounded-[1.1rem] bg-raised">
                 {(m.coverImage?.large || m.coverImage?.extraLarge) && (
-                  <Image
+                  <SafeImage
                     src={m.coverImage.large || m.coverImage.extraLarge || ""}
                     alt={displayTitle(m.title)}
                     fill

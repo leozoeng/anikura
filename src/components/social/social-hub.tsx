@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import { useState } from "react";
 import type { SocialAnnouncement } from "@/lib/announcements";
@@ -176,7 +176,7 @@ function RecentCommentsList({ items }: { items: SiteCommentItem[] }) {
                 className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/10"
               >
                 {item.authorAvatarUrl ? (
-                  <Image
+                  <SafeImage
                     src={item.authorAvatarUrl}
                     alt=""
                     fill
@@ -213,7 +213,7 @@ function RecentCommentsList({ items }: { items: SiteCommentItem[] }) {
                   <span className="flex gap-2">
                     <span className="relative h-12 w-8 shrink-0 overflow-hidden rounded-md bg-[#111214] ring-1 ring-white/8">
                       {item.animePoster ? (
-                        <Image
+                        <SafeImage
                           src={item.animePoster}
                           alt=""
                           fill

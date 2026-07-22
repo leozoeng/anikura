@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import {
   useCallback,
   useEffect,
@@ -285,7 +285,7 @@ export function CinematicBackdrop({
       className={`relative isolate overflow-hidden ${minHeightClass} ${className}`}
     >
       <div className="absolute inset-0 bg-void">
-        <Image
+        <SafeImage
           src={posterSrc}
           alt=""
           fill

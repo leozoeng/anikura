@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -44,7 +44,7 @@ export function MiniPlayer({
           href={`#${playerAnchorId}`}
           className="relative h-12 w-9 shrink-0 overflow-hidden rounded-md ring-1 ring-white/10"
         >
-          <Image src={poster} alt="" fill className="object-cover" sizes="36px" />
+          <SafeImage src={poster} alt="" fill className="object-cover" sizes="36px" />
         </Link>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium tracking-[-0.02em]">

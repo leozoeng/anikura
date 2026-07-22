@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -237,7 +237,7 @@ export function SearchPageForm({
                   >
                     <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-md bg-raised">
                       {hit.poster ? (
-                        <Image
+                        <SafeImage
                           src={hit.poster}
                           alt=""
                           fill

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import Link from "next/link";
 import {
   useCallback,
@@ -88,7 +88,7 @@ function AuthorAvatar({
       style={{ width: size, height: size }}
     >
       {avatarUrl ? (
-        <Image
+        <SafeImage
           src={avatarUrl}
           alt=""
           fill
