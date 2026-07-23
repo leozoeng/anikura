@@ -1,4 +1,4 @@
-export type DeskRangePreset = 1 | 7 | 15;
+export type DeskRangePreset = 1 | 7 | 15 | 30;
 
 export type DeskRange =
   | { kind: "preset"; days: DeskRangePreset }
@@ -9,6 +9,7 @@ export const DESK_RANGE_PRESETS: Array<{ days: DeskRangePreset; label: string }>
     { days: 1, label: "1d" },
     { days: 7, label: "7d" },
     { days: 15, label: "15d" },
+    { days: 30, label: "30d" },
   ];
 
 export function deskRangeKey(range: DeskRange): string {
@@ -58,6 +59,35 @@ export function sliceByDeskRange<T extends { day: string }>(
     return hit ? [hit] : [];
   }
   return rows.slice(-range.days);
+}
+
+/** Prior window of equal length immediately before the selected range. */
+export function slicePriorDeskRange<T extends { day: string }>(
+  rows: T[],
+  range: DeskRange,
+): T[] {
+  if (rows.length === 0) return [];
+
+  if (range.kind === "day") {
+    const idx = rows.findIndex((r) => r.day === range.date);
+    if (idx <= 0) return [];
+    return [rows[idx - 1]!];
+  }
+
+  if (range.days === 1) {
+    // Today → yesterday
+    if (rows.length < 2) return [];
+    return [rows[rows.length - 2]!];
+  }
+
+  const end = rows.length - range.days;
+  if (end <= 0) return [];
+  return rows.slice(Math.max(0, end - range.days), end);
+}
+
+export function priorDeskRangeLabel(range: DeskRange): string {
+  if (range.kind === "day" || range.days === 1) return "vs yesterday";
+  return `vs prior ${range.days}d`;
 }
 
 export function sumField<T>(arr: T[], pick: (row: T) => number) {

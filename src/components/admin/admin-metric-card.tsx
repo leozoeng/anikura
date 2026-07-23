@@ -1,6 +1,10 @@
 "use client";
 
 import { AdminSparkline } from "@/components/admin/admin-sparkline";
+import {
+  formatGrowthPercent,
+  type GrowthDelta,
+} from "@/lib/admin-ad-estimate";
 
 type MetricCardProps = {
   label: string;
@@ -9,6 +13,8 @@ type MetricCardProps = {
   spark?: number[];
   tone?: "default" | "live";
   live?: boolean;
+  /** Period-over-period growth (green up / red down). */
+  growth?: GrowthDelta | null;
 };
 
 export function AdminMetricCard({
@@ -18,8 +24,10 @@ export function AdminMetricCard({
   spark,
   tone = "default",
   live = false,
+  growth = null,
 }: MetricCardProps) {
   const isLive = tone === "live" || live;
+  const flat = growth && growth.percent === 0;
 
   return (
     <div
@@ -38,7 +46,7 @@ export function AdminMetricCard({
         aria-hidden
       />
       <div className="relative flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           {isLive ? (
             <span
               className={`relative flex h-1.5 w-1.5 ${
@@ -59,9 +67,28 @@ export function AdminMetricCard({
           <AdminSparkline values={spark} active={isLive} />
         ) : null}
       </div>
-      <p className="relative mt-1 text-2xl tracking-[-0.04em] text-snow tabular-nums transition duration-300 sm:text-[1.65rem]">
-        {value}
-      </p>
+      <div className="relative mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <p className="text-2xl tracking-[-0.04em] text-snow tabular-nums transition duration-300 sm:text-[1.65rem]">
+          {value}
+        </p>
+        {growth ? (
+          <p
+            className={`text-[0.7rem] font-medium tabular-nums ${
+              flat
+                ? "text-mute"
+                : growth.up
+                  ? "text-emerald-400/90"
+                  : "text-rose-400/90"
+            }`}
+            title={growth.vsLabel}
+          >
+            {formatGrowthPercent(growth.percent)}
+            <span className="ml-1 font-normal text-mute">
+              {growth.vsLabel}
+            </span>
+          </p>
+        ) : null}
+      </div>
       <p className="relative mt-0.5 text-[0.7rem] leading-snug text-cloud">{hint}</p>
     </div>
   );

@@ -27,8 +27,16 @@ import {
 import { VisitorDrawer } from "@/components/admin/visitor-drawer";
 import type { HotListItem } from "@/lib/admin-hot-paths";
 import {
+  DESK_AD_RPM,
+  estimateAdRevenue,
+  formatUsd,
+  growthDelta,
+} from "@/lib/admin-ad-estimate";
+import {
   deskRangeLabel,
+  priorDeskRangeLabel,
   sliceByDeskRange,
+  slicePriorDeskRange,
   sumField,
   type DeskRange,
   utcTodayKey,
@@ -92,11 +100,6 @@ function formatHours(seconds: number) {
   const h = seconds / 3600;
   if (h < 0.1) return `${Math.round(seconds / 60)}m`;
   return `${h.toFixed(h >= 10 ? 0 : 1)}h`;
-}
-
-function formatSigned(n: number) {
-  if (n > 0) return `+${n}`;
-  return String(n);
 }
 
 function lastN<T>(arr: T[], n: number) {
@@ -219,6 +222,13 @@ function AdminDashboardInner({
     };
   }, [activity, deskRange, series]);
 
+  const priorSlice = useMemo(() => {
+    return {
+      signups: slicePriorDeskRange(series, deskRange),
+      activity: slicePriorDeskRange(activity, deskRange),
+    };
+  }, [activity, deskRange, series]);
+
   const equitySeries = useMemo((): EquitySeries[] => {
     const watchHours = rangeSlice.activity.map((d) => ({
       day: d.day,
@@ -273,25 +283,45 @@ function AdminDashboardInner({
         views: rangeSlice.activity.map((d) => d.page_views),
         sessions: rangeSlice.activity.map((d) => d.sessions),
         watch: rangeSlice.activity.map((d) => d.watch_seconds),
+        revenue: rangeSlice.activity.map((d) =>
+          estimateAdRevenue(d.page_views),
+        ),
       };
     }
-    const n = Math.min(deskRange.days, 15);
+    const n = Math.min(deskRange.days, 30);
+    const act = lastN(activity, n);
     return {
       signups: lastN(series, n).map((d) => d.signups),
-      views: lastN(activity, n).map((d) => d.page_views),
-      sessions: lastN(activity, n).map((d) => d.sessions),
-      watch: lastN(activity, n).map((d) => d.watch_seconds),
+      views: act.map((d) => d.page_views),
+      sessions: act.map((d) => d.sessions),
+      watch: act.map((d) => d.watch_seconds),
+      revenue: act.map((d) => estimateAdRevenue(d.page_views)),
     };
   }, [activity, deskRange, rangeSlice, series]);
 
   const ranged = useMemo(() => {
     const label = deskRangeLabel(deskRange);
+    const vsLabel = priorDeskRangeLabel(deskRange);
     const signups = sumField(rangeSlice.signups, (d) => d.signups);
     const pageViews = sumField(rangeSlice.activity, (d) => d.page_views);
     const sessions = sumField(rangeSlice.activity, (d) => d.sessions);
     const watchSeconds = sumField(rangeSlice.activity, (d) => d.watch_seconds);
+    const priorSignups = sumField(priorSlice.signups, (d) => d.signups);
+    const priorViews = sumField(priorSlice.activity, (d) => d.page_views);
+    const priorSessions = sumField(priorSlice.activity, (d) => d.sessions);
+    const priorWatch = sumField(priorSlice.activity, (d) => d.watch_seconds);
+    const revenue = estimateAdRevenue(pageViews);
+    const priorRevenue = estimateAdRevenue(priorViews);
     const days =
       deskRange.kind === "day" ? 1 : Math.max(1, rangeSlice.activity.length);
+
+    const growth = {
+      signups: growthDelta(signups, priorSignups, vsLabel),
+      pageViews: growthDelta(pageViews, priorViews, vsLabel),
+      sessions: growthDelta(sessions, priorSessions, vsLabel),
+      watch: growthDelta(watchSeconds, priorWatch, vsLabel),
+      revenue: growthDelta(revenue, priorRevenue, vsLabel),
+    };
 
     if (deskRange.kind === "day") {
       return {
@@ -303,37 +333,44 @@ function AdminDashboardInner({
         sessionsHint: "Distinct browsers that day",
         watchSeconds,
         watchHint: "Visible /watch time that day",
+        revenue,
+        revenueHint: `Est. @ $${DESK_AD_RPM.mid} RPM · ${formatUsd(estimateAdRevenue(pageViews, DESK_AD_RPM.low))}–${formatUsd(estimateAdRevenue(pageViews, DESK_AD_RPM.high))}`,
         rangeLabel: label,
         days: 1,
+        growth,
       };
     }
 
     if (deskRange.days === 1) {
-      const yDate = new Date();
-      yDate.setUTCDate(yDate.getUTCDate() - 1);
-      const yKey = yDate.toISOString().slice(0, 10);
-      const yCount = series.find((d) => d.day === yKey)?.signups;
       const todaySignups =
         rangeSlice.signups[0]?.signups ?? metrics.signups_today;
+      const todayViews =
+        rangeSlice.activity[0]?.page_views ?? metrics.page_views_today;
+      const todaySessions =
+        rangeSlice.activity[0]?.sessions ?? metrics.sessions_today;
+      const todayWatch =
+        rangeSlice.activity[0]?.watch_seconds ?? metrics.watch_seconds_today;
+      const todayRevenue = estimateAdRevenue(todayViews);
       return {
         signups: todaySignups,
-        signupsHint: (() => {
-          if (yCount == null) return `${metrics.signups_7d} in last 7 days`;
-          if (yCount === todaySignups) {
-            return `Same as yesterday · ${metrics.signups_7d} in 7d`;
-          }
-          return `${formatSigned(todaySignups - yCount)} vs yesterday · ${metrics.signups_7d} in 7d`;
-        })(),
-        pageViews:
-          rangeSlice.activity[0]?.page_views ?? metrics.page_views_today,
+        signupsHint: `${metrics.signups_7d} in last 7 days`,
+        pageViews: todayViews,
         pageViewsHint: "Since midnight UTC",
-        sessions: rangeSlice.activity[0]?.sessions ?? metrics.sessions_today,
+        sessions: todaySessions,
         sessionsHint: "Distinct browsers today",
-        watchSeconds:
-          rangeSlice.activity[0]?.watch_seconds ?? metrics.watch_seconds_today,
+        watchSeconds: todayWatch,
         watchHint: "Visible time on /watch today",
+        revenue: todayRevenue,
+        revenueHint: `Est. @ $${DESK_AD_RPM.mid} RPM · ${formatUsd(estimateAdRevenue(todayViews, DESK_AD_RPM.low))}–${formatUsd(estimateAdRevenue(todayViews, DESK_AD_RPM.high))}`,
         rangeLabel: label,
         days: 1,
+        growth: {
+          signups: growthDelta(todaySignups, priorSignups, vsLabel),
+          pageViews: growthDelta(todayViews, priorViews, vsLabel),
+          sessions: growthDelta(todaySessions, priorSessions, vsLabel),
+          watch: growthDelta(todayWatch, priorWatch, vsLabel),
+          revenue: growthDelta(todayRevenue, priorRevenue, vsLabel),
+        },
       };
     }
 
@@ -352,10 +389,13 @@ function AdminDashboardInner({
           : "No sessions in range",
       watchSeconds,
       watchHint: `Sum of visible /watch time · ${label.toLowerCase()}`,
+      revenue,
+      revenueHint: `Est. @ $${DESK_AD_RPM.mid} RPM · ${formatUsd(estimateAdRevenue(pageViews, DESK_AD_RPM.low))}–${formatUsd(estimateAdRevenue(pageViews, DESK_AD_RPM.high))} band`,
       rangeLabel: label,
       days,
+      growth,
     };
-  }, [deskRange, metrics, rangeSlice, series]);
+  }, [deskRange, metrics, priorSlice, rangeSlice, series]);
 
   const rangeControl = (
     <AdminDeskRangeControl
@@ -367,30 +407,41 @@ function AdminDashboardInner({
   );
 
   const pulseMetrics = (
-    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
       <AdminMetricCard
         label="Signups"
         value={ranged.signups}
         hint={ranged.signupsHint}
         spark={sparkSource.signups}
+        growth={ranged.growth.signups}
       />
       <AdminMetricCard
         label="Page views"
         value={ranged.pageViews}
         hint={ranged.pageViewsHint}
         spark={sparkSource.views}
+        growth={ranged.growth.pageViews}
       />
       <AdminMetricCard
         label="Sessions"
         value={ranged.sessions}
         hint={ranged.sessionsHint}
         spark={sparkSource.sessions}
+        growth={ranged.growth.sessions}
       />
       <AdminMetricCard
         label="Hours watched"
         value={formatHours(ranged.watchSeconds)}
         hint={ranged.watchHint}
         spark={sparkSource.watch}
+        growth={ranged.growth.watch}
+      />
+      <AdminMetricCard
+        label="Est. ad revenue"
+        value={formatUsd(ranged.revenue)}
+        hint={ranged.revenueHint}
+        spark={sparkSource.revenue}
+        growth={ranged.growth.revenue}
       />
     </div>
   );
