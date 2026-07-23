@@ -40,6 +40,29 @@ function sortLabel(sort: MangaBrowseSort) {
   return "Most popular";
 }
 
+/** Prefer distinct art per genre tile — avoid the same mega-hit on every mood. */
+function pickUniqueGenreCovers(pools: MangaListItem[][]) {
+  const used = new Set<string>();
+  const out = new Map<string, string | null>();
+
+  MANGA_SHELF_GENRES.forEach((g, i) => {
+    const pool = pools[i] || [];
+    const pick =
+      pool.find((item) => item.poster && !used.has(item.poster))?.poster ??
+      pool.find((item) => item.poster)?.poster ??
+      null;
+    if (pick) used.add(pick);
+    out.set(g.slug, pick);
+  });
+
+  return out;
+}
+
+function genrePool(slug: string, pools: MangaListItem[][]) {
+  const idx = MANGA_SHELF_GENRES.findIndex((g) => g.slug === slug);
+  return idx >= 0 ? (pools[idx] || []).slice(0, 18) : [];
+}
+
 export default async function MangaPage({ searchParams }: Props) {
   const params = await searchParams;
   const query = (params.q || "").trim();
@@ -80,37 +103,23 @@ export default async function MangaPage({ searchParams }: Props) {
       shelfItems = result.items;
       found = result.found;
     } else {
-      const [
-        trendingItems,
-        popularResult,
-        latestItems,
-        ratingResult,
-        actionItems,
-        fantasyItems,
-        romanceItems,
-        ...genreSamples
-      ] = await Promise.all([
-        getTrendingManga(0, "Manga"),
-        browseManga({ sort: "popular", limit: 18 }),
-        getRecentlyUpdatedManga(0, "Manga"),
-        browseManga({ sort: "rating", limit: 18 }),
-        getMangaByGenre("action", 18),
-        getMangaByGenre("fantasy", 18),
-        getMangaByGenre("romance", 18),
-        ...MANGA_SHELF_GENRES.map((g) => getMangaByGenre(g.slug, 1)),
-      ]);
+      const [trendingItems, popularResult, latestItems, ratingResult, ...pools] =
+        await Promise.all([
+          getTrendingManga(0, "Manga"),
+          browseManga({ sort: "popular", limit: 18 }),
+          getRecentlyUpdatedManga(0, "Manga"),
+          browseManga({ sort: "rating", limit: 18 }),
+          ...MANGA_SHELF_GENRES.map((g) => getMangaByGenre(g.slug, 12)),
+        ]);
 
       trending = trendingItems.slice(0, 18);
       popular = popularResult.items;
       latest = latestItems.slice(0, 18);
       topRated = ratingResult.items;
-      action = actionItems;
-      fantasy = fantasyItems;
-      romance = romanceItems;
-
-      MANGA_SHELF_GENRES.forEach((g, i) => {
-        genreCovers.set(g.slug, genreSamples[i]?.[0]?.poster ?? null);
-      });
+      action = genrePool("action", pools);
+      fantasy = genrePool("fantasy", pools);
+      romance = genrePool("romance", pools);
+      genreCovers = pickUniqueGenreCovers(pools);
     }
   } catch (err) {
     loadError = err instanceof Error ? err.message : "Failed to load manga";
@@ -134,15 +143,11 @@ export default async function MangaPage({ searchParams }: Props) {
           <div className="absolute right-[-6%] top-16 h-40 w-[36%] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.04),transparent_70%)] blur-3xl" />
         </div>
 
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-mute uppercase">
-          <span className="sakura-dot h-1.5 w-1.5 rounded-full bg-sakura" />
-          Japanese only
-        </div>
-        <h1 className="mt-5 text-[clamp(2.4rem,6vw,4rem)] font-semibold tracking-[-0.05em] text-snow">
+        <h1 className="text-[clamp(2.4rem,6vw,4rem)] font-semibold tracking-[-0.05em] text-snow">
           Manga
         </h1>
         <p className="mt-3 max-w-xl text-cloud">
-          Trending, popular, and genre shelves — Japanese manga only.
+          Trending, popular, and genre shelves.
         </p>
 
         <form action="/manga" method="get" className="mt-8 max-w-xl">

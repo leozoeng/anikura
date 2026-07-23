@@ -37,6 +37,29 @@ function sortLabel(sort: NovelBrowseSort) {
   return sort === "latest" ? "Latest" : "Most popular";
 }
 
+/** Prefer distinct art per genre tile — avoid the same mega-hit on every mood. */
+function pickUniqueGenreCovers(pools: NovelListItem[][]) {
+  const used = new Set<string>();
+  const out = new Map<string, string | null>();
+
+  NOVEL_SHELF_GENRES.forEach((g, i) => {
+    const pool = pools[i] || [];
+    const pick =
+      pool.find((item) => item.cover && !used.has(item.cover))?.cover ??
+      pool.find((item) => item.cover)?.cover ??
+      null;
+    if (pick) used.add(pick);
+    out.set(g.slug, pick);
+  });
+
+  return out;
+}
+
+function genrePool(slug: string, pools: NovelListItem[][]) {
+  const idx = NOVEL_SHELF_GENRES.findIndex((g) => g.slug === slug);
+  return idx >= 0 ? (pools[idx] || []).slice(0, 18) : [];
+}
+
 export default async function NovelsPage({ searchParams }: Props) {
   const params = await searchParams;
   const query = (params.q || "").trim();
@@ -64,36 +87,23 @@ export default async function NovelsPage({ searchParams }: Props) {
     } else if (genre || params.sort) {
       const result = await getJapaneseNovels(page, 48, undefined, {
         genre: genre?.slug,
-        sort: genre ? sort : sort,
+        sort,
       });
       shelfItems = result.items;
       totalPages = Math.max(page, result.totalPages);
     } else {
-      const [
-        popularItems,
-        latestResult,
-        actionItems,
-        fantasyItems,
-        comedyItems,
-        ...genreSamples
-      ] = await Promise.all([
+      const [popularItems, latestResult, ...pools] = await Promise.all([
         getPopularNovels(18),
         getLatestNovels(1, 18),
-        getNovelsByGenre("action", 18),
-        getNovelsByGenre("fantasy", 18),
-        getNovelsByGenre("comedy", 18),
-        ...NOVEL_SHELF_GENRES.map((g) => getNovelsByGenre(g.slug, 1)),
+        ...NOVEL_SHELF_GENRES.map((g) => getNovelsByGenre(g.slug, 12)),
       ]);
 
       popular = popularItems;
       latest = latestResult.items;
-      action = actionItems;
-      fantasy = fantasyItems;
-      comedy = comedyItems;
-
-      NOVEL_SHELF_GENRES.forEach((g, i) => {
-        genreCovers.set(g.slug, genreSamples[i]?.[0]?.cover ?? null);
-      });
+      action = genrePool("action", pools);
+      fantasy = genrePool("fantasy", pools);
+      comedy = genrePool("comedy", pools);
+      genreCovers = pickUniqueGenreCovers(pools);
     }
   } catch (err) {
     loadError = err instanceof Error ? err.message : "Failed to load novels";
@@ -116,15 +126,11 @@ export default async function NovelsPage({ searchParams }: Props) {
           <div className="absolute right-[-6%] top-16 h-40 w-[36%] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.04),transparent_70%)] blur-3xl" />
         </div>
 
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-mute uppercase">
-          <span className="sakura-dot h-1.5 w-1.5 rounded-full bg-sakura" />
-          Japanese only
-        </div>
-        <h1 className="mt-5 text-[clamp(2.4rem,6vw,4rem)] font-semibold tracking-[-0.05em] text-snow">
+        <h1 className="text-[clamp(2.4rem,6vw,4rem)] font-semibold tracking-[-0.05em] text-snow">
           Novels
         </h1>
         <p className="mt-3 max-w-xl text-cloud">
-          Japanese light novels — popular shelves, fresh ink, and genre moods.
+          Popular titles, fresh chapters, and genre shelves.
         </p>
 
         <form action="/novels" method="get" className="mt-8 max-w-xl">
@@ -136,7 +142,7 @@ export default async function NovelsPage({ searchParams }: Props) {
               id="novel-search"
               name="q"
               defaultValue={query}
-              placeholder="Search light novels…"
+              placeholder="Search titles…"
               className="h-12 flex-1 rounded-full border border-white/10 bg-white/[0.04] px-5 text-sm text-snow outline-none placeholder:text-mute focus:border-sakura/40"
             />
             <button type="submit" className="btn-primary shrink-0 !px-5">
@@ -159,14 +165,14 @@ export default async function NovelsPage({ searchParams }: Props) {
         <div className="page-shell relative z-10 space-y-12 pt-10 sm:space-y-14">
           <NovelRow
             title="Trending now"
-            subtitle="Popular Japanese light novels"
+            subtitle="What people are reading"
             items={popular}
             seeAllHref="/novels?sort=popular"
             priorityCount={3}
           />
           <NovelRow
             title="Latest updates"
-            subtitle="Fresh chapters on the shelf"
+            subtitle="Fresh chapters dropping now"
             items={latest}
             seeAllHref="/novels?sort=latest"
           />
