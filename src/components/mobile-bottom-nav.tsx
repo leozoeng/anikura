@@ -27,10 +27,10 @@ const items = [
     icon: GenresIcon,
   },
   {
-    href: "/search",
-    label: "Search",
-    match: (p: string) => p.startsWith("/search"),
-    icon: SearchIcon,
+    href: "/manga",
+    label: "Manga",
+    match: (p: string) => p.startsWith("/manga"),
+    icon: MangaIcon,
   },
   {
     href: "/profile",
@@ -47,7 +47,8 @@ export function MobileBottomNav() {
   if (
     pathname.startsWith("/admin") ||
     pathname.startsWith("/watch") ||
-    pathname.startsWith("/login")
+    pathname.startsWith("/login") ||
+    /\/manga\/[^/]+\/read\//.test(pathname)
   ) {
     return null;
   }
@@ -163,18 +164,19 @@ function GenresIcon({ active }: { active: boolean }) {
   );
 }
 
-function SearchIcon({ active }: { active: boolean }) {
+function MangaIcon({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle
-        cx="11"
-        cy="11"
-        r="6.5"
+      <path
+        d="M5 4.5h5.2c.9 0 1.7.4 2.3 1.1.6-.7 1.4-1.1 2.3-1.1H20V19h-5.2c-.9 0-1.7.3-2.3.9-.6-.6-1.4-.9-2.3-.9H5V4.5Z"
         stroke="currentColor"
         strokeWidth={active ? 2 : 1.6}
+        strokeLinejoin="round"
+        fill={active ? "currentColor" : "none"}
+        fillOpacity={active ? 0.18 : 0}
       />
       <path
-        d="M16.5 16.5 20 20"
+        d="M12 5.5V20"
         stroke="currentColor"
         strokeWidth={active ? 2 : 1.6}
         strokeLinecap="round"

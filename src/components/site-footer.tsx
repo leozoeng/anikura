@@ -1,9 +1,17 @@
+"use client";
+
 import { AnikuraLogo } from "@/components/anikura-logo";
 import { FooterDonations } from "@/components/footer-donations";
 import { ANIKURA_DISCORD_INVITE } from "@/lib/discord-partners";
+import { usePathname } from "next/navigation";
 
 export function SiteFooter() {
+  const pathname = usePathname();
   const year = new Date().getFullYear();
+
+  if (/\/manga\/[^/]+\/read\//.test(pathname)) {
+    return null;
+  }
 
   return (
     <footer className="site-chrome site-footer relative z-10 mt-12 pb-[calc(4.25rem+env(safe-area-inset-bottom))] sm:mt-14 md:pb-0">

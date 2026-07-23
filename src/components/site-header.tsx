@@ -11,6 +11,7 @@ const links = [
   { href: "/", label: "Home" },
   { href: "/browse", label: "Browse" },
   { href: "/genres", label: "Genres" },
+  { href: "/manga", label: "Manga" },
 ];
 
 type SiteHeaderProps = {
@@ -31,6 +32,7 @@ export function SiteHeader({
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const hideChrome = pathname.startsWith("/admin");
+  const hideForReader = /\/manga\/[^/]+\/read\//.test(pathname);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -56,6 +58,8 @@ export function SiteHeader({
       document.body.style.overflow = "";
     };
   }, [menuOpen]);
+
+  if (hideForReader) return null;
 
   const solid = scrolled || searchOpen || menuOpen;
 

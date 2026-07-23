@@ -20,6 +20,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**.thetvdb.com" },
       { protocol: "https", hostname: "i.ytimg.com" },
       { protocol: "https", hostname: "img.youtube.com" },
+      { protocol: "https", hostname: "atsu.moe" },
+      { protocol: "https", hostname: "cdn.atsu.moe" },
       {
         protocol: "https",
         hostname: "yotvmnkhxqdztuqnvzpq.supabase.co",
