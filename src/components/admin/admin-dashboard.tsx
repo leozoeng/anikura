@@ -30,6 +30,9 @@ export type DashboardMetrics = {
   signups_7d: number;
   page_views_today: number;
   page_views_7d: number;
+  sessions_today: number;
+  sessions_7d: number;
+  sessions_30d: number;
   unique_visitors_today: number;
   returning_visitors_today: number;
   watch_seconds_today: number;
@@ -45,6 +48,7 @@ export type SignupDay = {
 export type ActivityDay = {
   day: string;
   page_views: number;
+  sessions: number;
   watch_seconds: number;
 };
 
@@ -216,6 +220,16 @@ function AdminDashboardInner({
         })),
       },
       {
+        id: "sessions",
+        label: "Sessions",
+        color: "rgba(220,200,210,0.9)",
+        fill: "rgba(220,200,210,0.25)",
+        points: curveSlice.activity.map((d) => ({
+          day: d.day,
+          value: d.sessions,
+        })),
+      },
+      {
         id: "watch",
         label: "Watch hours",
         color: "rgba(180,190,210,0.88)",
@@ -232,6 +246,10 @@ function AdminDashboardInner({
   );
   const viewsSpark = useMemo(
     () => lastN(activity, 7).map((d) => d.page_views),
+    [activity],
+  );
+  const sessionsSpark = useMemo(
+    () => lastN(activity, 7).map((d) => d.sessions),
     [activity],
   );
   const watchSpark = useMemo(
@@ -264,6 +282,11 @@ function AdminDashboardInner({
           metrics.page_views_7d > 0
             ? `${metrics.page_views_7d} in 7d · ~${Math.round(metrics.page_views_7d / 7)}/day`
             : "Since midnight UTC",
+        sessions: metrics.sessions_today,
+        sessionsHint:
+          metrics.sessions_7d > 0
+            ? `${metrics.sessions_7d} unique in 7d · browser IDs`
+            : "Distinct browsers today",
         watchSeconds: metrics.watch_seconds_today,
         watchHint: "Visible time on /watch today",
         rangeLabel: "Today",
@@ -275,11 +298,14 @@ function AdminDashboardInner({
       const views =
         sumField(act7, (d) => d.page_views) || metrics.page_views_7d;
       const signups = sumField(sig7, (d) => d.signups) || metrics.signups_7d;
+      const sessions = metrics.sessions_7d;
       return {
         signups,
         signupsHint: `~${(signups / 7).toFixed(1)}/day · ${metrics.total_signups} total`,
         pageViews: views,
         pageViewsHint: `~${Math.round(views / 7)}/day average`,
+        sessions,
+        sessionsHint: `~${Math.round(sessions / 7)}/day · distinct browsers`,
         watchSeconds: watch,
         watchHint: "Sum of visible /watch time · 7 days",
         rangeLabel: "Last 7 days",
@@ -289,12 +315,18 @@ function AdminDashboardInner({
     const watch = sumField(act30, (d) => d.watch_seconds);
     const views = sumField(act30, (d) => d.page_views);
     const signups = sumField(sig30, (d) => d.signups);
+    const sessions = metrics.sessions_30d;
     return {
       signups,
       signupsHint: `~${(signups / 30).toFixed(1)}/day · ${metrics.total_signups} total`,
       pageViews: views,
       pageViewsHint:
         views > 0 ? `~${Math.round(views / 30)}/day average` : "No views in range",
+      sessions,
+      sessionsHint:
+        sessions > 0
+          ? `~${Math.round(sessions / 30)}/day · distinct browsers`
+          : "No sessions in range",
       watchSeconds: watch,
       watchHint: "Sum of visible /watch time · 30 days",
       rangeLabel: "Last 30 days",
@@ -501,6 +533,12 @@ function AdminDashboardInner({
                   spark={watchSpark}
                 />
                 <AdminMetricCard
+                  label="Sessions"
+                  value={ranged.sessions}
+                  hint={ranged.sessionsHint}
+                  spark={sessionsSpark}
+                />
+                <AdminMetricCard
                   label="Page views"
                   value={ranged.pageViews}
                   hint={ranged.pageViewsHint}
@@ -595,9 +633,9 @@ function AdminDashboardInner({
                 </p>
                 <dl className="mt-2 space-y-1.5 text-xs">
                   <div className="flex justify-between gap-2">
-                    <dt className="text-mute">Unique</dt>
+                    <dt className="text-mute">Sessions</dt>
                     <dd className="tabular-nums text-snow">
-                      {metrics.unique_visitors_today}
+                      {metrics.sessions_today}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-2">
@@ -607,15 +645,15 @@ function AdminDashboardInner({
                     </dd>
                   </div>
                   <div className="flex justify-between gap-2">
-                    <dt className="text-mute">Accounts</dt>
+                    <dt className="text-mute">Sessions · 7d</dt>
                     <dd className="tabular-nums text-cloud">
-                      {metrics.total_signups}
+                      {metrics.sessions_7d}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-2 border-t border-white/[0.05] pt-1.5">
-                    <dt className="text-mute">7d signups</dt>
+                    <dt className="text-mute">Accounts</dt>
                     <dd className="tabular-nums text-cloud">
-                      {metrics.signups_7d}
+                      {metrics.total_signups}
                     </dd>
                   </div>
                 </dl>

@@ -80,6 +80,9 @@ export default async function AdminPage() {
     signups_7d?: number;
     page_views_today?: number;
     page_views_7d?: number;
+    sessions_today?: number;
+    sessions_7d?: number;
+    sessions_30d?: number;
     unique_visitors_today?: number;
     returning_visitors_today?: number;
     watch_seconds_today?: number | string;
@@ -109,11 +112,13 @@ export default async function AdminPage() {
     (activityRaw ?? []) as Array<{
       day: string;
       page_views: number;
+      sessions?: number;
       watch_seconds: number | string;
     }>
   ).map((row) => ({
     day: String(row.day).slice(0, 10),
     page_views: Number(row.page_views ?? 0),
+    sessions: Number(row.sessions ?? 0),
     watch_seconds: Number(row.watch_seconds ?? 0),
   }));
 
@@ -132,6 +137,10 @@ export default async function AdminPage() {
           signups_7d: metrics.signups_7d ?? 0,
           page_views_today: metrics.page_views_today ?? 0,
           page_views_7d: metrics.page_views_7d ?? 0,
+          sessions_today:
+            metrics.sessions_today ?? metrics.unique_visitors_today ?? 0,
+          sessions_7d: metrics.sessions_7d ?? 0,
+          sessions_30d: metrics.sessions_30d ?? 0,
           unique_visitors_today: metrics.unique_visitors_today ?? 0,
           returning_visitors_today: metrics.returning_visitors_today ?? 0,
           watch_seconds_today: Number(metrics.watch_seconds_today ?? 0),
