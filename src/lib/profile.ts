@@ -1,4 +1,10 @@
-export type ProfileBadgeId = "dev" | "vip" | "og" | "partner";
+export type ProfileBadgeId =
+  | "admin"
+  | "mod"
+  | "dev"
+  | "vip"
+  | "og"
+  | "partner";
 
 export type PublicProfile = {
   id: string;
@@ -79,6 +85,8 @@ const UUID_RE =
 
 /** Known badge ids, display order. */
 export const PROFILE_BADGE_ORDER: ProfileBadgeId[] = [
+  "admin",
+  "mod",
   "og",
   "partner",
   "dev",
@@ -87,6 +95,8 @@ export const PROFILE_BADGE_ORDER: ProfileBadgeId[] = [
 
 function isKnownBadge(value: string): value is ProfileBadgeId {
   return (
+    value === "admin" ||
+    value === "mod" ||
     value === "dev" ||
     value === "vip" ||
     value === "og" ||
@@ -105,7 +115,8 @@ export function resolveProfileBadges(
     if (isKnownBadge(id)) set.add(id);
   }
 
-  if (profile.role === "admin") set.add("dev");
+  // Staff role always shows the Admin mark; Dev stays assignable separately.
+  if (profile.role === "admin") set.add("admin");
 
   return PROFILE_BADGE_ORDER.filter((id) => set.has(id));
 }

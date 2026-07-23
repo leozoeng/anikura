@@ -22,6 +22,8 @@ export type AdminBadgeUser = {
 
 function isKnownBadge(value: string): value is ProfileBadgeId {
   return (
+    value === "admin" ||
+    value === "mod" ||
     value === "dev" ||
     value === "vip" ||
     value === "og" ||

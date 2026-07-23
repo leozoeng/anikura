@@ -23,6 +23,56 @@ export const PROFILE_BADGE_META: Record<
   ProfileBadgeId,
   { label: string; title: string; className: string; icon: ReactNode }
 > = {
+  admin: {
+    label: "Admin",
+    title: "Site admin",
+    className:
+      "border-rose-400/35 bg-[#2a1418] text-rose-100/95 ring-rose-400/15",
+    icon: (
+      <BadgeIcon>
+        {/* Shield with star — site authority */}
+        <path
+          d="M8 1.55 13.1 3.7v4.05c0 3.05-2.05 5.55-5.1 6.55-3.05-1-5.1-3.5-5.1-6.55V3.7L8 1.55z"
+          fill="currentColor"
+          fillOpacity="0.22"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M8 5.05l.85 1.8 1.95.2-1.45 1.35.45 1.9L8 9.35 5.2 10.3l.45-1.9L4.2 7.05l1.95-.2L8 5.05z"
+          fill="currentColor"
+          fillOpacity="0.85"
+        />
+      </BadgeIcon>
+    ),
+  },
+  mod: {
+    label: "Mod",
+    title: "Site moderator",
+    className:
+      "border-teal-400/30 bg-[#12201e] text-teal-100/90 ring-teal-400/12",
+    icon: (
+      <BadgeIcon>
+        {/* Shield with check — community moderation */}
+        <path
+          d="M8 1.55 13.1 3.7v4.05c0 3.05-2.05 5.55-5.1 6.55-3.05-1-5.1-3.5-5.1-6.55V3.7L8 1.55z"
+          fill="currentColor"
+          fillOpacity="0.2"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M5.35 7.85 7.15 9.6l3.55-3.7"
+          stroke="currentColor"
+          strokeWidth="1.45"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </BadgeIcon>
+    ),
+  },
   og: {
     label: "OG",
     title: "Original member",

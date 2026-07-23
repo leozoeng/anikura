@@ -259,7 +259,7 @@ export function BadgeManager() {
         <div>
           <h2 className="text-[0.95rem] tracking-[-0.02em] text-snow">Members</h2>
           <p className="text-xs text-mute">
-            Browse signups, open profiles, assign OG / Partner / Dev / VIP.
+            Browse signups, open profiles, assign Admin / Mod / OG / Partner / Dev / VIP.
           </p>
         </div>
         <p className="text-xs text-mute">
