@@ -855,6 +855,38 @@ body[data-theater="true"] .site-atmosphere {
   display: none;
 }
 
+/*
+  Watch player: keep the full 16:9 frame (incl. soft-sub band) inside the
+  visible viewport. On landscape phones, width-based aspect-video grows taller
+  than the screen and English captions sit below the fold.
+*/
+.watch-player-stage {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  background: #000;
+}
+
+.watch-player-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .watch-player-frame {
+    /* Fit under site header + watch chrome; leave room for the caption band. */
+    width: min(100%, calc((100svh - 7.75rem) * 16 / 9));
+    max-height: calc(100svh - 7.75rem);
+  }
+
+  body[data-theater="true"] .watch-player-frame {
+    width: min(100%, calc((100svh - 5.75rem) * 16 / 9));
+    max-height: calc(100svh - 5.75rem);
+  }
+}
+
 /* —— Footer —— */
 .site-footer {
   color: color-mix(in oklab, var(--color-cloud) 92%, white);
