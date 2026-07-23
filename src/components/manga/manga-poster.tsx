@@ -21,6 +21,7 @@ export function MangaPoster({
   index,
 }: Props) {
   const score = formatMangaRating(manga.rating);
+  const typeLabel = formatMangaType(manga.type);
   const delay =
     typeof index === "number"
       ? { animationDelay: `${Math.min(index, 14) * 18}ms` }
@@ -51,16 +52,19 @@ export function MangaPoster({
             {score}
           </span>
         ) : null}
+
+        <span className="absolute bottom-2.5 left-2.5 z-[1] rounded-md border border-white/10 bg-black/55 px-1.5 py-0.5 text-[0.62rem] font-medium tracking-[0.04em] text-snow/90 backdrop-blur-sm">
+          {typeLabel}
+        </span>
       </div>
 
       <div className="mt-2.5 px-0.5">
         <h3 className="line-clamp-2 text-[0.9rem] font-medium leading-snug tracking-[-0.02em] text-snow transition group-hover:text-sakura-soft">
           {manga.title}
         </h3>
-        <p className="mt-1 text-[0.72rem] text-mute">
-          {formatMangaType(manga.type)}
-          {manga.views ? ` · ${manga.views} views` : ""}
-        </p>
+        {manga.views ? (
+          <p className="mt-1 text-[0.72rem] text-mute">{manga.views} views</p>
+        ) : null}
       </div>
     </Link>
   );

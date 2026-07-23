@@ -11,6 +11,8 @@ export type NovelListItem = {
   isAdult: boolean;
   isMtl: boolean;
   isHot: boolean;
+  /** japanese | korean | chinese when known */
+  origin: string | null;
   genres: string[];
   updatedAt: string | null;
 };

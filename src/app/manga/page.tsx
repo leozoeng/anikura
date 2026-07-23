@@ -5,69 +5,99 @@ import {
   getRecentlyUpdatedManga,
   getTrendingManga,
   searchManga,
+  type MangaShelfType,
 } from "@/lib/atsu";
+import type { MangaListItem } from "@/lib/manga-types";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
+type ShelfTab = "manga" | "manhwa" | "manhua";
+
 type Props = {
   searchParams: Promise<{
+    type?: string;
     sort?: string;
     page?: string;
     q?: string;
   }>;
 };
 
+function parseTab(raw: string | undefined): ShelfTab | "home" {
+  if (raw === "manhwa" || raw === "manhua" || raw === "manga") return raw;
+  return "home";
+}
+
+function apiType(tab: ShelfTab): MangaShelfType {
+  if (tab === "manhwa") return "Manwha";
+  if (tab === "manhua") return "Manhua";
+  return "Manga";
+}
+
+function tabLabel(tab: ShelfTab) {
+  if (tab === "manhwa") return "Manhwa";
+  if (tab === "manhua") return "Manhua";
+  return "Manga";
+}
+
 export default async function MangaPage({ searchParams }: Props) {
   const params = await searchParams;
+  const tab = parseTab(params.type);
   const sort = params.sort === "updated" ? "updated" : "trending";
   const page = Math.max(1, Number(params.page || 1));
   const query = (params.q || "").trim();
   const apiPage = page - 1;
 
-  let trending = [] as Awaited<ReturnType<typeof getTrendingManga>>;
-  let updated = [] as Awaited<ReturnType<typeof getRecentlyUpdatedManga>>;
-  let searchItems = [] as Awaited<ReturnType<typeof searchManga>>["items"];
+  let trendingManga: MangaListItem[] = [];
+  let latestManga: MangaListItem[] = [];
+  let trendingManhwa: MangaListItem[] = [];
+  let trendingManhua: MangaListItem[] = [];
+  let shelfItems: MangaListItem[] = [];
+  let searchItems: MangaListItem[] = [];
   let searchFound = 0;
   let loadError: string | null = null;
 
   try {
     if (query) {
-      const result = await searchManga(query, page, 48);
+      const typeFilter =
+        tab === "home" ? "all" : apiType(tab);
+      const result = await searchManga(query, page, 48, undefined, typeFilter);
       searchItems = result.items;
       searchFound = result.found;
-    } else if (page === 1) {
-      [trending, updated] = await Promise.all([
-        getTrendingManga(0),
-        getRecentlyUpdatedManga(0),
+    } else if (tab === "home") {
+      const [tm, lm, thw, thu] = await Promise.all([
+        getTrendingManga(0, "Manga"),
+        getRecentlyUpdatedManga(0, "Manga"),
+        getTrendingManga(0, "Manwha"),
+        getTrendingManga(0, "Manhua"),
       ]);
-    } else if (sort === "updated") {
-      updated = await getRecentlyUpdatedManga(apiPage);
+      trendingManga = tm;
+      latestManga = lm;
+      trendingManhwa = thw;
+      trendingManhua = thu;
     } else {
-      trending = await getTrendingManga(apiPage);
+      const type = apiType(tab);
+      shelfItems =
+        sort === "updated"
+          ? await getRecentlyUpdatedManga(apiPage, type)
+          : await getTrendingManga(apiPage, type);
     }
   } catch (err) {
     loadError = err instanceof Error ? err.message : "Failed to load manga";
   }
 
-  const gridItems = query
-    ? searchItems
-    : page === 1
-      ? []
-      : sort === "updated"
-        ? updated
-        : trending;
-
   const totalPages = query
     ? Math.max(1, Math.ceil(searchFound / 48))
-    : page === 1
+    : tab === "home"
       ? 1
-      : page + (gridItems.length >= 24 ? 1 : 0);
+      : page + (shelfItems.length >= 24 ? 1 : 0);
 
-  const sorts = [
-    { id: "trending", label: "Trending" },
-    { id: "updated", label: "Latest" },
-  ] as const;
+  const tabs: { id: "home" | ShelfTab; label: string; href: string }[] = [
+    { id: "home", label: "For you", href: "/manga" },
+    { id: "manga", label: "Manga", href: "/manga?type=manga" },
+    { id: "manhwa", label: "Manhwa", href: "/manga?type=manhwa" },
+    { id: "manhua", label: "Manhua", href: "/manga?type=manhua" },
+  ];
 
   return (
     <div className="page-shell page-enter relative pb-16 pt-28">
@@ -87,11 +117,13 @@ export default async function MangaPage({ searchParams }: Props) {
         Manga
       </h1>
       <p className="mt-3 max-w-xl text-cloud">
-        Quiet shelves for loud panels — manga, manhwa, and manhua in the same
-        Anikura night.
+        Japanese manga first — then manhwa and manhua on their own shelves.
       </p>
 
       <form action="/manga" method="get" className="mt-8 max-w-xl">
+        {tab !== "home" ? (
+          <input type="hidden" name="type" value={tab} />
+        ) : null}
         <label className="sr-only" htmlFor="manga-search">
           Search manga
         </label>
@@ -109,6 +141,23 @@ export default async function MangaPage({ searchParams }: Props) {
         </div>
       </form>
 
+      <div className="filter-rail mt-8" role="tablist" aria-label="Manga type">
+        {tabs.map((t) => {
+          const active = tab === t.id;
+          return (
+            <Link
+              key={t.id}
+              href={t.href}
+              role="tab"
+              aria-selected={active}
+              className={`filter-pill ${active ? "is-active" : ""}`}
+            >
+              {t.label}
+            </Link>
+          );
+        })}
+      </div>
+
       {loadError ? (
         <div className="mt-16 border border-dashed border-white/15 px-8 py-14 text-center">
           <h2 className="text-2xl font-semibold tracking-[-0.03em]">
@@ -124,10 +173,14 @@ export default async function MangaPage({ searchParams }: Props) {
             <div>
               <p className="section-eyebrow">Search</p>
               <h2 className="section-title">
-                {searchFound.toLocaleString()} results for “{query}”
+                Results for “{query}”
+                {tab !== "home" ? ` · ${tabLabel(tab)}` : ""}
               </h2>
             </div>
-            <Link href="/manga" className="text-sm text-mute hover:text-sakura-soft">
+            <Link
+              href={tab === "home" ? "/manga" : `/manga?type=${tab}`}
+              className="text-sm text-mute hover:text-sakura-soft"
+            >
               Clear
             </Link>
           </div>
@@ -143,53 +196,72 @@ export default async function MangaPage({ searchParams }: Props) {
           <PagePagination
             page={Math.min(page, totalPages)}
             totalPages={totalPages}
-            hrefForPage={(p) => `/manga?q=${encodeURIComponent(query)}&page=${p}`}
+            hrefForPage={(p) => {
+              const qs = new URLSearchParams({
+                q: query,
+                page: String(p),
+              });
+              if (tab !== "home") qs.set("type", tab);
+              return `/manga?${qs}`;
+            }}
           />
         </>
       ) : null}
 
-      {!loadError && !query && page === 1 ? (
+      {!loadError && !query && tab === "home" ? (
         <>
           <MangaRow
-            eyebrow="Right now"
-            title="Trending"
-            subtitle="What the shelf is warming up tonight"
-            items={trending.slice(0, 18)}
-            seeAllHref="/manga?sort=trending&page=2"
+            eyebrow="Japan"
+            title="Trending manga"
+            subtitle="The main shelf — Japanese titles first"
+            items={trendingManga.slice(0, 18)}
+            seeAllHref="/manga?type=manga"
           />
           <MangaRow
             eyebrow="Fresh ink"
-            title="Latest updates"
-            subtitle="New chapters as they land"
-            items={updated.slice(0, 18)}
-            seeAllHref="/manga?sort=updated&page=2"
+            title="Latest manga"
+            subtitle="New chapters from the Japanese shelf"
+            items={latestManga.slice(0, 18)}
+            seeAllHref="/manga?type=manga&sort=updated"
           />
-          <div className="mt-14 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {trending.slice(0, 24).map((manga, i) => (
-              <MangaPoster key={`grid-${manga.id}`} manga={manga} index={i} />
-            ))}
-          </div>
-          <div className="mt-10 flex justify-center">
-            <Link href="/manga?sort=trending&page=2" className="btn-ghost">
-              Browse more
-            </Link>
+
+          <div className="mt-16 border-t border-white/[0.06] pt-2">
+            <MangaRow
+              eyebrow="Korea"
+              title="Manhwa"
+              subtitle="Webtoon energy on its own row"
+              items={trendingManhwa.slice(0, 18)}
+              seeAllHref="/manga?type=manhwa"
+            />
+            <MangaRow
+              eyebrow="China"
+              title="Manhua"
+              subtitle="Cultivation nights and long roads"
+              items={trendingManhua.slice(0, 18)}
+              seeAllHref="/manga?type=manhua"
+            />
           </div>
         </>
       ) : null}
 
-      {!loadError && !query && page > 1 ? (
+      {!loadError && !query && tab !== "home" ? (
         <>
           <div
-            className="filter-rail mt-9"
+            className="filter-rail mt-6"
             role="tablist"
-            aria-label="Manga sort"
+            aria-label={`${tabLabel(tab)} sort`}
           >
-            {sorts.map((s) => {
+            {(
+              [
+                { id: "trending", label: "Trending" },
+                { id: "updated", label: "Latest" },
+              ] as const
+            ).map((s) => {
               const active = sort === s.id;
               return (
                 <Link
                   key={s.id}
-                  href={`/manga?sort=${s.id}&page=1`}
+                  href={`/manga?type=${tab}&sort=${s.id}`}
                   role="tab"
                   aria-selected={active}
                   className={`filter-pill ${active ? "is-active" : ""}`}
@@ -200,8 +272,15 @@ export default async function MangaPage({ searchParams }: Props) {
             })}
           </div>
 
-          <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {gridItems.map((manga, i) => (
+          <div className="mt-4">
+            <p className="section-eyebrow">{tabLabel(tab)}</p>
+            <h2 className="section-title">
+              {sort === "updated" ? "Latest updates" : "Trending now"}
+            </h2>
+          </div>
+
+          <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            {shelfItems.map((manga, i) => (
               <MangaPoster key={manga.id} manga={manga} index={i} />
             ))}
           </div>
@@ -209,7 +288,9 @@ export default async function MangaPage({ searchParams }: Props) {
           <PagePagination
             page={page}
             totalPages={Math.max(page, totalPages)}
-            hrefForPage={(p) => `/manga?sort=${sort}&page=${p}`}
+            hrefForPage={(p) =>
+              `/manga?type=${tab}&sort=${sort}&page=${p}`
+            }
           />
         </>
       ) : null}

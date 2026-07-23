@@ -9,12 +9,20 @@ import type {
 const DOMAIN = "atsu.moe";
 const ORIGIN = `https://${DOMAIN}`;
 const CDN = `https://cdn.${DOMAIN}`;
-const DEFAULT_TYPES = "Manga,Manwha,Manhua,OEL";
+const DEFAULT_TYPES = "Manga,Manwha,Manhua";
+
+export type MangaShelfType = "Manga" | "Manwha" | "Manhua";
 
 type FetchOptions = {
   revalidate?: number | false;
   cache?: RequestCache;
 };
+
+function typesParam(types?: MangaShelfType | MangaShelfType[] | string) {
+  if (!types) return DEFAULT_TYPES;
+  if (Array.isArray(types)) return types.join(",");
+  return types;
+}
 
 async function fetchJson<T>(
   url: string,
@@ -215,9 +223,10 @@ type InfiniteResponse = { items?: Record<string, unknown>[] };
 
 export async function getTrendingManga(
   page = 0,
+  types?: MangaShelfType | MangaShelfType[] | string,
   options: FetchOptions = { revalidate: 300 },
 ) {
-  const url = `${ORIGIN}/api/infinite/trending?page=${page}&types=${DEFAULT_TYPES}`;
+  const url = `${ORIGIN}/api/infinite/trending?page=${page}&types=${encodeURIComponent(typesParam(types))}`;
   const json = await fetchJson<InfiniteResponse>(url, options);
   return (json.items || [])
     .map(asListItem)
@@ -226,9 +235,10 @@ export async function getTrendingManga(
 
 export async function getRecentlyUpdatedManga(
   page = 0,
+  types?: MangaShelfType | MangaShelfType[] | string,
   options: FetchOptions = { revalidate: 180 },
 ) {
-  const url = `${ORIGIN}/api/infinite/recentlyUpdated?page=${page}&types=${DEFAULT_TYPES}`;
+  const url = `${ORIGIN}/api/infinite/recentlyUpdated?page=${page}&types=${encodeURIComponent(typesParam(types))}`;
   const json = await fetchJson<InfiniteResponse>(url, options);
   return (json.items || [])
     .map(asListItem)
@@ -245,6 +255,7 @@ export async function searchManga(
   page = 1,
   limit = 24,
   options: FetchOptions = { revalidate: 120 },
+  typeFilter?: MangaShelfType | "all",
 ) {
   const q = query.trim();
   if (!q) return { items: [] as MangaListItem[], found: 0 };
@@ -261,11 +272,18 @@ export async function searchManga(
 
   const url = `${ORIGIN}/collections/manga/documents/search?${params}`;
   const json = await fetchJson<SearchResponse>(url, options);
-  const items = (json.hits || [])
+  let items = (json.hits || [])
     .map((hit) => hit.document)
     .filter(Boolean)
     .map((doc) => asListItem(doc as Record<string, unknown>))
     .filter((item) => !item.isAdult);
+
+  if (typeFilter && typeFilter !== "all") {
+    items = items.filter((item) => {
+      const t = item.type === "Manhwa" ? "Manwha" : item.type;
+      return t === typeFilter;
+    });
+  }
 
   return { items, found: json.found ?? items.length };
 }

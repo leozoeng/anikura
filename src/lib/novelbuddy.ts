@@ -117,10 +117,22 @@ function asListItem(raw: Record<string, unknown>): NovelListItem {
         .filter((n): n is string => Boolean(n))
     : [];
 
+  const originRaw = raw.type;
+  let origin: string | null = null;
+  if (typeof originRaw === "string") origin = originRaw;
+  else if (originRaw && typeof originRaw === "object") {
+    const o = originRaw as { name?: string; slug?: string };
+    origin = o.slug || o.name || null;
+  }
+
+  const title = String(raw.name || "Untitled");
+  const isMtl =
+    Boolean(raw.is_mtl) || /^mtl[\s\-–—]/i.test(title) || /\bMTL\b/.test(title);
+
   return {
     id: String(raw.id),
     slug: String(raw.slug || raw.id),
-    title: String(raw.name || "Untitled"),
+    title,
     cover: raw.cover ? String(raw.cover) : null,
     status: raw.status ? String(raw.status) : null,
     rating: typeof raw.rating === "number" ? raw.rating : null,
@@ -131,26 +143,128 @@ function asListItem(raw: Record<string, unknown>): NovelListItem {
       raw.summary != null ? String(raw.summary) : null,
     ).slice(0, 280) || null,
     isAdult: Boolean(raw.is_adult),
-    isMtl: Boolean(raw.is_mtl),
+    isMtl,
     isHot: Boolean(raw.is_hot),
+    origin: origin ? String(origin).toLowerCase() : null,
     genres,
     updatedAt: raw.updated_at ? String(raw.updated_at) : null,
   };
 }
 
-function isBlockedNovel(item: {
-  isAdult?: boolean;
-  genres?: string[] | NovelGenre[];
-  title?: string;
-}) {
-  if (item.isAdult) return true;
-  const names = (item.genres || []).map((g) =>
-    typeof g === "string" ? g.toLowerCase() : g.name.toLowerCase(),
-  );
-  if (names.some((n) => ["adult", "smut", "ecchi"].includes(n))) return true;
-  const title = (item.title || "").toLowerCase();
-  if (/\b(r-18|hentai|smut)\b/i.test(title)) return true;
-  return false;
+const BLOCKED_GENRES = new Set([
+  "adult",
+  "smut",
+  "fan-fiction",
+  "fanfiction",
+]);
+
+/** Omegaverse / mafia / heat romance + obvious western fanfic spam. */
+const BLOCKED_TITLE =
+  /\b(mate[ds]?|alphas?|omegas?|mafia|dadd(?:y|ies)|breeding|claimed me|sold me|went into heat|pregnant by|heat and my|omegaverse|reverse harem|roommates with benefits|seduce the|slave harem|taboo harem|milf|tentacle|stepbrother|stepsister|harry potter|warhammer|marvel\s*:|dc comics|football manager)\b/i;
+
+const FANFIC_PREFIX =
+  /^(naruto|one piece|bleach|pokemon|boruto|fairy tail|dragon ball|harry potter|marvel|dc|warhammer|cyberpunk|douluo dalu)\s*[:\-]/i;
+
+const ANIME_SHELF_GENRES = new Set([
+  "action",
+  "adventure",
+  "fantasy",
+  "comedy",
+  "drama",
+  "mystery",
+  "horror",
+  "sci-fi",
+  "scifi",
+  "school life",
+  "martial arts",
+  "mecha",
+  "supernatural",
+  "psychological",
+  "seinen",
+  "shounen",
+  "shoujo",
+  "slice of life",
+  "system",
+  "reincarnation",
+  "eastern",
+  "xianxia",
+  "xuanhuan",
+  "wuxia",
+  "historical",
+  "tragedy",
+  "sports",
+  "game",
+  "isekai",
+]);
+
+const ACTION_SPINE = new Set([
+  "action",
+  "adventure",
+  "martial arts",
+  "mecha",
+  "sci-fi",
+  "scifi",
+  "shounen",
+  "seinen",
+  "xianxia",
+  "xuanhuan",
+  "wuxia",
+  "system",
+  "isekai",
+]);
+
+export type NovelOrigin = "japanese" | "korean" | "chinese";
+
+function isAnimeShelfNovel(item: NovelListItem) {
+  if (item.isMtl) return false;
+  if (BLOCKED_TITLE.test(item.title) || FANFIC_PREFIX.test(item.title)) {
+    return false;
+  }
+
+  const genres = item.genres.map((g) => g.toLowerCase());
+  if (genres.some((g) => BLOCKED_GENRES.has(g))) return false;
+
+  // NovelBuddy marks many real LNs as adult — only trust the flag with smut genres
+  // or when there is no adventure / shounen spine at all.
+  const hasActionSpine = genres.some((g) => ACTION_SPINE.has(g));
+  if (item.isAdult && !hasActionSpine) return false;
+
+  const hasAnimeSpine = genres.some((g) => ANIME_SHELF_GENRES.has(g));
+  if (!hasAnimeSpine) return false;
+
+  // Yaoi/Yuri / pure romance without an action spine → romance spam on this source
+  const blTagged =
+    genres.includes("yaoi") ||
+    genres.includes("yuri") ||
+    genres.includes("bl") ||
+    genres.includes("gl");
+  if (blTagged && !hasActionSpine) return false;
+
+  if (genres.includes("romance") && !hasActionSpine && blTagged) return false;
+
+  // Pure palace / husband / empress romance with no adventure spine
+  if (
+    genres.includes("romance") &&
+    !hasActionSpine &&
+    !genres.some((g) =>
+      ["fantasy", "supernatural", "reincarnation", "isekai", "comedy"].includes(
+        g,
+      ),
+    )
+  ) {
+    return false;
+  }
+
+  // Harem + romance with no action spine (KR web-novel spam)
+  if (
+    genres.includes("harem") &&
+    genres.includes("romance") &&
+    !hasActionSpine
+  ) {
+    return false;
+  }
+
+  return true;
 }
 
 export function novelHref(id: string) {
@@ -192,13 +306,19 @@ export async function searchNovels(
   page = 1,
   limit = 24,
   options: FetchOptions = { revalidate: 180 },
+  origin?: NovelOrigin | "all",
 ) {
+  // Oversample — anime filter drops a lot of KR/CN web-novel spam.
+  const fetchLimit = Math.min(48, Math.max(limit * 3, limit));
   const params = new URLSearchParams({
     page: String(page),
-    limit: String(limit),
+    limit: String(fetchLimit),
   });
   const q = query?.trim();
   if (q) params.set("q", q);
+  if (origin && origin !== "all") params.set("type", origin);
+  // Default browse is newest junk; popular keeps ORV / Slime / LotM on top.
+  if (!q) params.set("sort", "popular");
 
   const json = await fetchJson<SearchResponse>(
     `/titles/search?${params}`,
@@ -206,7 +326,13 @@ export async function searchNovels(
   );
   const items = (json.data?.items || [])
     .map(asListItem)
-    .filter((item) => !isBlockedNovel(item));
+    .map((item) =>
+      origin && origin !== "all" && !item.origin
+        ? { ...item, origin }
+        : item,
+    )
+    .filter((item) => isAnimeShelfNovel(item))
+    .slice(0, limit);
 
   return {
     items,
@@ -217,30 +343,57 @@ export async function searchNovels(
   };
 }
 
-/** Fresh ink — latest catalog page from NovelBuddy. */
+/** Japanese light novels — primary Anikura shelf. */
+export async function getJapaneseNovels(
+  page = 1,
+  limit = 24,
+  options?: FetchOptions,
+) {
+  return searchNovels(null, page, limit, options, "japanese");
+}
+
+/** Korean web novels that still feel anime/manhwa adjacent. */
+export async function getKoreanNovels(
+  page = 1,
+  limit = 24,
+  options?: FetchOptions,
+) {
+  return searchNovels(null, page, limit, options, "korean");
+}
+
+/** Chinese xianxia / web novels on the anime-adjacent shelf. */
+export async function getChineseNovels(
+  page = 1,
+  limit = 24,
+  options?: FetchOptions,
+) {
+  return searchNovels(null, page, limit, options, "chinese");
+}
+
+/** Fresh ink — Japanese first. */
 export async function getLatestNovels(
   page = 1,
   limit = 24,
   options?: FetchOptions,
 ) {
-  return searchNovels(null, page, limit, options);
+  return getJapaneseNovels(page, limit, options);
 }
 
-/** Popular shelf — browse latest pages and rank by views. */
+/** Popular shelf — Japanese ranked by views, topped up with KR/CN hits. */
 export async function getPopularNovels(
   limit = 24,
   options: FetchOptions = { revalidate: 300 },
 ) {
-  const pages = await Promise.all([
-    searchNovels(null, 1, 48, options),
-    searchNovels(null, 2, 48, options),
-    searchNovels("the", 1, 24, options),
+  const [jp1, jp2, kr, cn] = await Promise.all([
+    searchNovels(null, 1, 48, options, "japanese"),
+    searchNovels(null, 2, 48, options, "japanese"),
+    searchNovels(null, 1, 36, options, "korean"),
+    searchNovels(null, 1, 36, options, "chinese"),
   ]);
 
   const map = new Map<string, NovelListItem>();
-  for (const page of pages) {
+  for (const page of [jp1, jp2, kr, cn]) {
     for (const item of page.items) {
-      if (item.isMtl) continue;
       const existing = map.get(item.id);
       if (!existing || (item.views || 0) > (existing.views || 0)) {
         map.set(item.id, item);
@@ -268,6 +421,19 @@ export async function getNovelDetail(
   );
   const raw = json.data?.title;
   if (!raw) throw new Error(`Novel not found: ${id}`);
+
+  const listProbe = asListItem({
+    ...raw,
+    name: raw.name,
+    is_adult: raw.is_adult,
+    is_mtl: raw.is_mtl,
+    genres: raw.genres,
+    stats: raw.stats,
+    type: raw.type,
+  });
+  if (!isAnimeShelfNovel(listProbe)) {
+    throw new Error(`Novel filtered: ${id}`);
+  }
 
   const stats = (raw.stats as Record<string, unknown> | undefined) || {};
   const authors = Array.isArray(raw.authors)
