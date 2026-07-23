@@ -332,7 +332,7 @@ export async function searchNovels(
   query: string | null,
   page = 1,
   limit = 24,
-  options: FetchOptions = { revalidate: 180 },
+  options: FetchOptions = { revalidate: 120 },
   origin: NovelOrigin | "all" = "japanese",
   extras?: { genre?: string | null; sort?: NovelBrowseSort },
 ) {
@@ -425,7 +425,7 @@ type DetailResponse = {
 
 export async function getNovelDetail(
   id: string,
-  options: FetchOptions = { revalidate: 300 },
+  options: FetchOptions = { cache: "no-store" },
 ): Promise<NovelDetail> {
   const json = await fetchJson<DetailResponse>(
     `/titles/${encodeURIComponent(id)}`,
@@ -510,7 +510,7 @@ type ChaptersResponse = {
 
 export async function getNovelChapters(
   id: string,
-  options: FetchOptions = { revalidate: 300 },
+  options: FetchOptions = { cache: "no-store" },
 ) {
   const json = await fetchJson<ChaptersResponse>(
     `/titles/${encodeURIComponent(id)}/chapters`,
@@ -537,7 +537,7 @@ type ReadResponse = {
 export async function getNovelChapterContent(
   novelId: string,
   chapterId: string,
-  options: FetchOptions = { revalidate: 600 },
+  options: FetchOptions = { revalidate: 120 },
 ): Promise<NovelChapterContent> {
   const json = await fetchJson<ReadResponse>(
     `/titles/${encodeURIComponent(novelId)}/chapters/${encodeURIComponent(chapterId)}`,

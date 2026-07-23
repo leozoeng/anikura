@@ -251,7 +251,7 @@ type InfiniteResponse = { items?: Record<string, unknown>[] };
 export async function getTrendingManga(
   page = 0,
   types?: MangaShelfType | MangaShelfType[] | string,
-  options: FetchOptions = { revalidate: 300 },
+  options: FetchOptions = { revalidate: 120 },
 ) {
   const url = `${ORIGIN}/api/infinite/trending?page=${page}&types=${encodeURIComponent(typesParam(types))}`;
   const json = await fetchJson<InfiniteResponse>(url, options);
@@ -263,7 +263,7 @@ export async function getTrendingManga(
 export async function getRecentlyUpdatedManga(
   page = 0,
   types?: MangaShelfType | MangaShelfType[] | string,
-  options: FetchOptions = { revalidate: 180 },
+  options: FetchOptions = { revalidate: 60 },
 ) {
   const url = `${ORIGIN}/api/infinite/recentlyUpdated?page=${page}&types=${encodeURIComponent(typesParam(types))}`;
   const json = await fetchJson<InfiniteResponse>(url, options);
@@ -393,7 +393,7 @@ type MangaPageResponse = { mangaPage?: Record<string, unknown> };
 
 export async function getMangaDetail(
   id: string,
-  options: FetchOptions = { revalidate: 300 },
+  options: FetchOptions = { cache: "no-store" },
 ): Promise<MangaDetail> {
   const url = `${ORIGIN}/api/manga/page?id=${encodeURIComponent(id)}`;
   const json = await fetchJson<MangaPageResponse>(url, options);
@@ -468,7 +468,7 @@ export async function getMangaChaptersPage(
   id: string,
   page = 0,
   sort: "asc" | "desc" = "asc",
-  options: FetchOptions = { revalidate: 300 },
+  options: FetchOptions = { cache: "no-store" },
 ) {
   const url = `${ORIGIN}/api/manga/chapters?id=${encodeURIComponent(id)}&filter=all&sort=${sort}&page=${page}`;
   const json = await fetchJson<ChaptersResponse>(url, options);
@@ -481,7 +481,7 @@ export async function getMangaChaptersPage(
 
 export async function getAllMangaChapters(
   id: string,
-  options: FetchOptions = { revalidate: 300 },
+  options: FetchOptions = { cache: "no-store" },
 ) {
   const first = await getMangaChaptersPage(id, 0, "asc", options);
   if (first.pages <= 1) return dedupeChapters(first.chapters);
@@ -516,7 +516,7 @@ type ReadResponse = {
 export async function getChapterPages(
   mangaId: string,
   chapterId: string,
-  options: FetchOptions = { revalidate: 600 },
+  options: FetchOptions = { revalidate: 120 },
 ): Promise<{ id: string; title: string; pages: MangaPageImage[] }> {
   const url = `${ORIGIN}/api/read/chapter?mangaId=${encodeURIComponent(mangaId)}&chapterId=${encodeURIComponent(chapterId)}`;
   const json = await fetchJson<ReadResponse>(url, options);
