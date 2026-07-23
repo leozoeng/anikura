@@ -9,7 +9,7 @@ export function SiteFooter() {
   const pathname = usePathname();
   const year = new Date().getFullYear();
 
-  if (/\/manga\/[^/]+\/read\//.test(pathname)) {
+  if (/\/manga\/[^/]+\/read\//.test(pathname) || /\/novels\/[^/]+\/read\//.test(pathname)) {
     return null;
   }
 

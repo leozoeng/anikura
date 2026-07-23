@@ -21,16 +21,16 @@ const items = [
     icon: BrowseIcon,
   },
   {
-    href: "/genres",
-    label: "Genres",
-    match: (p: string) => p.startsWith("/genres"),
-    icon: GenresIcon,
-  },
-  {
     href: "/manga",
     label: "Manga",
     match: (p: string) => p.startsWith("/manga"),
     icon: MangaIcon,
+  },
+  {
+    href: "/novels",
+    label: "Novels",
+    match: (p: string) => p.startsWith("/novels"),
+    icon: NovelsIcon,
   },
   {
     href: "/profile",
@@ -48,7 +48,8 @@ export function MobileBottomNav() {
     pathname.startsWith("/admin") ||
     pathname.startsWith("/watch") ||
     pathname.startsWith("/login") ||
-    /\/manga\/[^/]+\/read\//.test(pathname)
+    /\/manga\/[^/]+\/read\//.test(pathname) ||
+    /\/novels\/[^/]+\/read\//.test(pathname)
   ) {
     return null;
   }
@@ -151,11 +152,20 @@ function BrowseIcon({ active }: { active: boolean }) {
   );
 }
 
-function GenresIcon({ active }: { active: boolean }) {
+function NovelsIcon({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
-        d="M4 7h16M4 12h16M4 17h10"
+        d="M6.5 4.5h8.2c.9 0 1.6.7 1.6 1.6V19l-3.2-1.6L10 19V6.1c0-.9-.7-1.6-1.6-1.6H6.5A1.6 1.6 0 0 0 4.9 6.1v11.3"
+        stroke="currentColor"
+        strokeWidth={active ? 2 : 1.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill={active ? "currentColor" : "none"}
+        fillOpacity={active ? 0.18 : 0}
+      />
+      <path
+        d="M8.8 8h5.2M8.8 11h5.2M8.8 14h3.4"
         stroke="currentColor"
         strokeWidth={active ? 2 : 1.6}
         strokeLinecap="round"

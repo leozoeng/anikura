@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "img.youtube.com" },
       { protocol: "https", hostname: "atsu.moe" },
       { protocol: "https", hostname: "cdn.atsu.moe" },
+      { protocol: "https", hostname: "rs.novelbuddy.me" },
+      { protocol: "https", hostname: "novelbuddy.me" },
+      { protocol: "https", hostname: "**.novelbuddy.me" },
       {
         protocol: "https",
         hostname: "yotvmnkhxqdztuqnvzpq.supabase.co",

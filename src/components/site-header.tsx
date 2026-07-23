@@ -12,6 +12,7 @@ const links = [
   { href: "/browse", label: "Browse" },
   { href: "/genres", label: "Genres" },
   { href: "/manga", label: "Manga" },
+  { href: "/novels", label: "Novels" },
 ];
 
 type SiteHeaderProps = {
@@ -32,7 +33,9 @@ export function SiteHeader({
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const hideChrome = pathname.startsWith("/admin");
-  const hideForReader = /\/manga\/[^/]+\/read\//.test(pathname);
+  const hideForReader =
+    /\/manga\/[^/]+\/read\//.test(pathname) ||
+    /\/novels\/[^/]+\/read\//.test(pathname);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);

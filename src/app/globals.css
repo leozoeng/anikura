@@ -1378,3 +1378,41 @@ body[data-theater="true"] .site-atmosphere {
   }
 }
 
+/* Novel reader prose */
+.novel-prose p {
+  margin: 0 0 1.15em;
+}
+.novel-prose p:last-child {
+  margin-bottom: 0;
+}
+.novel-prose br {
+  display: block;
+  content: "";
+  margin-top: 0.35em;
+}
+.novel-prose em,
+.novel-prose i {
+  font-style: italic;
+  color: color-mix(in oklab, var(--color-snow) 82%, var(--color-sakura-soft));
+}
+.novel-prose strong,
+.novel-prose b {
+  font-weight: 600;
+  color: var(--color-snow);
+}
+.novel-prose blockquote {
+  margin: 1.25em 0;
+  padding-left: 1rem;
+  border-left: 2px solid color-mix(in oklab, var(--color-sakura) 55%, transparent);
+  color: var(--color-mute);
+}
+.novel-prose h1,
+.novel-prose h2,
+.novel-prose h3 {
+  margin: 1.4em 0 0.6em;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--color-snow);
+}
+
+
