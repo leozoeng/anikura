@@ -467,7 +467,6 @@ export function ProfileView({
                   widgets={widgets}
                   isOwner={isOwner}
                   accent={accent}
-                  rgb={rgb}
                   busyId={shelfBusyId}
                   onAdd={(shelf) => setPickerShelf(shelf)}
                   onRemove={(shelf, entry) => {
@@ -677,7 +676,6 @@ function BoardTab({
   widgets,
   isOwner,
   accent,
-  rgb,
   busyId,
   onAdd,
   onRemove,
@@ -685,7 +683,6 @@ function BoardTab({
   widgets: WidgetDef[];
   isOwner: boolean;
   accent: string;
-  rgb: string;
   busyId: string | null;
   onAdd: (shelf: BoardShelfId) => void;
   onRemove: (shelf: BoardShelfId, entry: AnimeListEntry) => void;
@@ -703,14 +700,13 @@ function BoardTab({
         </p>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:items-stretch">
         {widgets.map((w) => (
           <WidgetCard
             key={w.id}
             widget={w}
             isOwner={isOwner}
             accent={accent}
-            rgb={rgb}
             busyId={busyId}
             onAdd={() => onAdd(w.id)}
             onRemove={(entry) => onRemove(w.id, entry)}
@@ -721,11 +717,14 @@ function BoardTab({
   );
 }
 
+/** Shared poster / + tile footprint so bottoms and outlines align. */
+const BOARD_TILE =
+  "box-border aspect-[2/3] w-[4.25rem] shrink-0 snap-start sm:w-[4.5rem]";
+
 function WidgetCard({
   widget,
   isOwner,
   accent,
-  rgb,
   busyId,
   onAdd,
   onRemove,
@@ -733,7 +732,6 @@ function WidgetCard({
   widget: WidgetDef;
   isOwner: boolean;
   accent: string;
-  rgb: string;
   busyId: string | null;
   onAdd: () => void;
   onRemove: (entry: AnimeListEntry) => void;
@@ -743,12 +741,7 @@ function WidgetCard({
   const empty = filled.length === 0;
 
   return (
-    <div
-      className="rounded-xl bg-[#1e1f22]/95 p-3 ring-1 ring-white/[0.05]"
-      style={{
-        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 1px rgba(${rgb}, 0.04)`,
-      }}
-    >
+    <div className="flex h-full min-h-0 flex-col rounded-xl border border-white/[0.06] bg-[#1e1f22]/95 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-[#949ba4]">
           {widget.title}
@@ -772,16 +765,13 @@ function WidgetCard({
           </p>
         )
       ) : (
-        <div className="scrollbar-none -mx-0.5 flex snap-x snap-mandatory gap-1.5 overflow-x-auto px-0.5 pb-0.5">
+        <div className="scrollbar-none flex items-stretch gap-1.5 overflow-x-auto snap-x snap-mandatory">
           {filled.map((item) => (
-            <div
-              key={item.id}
-              className="group relative aspect-[2/3] w-[4.25rem] shrink-0 snap-start sm:w-[4.5rem]"
-            >
+            <div key={item.id} className={`group relative ${BOARD_TILE}`}>
               <Link
                 href={`/anime/${item.anime_id}/${item.slug}`}
                 aria-label={item.title}
-                className={`pressable relative block h-full overflow-hidden rounded-lg bg-[#111214] ring-1 ring-white/8 transition hover:ring-white/25 ${FOCUS_RING}`}
+                className={`pressable absolute inset-0 overflow-hidden rounded-lg border border-white/10 bg-[#111214] transition-[border-color] duration-200 hover:border-white/30 ${FOCUS_RING}`}
               >
                 {item.poster ? (
                   <SafeImage
@@ -804,7 +794,7 @@ function WidgetCard({
                     e.stopPropagation();
                     onRemove(item);
                   }}
-                  className={`absolute right-1 top-1 z-[2] grid h-6 w-6 place-items-center rounded-full bg-black/75 text-[0.7rem] text-snow opacity-100 shadow-sm ring-1 ring-white/20 transition hover:bg-[#ff5c5c] sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 ${FOCUS_RING} disabled:opacity-50`}
+                  className={`absolute right-1 top-1 z-[2] grid h-6 w-6 place-items-center rounded-full border border-white/20 bg-black/75 text-[0.7rem] text-snow opacity-100 shadow-sm transition hover:bg-[#ff5c5c] sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 ${FOCUS_RING} disabled:opacity-50`}
                 >
                   ✕
                 </button>
@@ -837,11 +827,10 @@ function EmptySlot({
         type="button"
         onClick={onClick}
         aria-label={label}
-        className={`group flex min-h-11 w-full items-center gap-2.5 rounded-lg bg-white/[0.03] px-2.5 py-2 ring-1 ring-dashed ring-white/15 transition hover:bg-white/[0.06] hover:text-snow ${FOCUS_RING}`}
-        style={{ borderColor: `${accent}33` }}
+        className={`group flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-dashed border-white/15 bg-white/[0.03] px-2.5 py-2 transition-[background-color,border-color,color] duration-200 hover:border-white/30 hover:bg-white/[0.06] hover:text-snow ${FOCUS_RING}`}
       >
         <span
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-white/[0.04] text-lg text-[#949ba4] transition group-hover:scale-105 group-hover:text-snow"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-white/[0.04] text-lg text-[#949ba4] transition group-hover:text-snow"
           style={{ color: accent }}
           aria-hidden
         >
@@ -860,10 +849,11 @@ function EmptySlot({
       onClick={onClick}
       aria-label={label}
       title={label}
-      className={`grid aspect-[2/3] w-[4.25rem] shrink-0 place-items-center rounded-lg bg-white/[0.03] text-lg text-[#6d6f78] ring-1 ring-dashed ring-white/15 transition hover:scale-[1.02] hover:bg-white/[0.06] hover:text-snow sm:w-[4.5rem] ${FOCUS_RING}`}
-      style={{ borderColor: `${accent}33`, transitionDuration: "0.2s" }}
+      className={`grid ${BOARD_TILE} place-items-center rounded-lg border border-dashed border-white/15 bg-white/[0.03] text-lg transition-[background-color,border-color] duration-200 hover:border-white/30 hover:bg-white/[0.06] ${FOCUS_RING}`}
     >
-      <span aria-hidden>+</span>
+      <span aria-hidden style={{ color: accent }}>
+        +
+      </span>
     </button>
   );
 }
