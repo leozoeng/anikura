@@ -10,12 +10,15 @@ export type GlobePerson = {
   country: string | null;
   city: string | null;
   path: string | null;
+  first_seen?: string | null;
   last_seen: string;
   session_id: string | null;
   user_id: string | null;
   email: string | null;
   nickname: string | null;
   username: string | null;
+  path_label?: string | null;
+  path_meta?: string | null;
 };
 
 type LiveGlobeProps = {

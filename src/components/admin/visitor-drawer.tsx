@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GlobePerson } from "@/components/admin/live-globe";
+import {
+  formatDurationShort,
+  formatLastSeenRelative,
+  formatSessionDuration,
+  watchingFromPath,
+} from "@/lib/admin-presence";
 import { adminDisplayName, adminIdentityDetail } from "@/lib/profile";
 
 type VisitorDrawerProps = {
@@ -12,6 +18,7 @@ type VisitorDrawerProps = {
 
 export function VisitorDrawer({ person, open, onClose }: VisitorDrawerProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
     if (!open) return;
@@ -25,6 +32,12 @@ export function VisitorDrawer({ person, open, onClose }: VisitorDrawerProps) {
   useEffect(() => {
     if (open) panelRef.current?.focus();
   }, [open, person?.id]);
+
+  useEffect(() => {
+    if (!open) return;
+    const id = window.setInterval(() => setNowMs(Date.now()), 15_000);
+    return () => window.clearInterval(id);
+  }, [open]);
 
   const place = person
     ? [person.city, person.country].filter(Boolean).join(", ") || "Unknown place"
@@ -48,6 +61,27 @@ export function VisitorDrawer({ person, open, onClose }: VisitorDrawerProps) {
         email: person.email,
         user_id: person.user_id,
       })
+    : null;
+
+  const watching = useMemo(() => {
+    if (!person) return null;
+    if (person.path_label) {
+      return {
+        label: person.path_label,
+        meta:
+          person.path_meta ||
+          (person.path?.startsWith("/watch/") ? "Watching" : "Path"),
+        path: person.path || "/",
+        isWatching:
+          person.path_meta === "Watching" ||
+          Boolean(person.path?.startsWith("/watch/")),
+      };
+    }
+    return watchingFromPath(person.path);
+  }, [person]);
+
+  const session = person
+    ? formatSessionDuration(person.first_seen, person.last_seen, nowMs)
     : null;
 
   return (
@@ -98,15 +132,46 @@ export function VisitorDrawer({ person, open, onClose }: VisitorDrawerProps) {
             <p className="text-sm text-cloud">{place}</p>
             <dl className="mt-5 space-y-3 text-sm">
               <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-3">
-                <dt className="text-mute">Path</dt>
-                <dd className="max-w-[14rem] truncate text-right font-mono text-xs text-snow">
-                  {person.path || "/"}
+                <dt className="text-mute">
+                  {watching?.isWatching ? "Watching" : "On"}
+                </dt>
+                <dd className="max-w-[14rem] text-right">
+                  <span className="block truncate text-snow">
+                    {watching?.label || "—"}
+                  </span>
+                  <span className="mt-0.5 block truncate font-mono text-[0.65rem] text-mute">
+                    {watching?.path || person.path || "/"}
+                  </span>
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-3">
+                <dt className="text-mute">Session</dt>
+                <dd className="text-right">
+                  <span className="block tabular-nums text-snow">
+                    {session?.label ?? "—"}
+                  </span>
+                  <span className="mt-0.5 block text-[0.65rem] text-mute">
+                    {person.first_seen
+                      ? `since ${new Date(person.first_seen).toLocaleTimeString()}`
+                      : "start time unavailable"}
+                  </span>
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-3">
+                <dt className="text-mute">Last seen</dt>
+                <dd className="text-right text-xs text-cloud">
+                  <span className="block">
+                    {formatLastSeenRelative(person.last_seen, nowMs)}
+                  </span>
+                  <span className="mt-0.5 block text-mute">
+                    {new Date(person.last_seen).toLocaleString()}
+                  </span>
                 </dd>
               </div>
               <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-3">
                 <dt className="text-mute">Signed in</dt>
                 <dd className="text-right text-cloud">
-                  {person.user_id ? "Yes" : "Anonymous"}
+                  {person.user_id ? "Yes" : "Guest"}
                 </dd>
               </div>
               <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-3">
@@ -122,15 +187,9 @@ export function VisitorDrawer({ person, open, onClose }: VisitorDrawerProps) {
                 </dd>
               </div>
               <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-3">
-                <dt className="text-mute">Session</dt>
+                <dt className="text-mute">Session id</dt>
                 <dd className="font-mono text-xs text-cloud">
                   {(person.session_id || "—").slice(0, 12)}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-3">
-                <dt className="text-mute">Last seen</dt>
-                <dd className="text-right text-xs text-cloud">
-                  {new Date(person.last_seen).toLocaleString()}
                 </dd>
               </div>
               <div className="flex justify-between gap-4">
@@ -141,11 +200,20 @@ export function VisitorDrawer({ person, open, onClose }: VisitorDrawerProps) {
                     : "—"}
                 </dd>
               </div>
+              {session?.seconds != null && session.seconds > 0 ? (
+                <div className="rounded-lg border border-white/[0.06] bg-black/30 px-3 py-2 text-[0.7rem] text-mute">
+                  Present for{" "}
+                  <span className="tabular-nums text-cloud">
+                    {formatDurationShort(session.seconds)}
+                  </span>{" "}
+                  this browser session (from first heartbeat).
+                </div>
+              ) : null}
             </dl>
           </div>
         ) : (
           <div className="flex flex-1 items-center justify-center px-6 text-center text-sm text-mute">
-            Select a globe dot or live path to inspect a visitor.
+            Select a live visitor to inspect.
           </div>
         )}
       </aside>

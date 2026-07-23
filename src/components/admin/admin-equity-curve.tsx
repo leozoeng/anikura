@@ -63,7 +63,20 @@ export function AdminEquityCurve({
   const n = cum.length;
 
   const coords = useMemo(() => {
-    if (n < 2) return [] as Array<{ x: number; y: number; day: string; value: number }>;
+    if (n === 0) {
+      return [] as Array<{ x: number; y: number; day: string; value: number }>;
+    }
+    if (n === 1) {
+      const p = cum[0]!;
+      return [
+        {
+          x: pad.left + innerW * 0.5,
+          y: pad.top + innerH - (p.value / maxY) * innerH,
+          day: p.day,
+          value: p.value,
+        },
+      ];
+    }
     return cum.map((p, i) => ({
       x: pad.left + (i / (n - 1)) * innerW,
       y: pad.top + innerH - (p.value / maxY) * innerH,
@@ -80,17 +93,27 @@ export function AdminEquityCurve({
   }, [coords]);
 
   const areaD = useMemo(() => {
+    if (coords.length === 1) {
+      const c = coords[0]!;
+      const baseY = pad.top + innerH;
+      const half = Math.min(48, innerW * 0.18);
+      return `M ${(c.x - half).toFixed(1)} ${baseY} L ${(c.x - half).toFixed(1)} ${c.y.toFixed(1)} L ${(c.x + half).toFixed(1)} ${c.y.toFixed(1)} L ${(c.x + half).toFixed(1)} ${baseY} Z`;
+    }
     if (coords.length < 2) return "";
     const first = coords[0]!;
     const last = coords[coords.length - 1]!;
     const baseY = pad.top + innerH;
     return `${pathD} L ${last.x.toFixed(1)} ${baseY} L ${first.x.toFixed(1)} ${baseY} Z`;
-  }, [coords, innerH, pad.top, pathD]);
+  }, [coords, innerH, innerW, pad.top, pathD]);
 
   const onMove = useCallback(
     (clientX: number) => {
       const el = wrapRef.current;
-      if (!el || n < 2) return;
+      if (!el || n < 1) return;
+      if (n === 1) {
+        setScrubIndex(0);
+        return;
+      }
       const rect = el.getBoundingClientRect();
       const rel = (clientX - rect.left) / rect.width;
       const idx = Math.round(rel * (n - 1));
@@ -147,7 +170,14 @@ export function AdminEquityCurve({
               <span className="text-cloud">{scrub.day}</span>
               {" · "}
               <span className="tabular-nums text-snow">{fmt(scrub.value)}</span>
-              {" cumulative"}
+              {n === 1 ? " day" : " cumulative"}
+            </>
+          ) : n === 1 ? (
+            <>
+              <span className="text-cloud">{end?.day}</span>
+              {" · "}
+              <span className="tabular-nums text-cloud">{fmt(end?.value ?? 0)}</span>
+              {" that day"}
             </>
           ) : (
             <>
@@ -273,9 +303,9 @@ export function AdminEquityCurve({
             <span className="block text-mute">{scrub.day}</span>
             <span className="block tabular-nums">
               {fmt(scrub.value)}{" "}
-              <span className="text-mute">cum</span>
+              <span className="text-mute">{n === 1 ? "day" : "cum"}</span>
             </span>
-            {scrubDay ? (
+            {scrubDay && n > 1 ? (
               <span className="mt-0.5 block tabular-nums text-cloud">
                 {scrubDay.value >= 0 ? "+" : ""}
                 {fmt(scrubDay.value)}{" "}

@@ -6,6 +6,7 @@ import {
   AdminCommandStrip,
   type AdminNavItem,
 } from "@/components/admin/admin-command-strip";
+import { AdminDeskRangeControl } from "@/components/admin/admin-desk-range";
 import {
   AdminEquityCurve,
   type EquitySeries,
@@ -19,8 +20,19 @@ import {
   LiveGlobe,
   type GlobePerson,
 } from "@/components/admin/live-globe";
+import {
+  LivePresenceTable,
+  type LivePresencePerson,
+} from "@/components/admin/live-presence-table";
 import { VisitorDrawer } from "@/components/admin/visitor-drawer";
 import type { HotListItem } from "@/lib/admin-hot-paths";
+import {
+  deskRangeLabel,
+  sliceByDeskRange,
+  sumField,
+  type DeskRange,
+  utcTodayKey,
+} from "@/lib/admin-desk-range";
 import { adminDisplayName, adminIdentityDetail } from "@/lib/profile";
 
 export type DashboardMetrics = {
@@ -38,7 +50,7 @@ export type DashboardMetrics = {
   watch_seconds_today: number;
 };
 
-export type PresencePoint = GlobePerson;
+export type PresencePoint = LivePresencePerson;
 
 export type SignupDay = {
   day: string;
@@ -62,15 +74,12 @@ type AdminDashboardProps = {
   topWatched: HotListItem[];
 };
 
-type RangeKey = "today" | "7d" | "30d";
-
 const NAV: AdminNavItem[] = [
   { id: "overview", label: "Overview", shortcut: "1" },
-  { id: "users", label: "Live users", shortcut: "2" },
+  { id: "growth", label: "Growth", shortcut: "2" },
   { id: "hot", label: "What's hot", shortcut: "3" },
-  { id: "growth", label: "Growth", shortcut: "4" },
-  { id: "globe", label: "Globe", shortcut: "5" },
-  { id: "members", label: "Members", shortcut: "6" },
+  { id: "globe", label: "Globe", shortcut: "4" },
+  { id: "members", label: "Members", shortcut: "5" },
 ];
 
 function formatHours(seconds: number) {
@@ -86,10 +95,6 @@ function formatSigned(n: number) {
 
 function lastN<T>(arr: T[], n: number) {
   return arr.slice(-n);
-}
-
-function sumField<T>(arr: T[], pick: (row: T) => number) {
-  return arr.reduce((s, row) => s + pick(row), 0);
 }
 
 function visitorLabel(p: PresencePoint) {
@@ -122,11 +127,24 @@ function AdminDashboardInner({
   topWatched,
 }: AdminDashboardProps) {
   const [tab, setTab] = useState(NAV[0]!.id);
-  const [range, setRange] = useState<RangeKey>("today");
-  const [curveRange, setCurveRange] = useState<"7" | "14" | "30">("14");
+  const [deskRange, setDeskRange] = useState<DeskRange>({
+    kind: "preset",
+    days: 7,
+  });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { refresh, refreshing } = useAdminManualRefresh();
+
+  const dayBounds = useMemo(() => {
+    const days = [
+      ...series.map((d) => d.day),
+      ...activity.map((d) => d.day),
+    ].sort();
+    return {
+      minDay: days[0] ?? utcTodayKey(),
+      maxDay: days[days.length - 1] ?? utcTodayKey(),
+    };
+  }, [activity, series]);
 
   const selected = useMemo(
     () => presence.find((p) => p.id === selectedId) ?? null,
@@ -169,32 +187,15 @@ function AdminDashboardInner({
       .slice(0, 6);
   }, [presence]);
 
-  const liveNowPaths = useMemo(() => {
-    const byPath = new Map<string, PresencePoint[]>();
-    for (const p of presence) {
-      const key = p.path?.trim() || "/";
-      const list = byPath.get(key) ?? [];
-      list.push(p);
-      byPath.set(key, list);
-    }
-    return [...byPath.entries()]
-      .map(([path, people]) => ({ path, people, n: people.length }))
-      .sort((a, b) => b.n - a.n)
-      .slice(0, 6);
-  }, [presence]);
-
-  const identityChips = useMemo(() => presence.slice(0, 10), [presence]);
-
-  const curveSlice = useMemo(() => {
-    const n = Number(curveRange);
+  const rangeSlice = useMemo(() => {
     return {
-      signups: lastN(series, n),
-      activity: lastN(activity, n),
+      signups: sliceByDeskRange(series, deskRange),
+      activity: sliceByDeskRange(activity, deskRange),
     };
-  }, [activity, curveRange, series]);
+  }, [activity, deskRange, series]);
 
   const equitySeries = useMemo((): EquitySeries[] => {
-    const watchHours = curveSlice.activity.map((d) => ({
+    const watchHours = rangeSlice.activity.map((d) => ({
       day: d.day,
       value: Math.round((d.watch_seconds / 3600) * 10) / 10,
     }));
@@ -204,7 +205,7 @@ function AdminDashboardInner({
         label: "Signups",
         color: "rgba(245,245,247,0.92)",
         fill: "rgba(245,245,247,0.28)",
-        points: curveSlice.signups.map((d) => ({
+        points: rangeSlice.signups.map((d) => ({
           day: d.day,
           value: d.signups,
         })),
@@ -214,7 +215,7 @@ function AdminDashboardInner({
         label: "Page views",
         color: "rgba(200,210,230,0.9)",
         fill: "rgba(200,210,230,0.25)",
-        points: curveSlice.activity.map((d) => ({
+        points: rangeSlice.activity.map((d) => ({
           day: d.day,
           value: d.page_views,
         })),
@@ -224,7 +225,7 @@ function AdminDashboardInner({
         label: "Sessions",
         color: "rgba(220,200,210,0.9)",
         fill: "rgba(220,200,210,0.25)",
-        points: curveSlice.activity.map((d) => ({
+        points: rangeSlice.activity.map((d) => ({
           day: d.day,
           value: d.sessions,
         })),
@@ -238,157 +239,134 @@ function AdminDashboardInner({
         format: (n) => `${n.toFixed(n >= 10 ? 0 : 1)}h`,
       },
     ];
-  }, [curveSlice]);
+  }, [rangeSlice]);
 
-  const signupSpark = useMemo(
-    () => lastN(series, 7).map((d) => d.signups),
-    [series],
-  );
-  const viewsSpark = useMemo(
-    () => lastN(activity, 7).map((d) => d.page_views),
-    [activity],
-  );
-  const sessionsSpark = useMemo(
-    () => lastN(activity, 7).map((d) => d.sessions),
-    [activity],
-  );
-  const watchSpark = useMemo(
-    () => lastN(activity, 7).map((d) => d.watch_seconds),
-    [activity],
-  );
+  const sparkSource = useMemo(() => {
+    if (deskRange.kind === "day") {
+      return {
+        signups: rangeSlice.signups.map((d) => d.signups),
+        views: rangeSlice.activity.map((d) => d.page_views),
+        sessions: rangeSlice.activity.map((d) => d.sessions),
+        watch: rangeSlice.activity.map((d) => d.watch_seconds),
+      };
+    }
+    const n = Math.min(deskRange.days, 15);
+    return {
+      signups: lastN(series, n).map((d) => d.signups),
+      views: lastN(activity, n).map((d) => d.page_views),
+      sessions: lastN(activity, n).map((d) => d.sessions),
+      watch: lastN(activity, n).map((d) => d.watch_seconds),
+    };
+  }, [activity, deskRange, rangeSlice, series]);
 
   const ranged = useMemo(() => {
-    const act7 = lastN(activity, 7);
-    const act30 = lastN(activity, 30);
-    const sig7 = lastN(series, 7);
-    const sig30 = lastN(series, 30);
+    const label = deskRangeLabel(deskRange);
+    const signups = sumField(rangeSlice.signups, (d) => d.signups);
+    const pageViews = sumField(rangeSlice.activity, (d) => d.page_views);
+    const sessions = sumField(rangeSlice.activity, (d) => d.sessions);
+    const watchSeconds = sumField(rangeSlice.activity, (d) => d.watch_seconds);
+    const days =
+      deskRange.kind === "day" ? 1 : Math.max(1, rangeSlice.activity.length);
 
-    if (range === "today") {
-      return {
-        signups: metrics.signups_today,
-        signupsHint: (() => {
-          const yDate = new Date();
-          yDate.setUTCDate(yDate.getUTCDate() - 1);
-          const yKey = yDate.toISOString().slice(0, 10);
-          const yCount = series.find((d) => d.day === yKey)?.signups;
-          if (yCount == null) return `${metrics.signups_7d} in last 7 days`;
-          if (yCount === metrics.signups_today) {
-            return `Same as yesterday · ${metrics.signups_7d} in 7d`;
-          }
-          return `${formatSigned(metrics.signups_today - yCount)} vs yesterday · ${metrics.signups_7d} in 7d`;
-        })(),
-        pageViews: metrics.page_views_today,
-        pageViewsHint:
-          metrics.page_views_7d > 0
-            ? `${metrics.page_views_7d} in 7d · ~${Math.round(metrics.page_views_7d / 7)}/day`
-            : "Since midnight UTC",
-        sessions: metrics.sessions_today,
-        sessionsHint:
-          metrics.sessions_7d > 0
-            ? `${metrics.sessions_7d} unique in 7d · browser IDs`
-            : "Distinct browsers today",
-        watchSeconds: metrics.watch_seconds_today,
-        watchHint: "Visible time on /watch today",
-        rangeLabel: "Today",
-      };
-    }
-
-    if (range === "7d") {
-      const watch = sumField(act7, (d) => d.watch_seconds) || metrics.watch_seconds_today;
-      const views =
-        sumField(act7, (d) => d.page_views) || metrics.page_views_7d;
-      const signups = sumField(sig7, (d) => d.signups) || metrics.signups_7d;
-      const sessions = metrics.sessions_7d;
+    if (deskRange.kind === "day") {
       return {
         signups,
-        signupsHint: `~${(signups / 7).toFixed(1)}/day · ${metrics.total_signups} total`,
-        pageViews: views,
-        pageViewsHint: `~${Math.round(views / 7)}/day average`,
+        signupsHint: `${label} · UTC`,
+        pageViews,
+        pageViewsHint: `${label} · UTC`,
         sessions,
-        sessionsHint: `~${Math.round(sessions / 7)}/day · distinct browsers`,
-        watchSeconds: watch,
-        watchHint: "Sum of visible /watch time · 7 days",
-        rangeLabel: "Last 7 days",
+        sessionsHint: "Distinct browsers that day",
+        watchSeconds,
+        watchHint: "Visible /watch time that day",
+        rangeLabel: label,
+        days: 1,
       };
     }
 
-    const watch = sumField(act30, (d) => d.watch_seconds);
-    const views = sumField(act30, (d) => d.page_views);
-    const signups = sumField(sig30, (d) => d.signups);
-    const sessions = metrics.sessions_30d;
+    if (deskRange.days === 1) {
+      const yDate = new Date();
+      yDate.setUTCDate(yDate.getUTCDate() - 1);
+      const yKey = yDate.toISOString().slice(0, 10);
+      const yCount = series.find((d) => d.day === yKey)?.signups;
+      const todaySignups =
+        rangeSlice.signups[0]?.signups ?? metrics.signups_today;
+      return {
+        signups: todaySignups,
+        signupsHint: (() => {
+          if (yCount == null) return `${metrics.signups_7d} in last 7 days`;
+          if (yCount === todaySignups) {
+            return `Same as yesterday · ${metrics.signups_7d} in 7d`;
+          }
+          return `${formatSigned(todaySignups - yCount)} vs yesterday · ${metrics.signups_7d} in 7d`;
+        })(),
+        pageViews:
+          rangeSlice.activity[0]?.page_views ?? metrics.page_views_today,
+        pageViewsHint: "Since midnight UTC",
+        sessions: rangeSlice.activity[0]?.sessions ?? metrics.sessions_today,
+        sessionsHint: "Distinct browsers today",
+        watchSeconds:
+          rangeSlice.activity[0]?.watch_seconds ?? metrics.watch_seconds_today,
+        watchHint: "Visible time on /watch today",
+        rangeLabel: label,
+        days: 1,
+      };
+    }
+
     return {
       signups,
-      signupsHint: `~${(signups / 30).toFixed(1)}/day · ${metrics.total_signups} total`,
-      pageViews: views,
+      signupsHint: `~${(signups / days).toFixed(1)}/day · ${metrics.total_signups} total`,
+      pageViews,
       pageViewsHint:
-        views > 0 ? `~${Math.round(views / 30)}/day average` : "No views in range",
+        pageViews > 0
+          ? `~${Math.round(pageViews / days)}/day average`
+          : "No views in range",
       sessions,
       sessionsHint:
         sessions > 0
-          ? `~${Math.round(sessions / 30)}/day · distinct browsers`
+          ? `~${Math.round(sessions / days)}/day · distinct browsers`
           : "No sessions in range",
-      watchSeconds: watch,
-      watchHint: "Sum of visible /watch time · 30 days",
-      rangeLabel: "Last 30 days",
+      watchSeconds,
+      watchHint: `Sum of visible /watch time · ${label.toLowerCase()}`,
+      rangeLabel: label,
+      days,
     };
-  }, [activity, metrics, range, series]);
+  }, [deskRange, metrics, rangeSlice, series]);
 
-  const newVisitors = Math.max(
-    0,
-    metrics.unique_visitors_today - metrics.returning_visitors_today,
+  const rangeControl = (
+    <AdminDeskRangeControl
+      value={deskRange}
+      onChange={setDeskRange}
+      minDay={dayBounds.minDay}
+      maxDay={dayBounds.maxDay}
+    />
   );
 
-  const avg7 =
-    metrics.signups_7d / 7 >= 0.1
-      ? `${metrics.signups_7d} this week · ~${(metrics.signups_7d / 7).toFixed(1)}/day`
-      : `${metrics.signups_7d} in the last 7 days`;
-
-  const rangeToggle = (
-    <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
-      <p className="text-[0.7rem] text-mute">
-        Desk range · hot lists stay <span className="text-cloud">today</span>
-      </p>
-      <div className="flex rounded-full border border-white/10 p-0.5">
-        {(
-          [
-            ["today", "Today"],
-            ["7d", "7d"],
-            ["30d", "30d"],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setRange(key)}
-            className={`rounded-full px-2.5 py-1 text-xs transition duration-200 ease-[var(--ease-out-soft)] ${
-              range === key
-                ? "bg-snow text-void"
-                : "text-mute hover:text-snow"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-
-  const curveRangeToggle = (
-    <div className="flex rounded-full border border-white/10 p-0.5">
-      {(["7", "14", "30"] as const).map((key) => (
-        <button
-          key={key}
-          type="button"
-          onClick={() => setCurveRange(key)}
-          className={`rounded-full px-2.5 py-1 text-xs transition duration-200 ease-[var(--ease-out-soft)] ${
-            curveRange === key
-              ? "bg-snow text-void"
-              : "text-mute hover:text-snow"
-          }`}
-        >
-          {key}d
-        </button>
-      ))}
+  const pulseMetrics = (
+    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+      <AdminMetricCard
+        label="Signups"
+        value={ranged.signups}
+        hint={ranged.signupsHint}
+        spark={sparkSource.signups}
+      />
+      <AdminMetricCard
+        label="Page views"
+        value={ranged.pageViews}
+        hint={ranged.pageViewsHint}
+        spark={sparkSource.views}
+      />
+      <AdminMetricCard
+        label="Sessions"
+        value={ranged.sessions}
+        hint={ranged.sessionsHint}
+        spark={sparkSource.sessions}
+      />
+      <AdminMetricCard
+        label="Hours watched"
+        value={formatHours(ranged.watchSeconds)}
+        hint={ranged.watchHint}
+        spark={sparkSource.watch}
+      />
     </div>
   );
 
@@ -403,7 +381,7 @@ function AdminDashboardInner({
             Night desk
           </h1>
           <p className="mt-1 max-w-xl text-xs text-cloud sm:text-sm">
-            Live ops — presence, audience, and growth.
+            Live presence first — then growth, heat, and geography.
           </p>
         </div>
         <div className="text-xs text-mute sm:text-sm">
@@ -427,372 +405,106 @@ function AdminDashboardInner({
         className="admin-tab-panel min-h-[20rem]"
       >
         {tab === "overview" ? (
-          <section aria-label="Overview" className="space-y-2.5">
-            {rangeToggle}
+          <section aria-label="Overview" className="space-y-3">
+            <LivePresenceTable
+              people={presence}
+              liveCount={metrics.live_users}
+              selectedId={selectedId}
+              drawerOpen={drawerOpen}
+              onSelect={openVisitor}
+            />
 
-            {/* Live identity strip */}
-            <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 transition duration-300 hover:border-white/[0.12] sm:px-3.5">
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full bg-snow ${
-                      metrics.live_users > 0 ? "admin-live-pulse" : "opacity-40"
-                    }`}
-                  />
-                  <h2 className="text-[0.65rem] uppercase tracking-[0.16em] text-mute">
-                    On the floor
-                  </h2>
-                  <span className="tabular-nums text-xs text-cloud">
-                    {metrics.live_users} live
-                  </span>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="text-[0.65rem] uppercase tracking-[0.16em] text-mute">
+                  Pulse
+                </h2>
+                <p className="mt-0.5 text-xs text-cloud">
+                  {ranged.rangeLabel} · shared with Growth
+                </p>
+              </div>
+              {rangeControl}
+            </div>
+
+            {pulseMetrics}
+
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 hover:border-white/[0.12] sm:p-4">
+              <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
+                <div>
+                  <h3 className="text-[0.95rem] tracking-[-0.02em] text-snow">
+                    Equity
+                  </h3>
+                  <p className="text-xs text-mute">
+                    Cumulative over {ranged.rangeLabel.toLowerCase()} · scrub to
+                    inspect
+                  </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setTab("users")}
+                  onClick={() => setTab("growth")}
                   className="text-[0.65rem] text-mute transition hover:text-snow"
                 >
-                  Open live users →
+                  Open Growth →
                 </button>
               </div>
-              {identityChips.length === 0 ? (
-                <p className="py-2 text-xs text-mute">
-                  Waiting for heartbeats…
-                </p>
-              ) : (
-                <ul className="flex flex-wrap gap-1.5">
-                  {identityChips.map((p) => {
-                    const active = p.id === selectedId && drawerOpen;
-                    const detail = visitorDetail(p);
-                    return (
-                      <li key={p.id}>
-                        <button
-                          type="button"
-                          onClick={() => openVisitor(p)}
-                          className={`group max-w-[14rem] rounded-lg border px-2.5 py-1.5 text-left transition duration-200 ease-[var(--ease-out-soft)] ${
-                            active
-                              ? "border-white/20 bg-white/[0.08]"
-                              : "border-white/[0.08] bg-black/30 hover:border-white/16 hover:bg-white/[0.05]"
-                          }`}
-                        >
-                          <span className="block truncate text-xs text-snow">
-                            {visitorLabel(p)}
-                          </span>
-                          <span className="block truncate text-[0.6rem] text-mute group-hover:text-cloud">
-                            {[
-                              detail || (p.user_id ? "Signed in" : "Guest"),
-                              p.path || "/",
-                            ].join(" · ")}
-                          </span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                  {presence.length > identityChips.length ? (
-                    <li className="flex items-center px-2 text-[0.65rem] text-mute">
-                      +{presence.length - identityChips.length} more
-                    </li>
-                  ) : null}
-                </ul>
-              )}
-            </div>
-
-            {/* Main desk: equity + pulse metrics */}
-            <div className="grid gap-2.5 lg:grid-cols-[1.55fr_1fr]">
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 hover:border-white/[0.12] sm:p-4">
-                <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
-                  <div>
-                    <h2 className="text-[0.95rem] tracking-[-0.02em] text-snow">
-                      Equity curves
-                    </h2>
-                    <p className="text-xs text-mute">
-                      Cumulative · {ranged.rangeLabel} metrics aside · scrub to
-                      inspect
-                    </p>
-                  </div>
-                  {curveRangeToggle}
-                </div>
-                <AdminEquityCurve series={equitySeries} height={212} />
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-                <AdminMetricCard
-                  tone="live"
-                  live={metrics.live_users > 0}
-                  label="Live now"
-                  value={metrics.live_users}
-                  hint={
-                    metrics.live_users > 0
-                      ? `${presence.length} listed · ${globePeople.length} on globe`
-                      : "Waiting for heartbeats…"
-                  }
-                />
-                <AdminMetricCard
-                  label="Hours watched"
-                  value={formatHours(ranged.watchSeconds)}
-                  hint={ranged.watchHint}
-                  spark={watchSpark}
-                />
-                <AdminMetricCard
-                  label="Sessions"
-                  value={ranged.sessions}
-                  hint={ranged.sessionsHint}
-                  spark={sessionsSpark}
-                />
-                <AdminMetricCard
-                  label="Page views"
-                  value={ranged.pageViews}
-                  hint={ranged.pageViewsHint}
-                  spark={viewsSpark}
-                />
-                <AdminMetricCard
-                  label={
-                    range === "today" ? "Signups today" : `Signups · ${range}`
-                  }
-                  value={ranged.signups}
-                  hint={ranged.signupsHint}
-                  spark={signupSpark}
-                />
-              </div>
-            </div>
-
-            {/* Secondary strip */}
-            <div className="grid gap-2.5 md:grid-cols-3">
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 transition duration-300 hover:border-white/[0.12]">
-                <p className="text-[0.62rem] uppercase tracking-[0.14em] text-mute">
-                  Live paths
-                </p>
-                {liveNowPaths.length === 0 ? (
-                  <p className="mt-2 text-xs text-mute">No active paths</p>
-                ) : (
-                  <ul className="mt-1.5 space-y-0.5">
-                    {liveNowPaths.slice(0, 5).map(({ path, people, n }) => (
-                      <li key={path}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setTab("users");
-                            openVisitor(people[0] ?? null);
-                          }}
-                          className="group flex w-full items-center justify-between gap-2 rounded-md px-1 py-0.5 text-left transition hover:bg-white/[0.04]"
-                        >
-                          <span className="truncate font-mono text-[0.65rem] text-cloud group-hover:text-snow">
-                            {path}
-                          </span>
-                          <span className="shrink-0 tabular-nums text-[0.65rem] text-mute">
-                            {n}
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 transition duration-300 hover:border-white/[0.12]">
-                <div className="mb-1.5 flex items-center justify-between gap-2">
-                  <p className="text-[0.62rem] uppercase tracking-[0.14em] text-mute">
-                    Regions
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setTab("globe")}
-                    className="text-[0.6rem] text-mute transition hover:text-snow"
-                  >
-                    Globe →
-                  </button>
-                </div>
-                {topCountries.length === 0 ? (
-                  <p className="mt-2 text-xs text-mute">No regions yet</p>
-                ) : (
-                  <ul className="space-y-1">
-                    {topCountries.slice(0, 4).map(([country, count]) => {
-                      const max = topCountries[0]?.[1] ?? 1;
-                      const width = Math.max(8, Math.round((count / max) * 100));
-                      return (
-                        <li key={country} className="text-xs">
-                          <div className="mb-0.5 flex justify-between gap-2">
-                            <span className="truncate text-cloud">{country}</span>
-                            <span className="tabular-nums text-mute">{count}</span>
-                          </div>
-                          <div className="h-0.5 overflow-hidden rounded-full bg-white/[0.06]">
-                            <div
-                              className="h-full rounded-full bg-white/35"
-                              style={{ width: `${width}%` }}
-                            />
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 transition duration-300 hover:border-white/[0.12]">
-                <p className="text-[0.62rem] uppercase tracking-[0.14em] text-mute">
-                  Audience · today
-                </p>
-                <dl className="mt-2 space-y-1.5 text-xs">
-                  <div className="flex justify-between gap-2">
-                    <dt className="text-mute">Sessions</dt>
-                    <dd className="tabular-nums text-snow">
-                      {metrics.sessions_today}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <dt className="text-mute">New / returning</dt>
-                    <dd className="tabular-nums text-cloud">
-                      {newVisitors} · {metrics.returning_visitors_today}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <dt className="text-mute">Sessions · 7d</dt>
-                    <dd className="tabular-nums text-cloud">
-                      {metrics.sessions_7d}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-2 border-t border-white/[0.05] pt-1.5">
-                    <dt className="text-mute">Accounts</dt>
-                    <dd className="tabular-nums text-cloud">
-                      {metrics.total_signups}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
+              <AdminEquityCurve series={equitySeries} height={180} />
             </div>
           </section>
         ) : null}
 
-        {tab === "users" ? (
-          <section className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 hover:border-white/[0.12] sm:p-4">
-            <div className="mb-2.5 flex flex-wrap items-end justify-between gap-2">
+        {tab === "growth" ? (
+          <section className="space-y-3" aria-label="Growth">
+            <div className="flex flex-wrap items-end justify-between gap-2">
               <div>
                 <h2 className="text-[0.95rem] tracking-[-0.02em] text-snow">
-                  Live users
+                  Growth
                 </h2>
                 <p className="text-xs text-mute">
-                  {presence.length} active · click a row for details
+                  Equity curves and period totals · {ranged.rangeLabel}
                 </p>
               </div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-[0.65rem] text-cloud">
-                <span
-                  className={`h-1.5 w-1.5 rounded-full bg-snow ${
-                    metrics.live_users > 0 ? "admin-live-pulse" : "opacity-40"
-                  }`}
-                />
-                Presence
-              </span>
+              {rangeControl}
             </div>
 
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[760px] text-left text-sm">
-                <thead className="text-[0.65rem] uppercase tracking-[0.12em] text-mute">
-                  <tr className="border-b border-white/[0.06]">
-                    <th className="pb-2 pr-3 font-medium">Visitor</th>
-                    <th className="pb-2 pr-3 font-medium">Auth</th>
-                    <th className="pb-2 pr-3 font-medium">Place</th>
-                    <th className="pb-2 pr-3 font-medium">Path</th>
-                    <th className="pb-2 font-medium">Last seen</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {presence.slice(0, 48).map((p) => {
-                    const active = p.id === selectedId && drawerOpen;
-                    const detail = visitorDetail(p);
-                    return (
-                      <tr
-                        key={p.id}
-                        className={`cursor-pointer border-b border-white/[0.04] transition duration-200 ${
-                          active
-                            ? "bg-white/[0.07] text-snow"
-                            : "text-cloud hover:bg-white/[0.03] hover:text-snow"
-                        }`}
-                        onClick={() => openVisitor(p)}
-                      >
-                        <td className="py-2 pr-3">
-                          <span className="block text-sm">{visitorLabel(p)}</span>
-                          <span className="block text-[0.65rem] text-mute">
-                            {detail || (p.user_id ? "Signed in" : "Anonymous")}
-                          </span>
-                        </td>
-                        <td className="py-2 pr-3">
-                          <span
-                            className={`inline-block rounded-full border px-2 py-0.5 text-[0.6rem] uppercase tracking-wider ${
-                              p.user_id
-                                ? "border-white/15 text-cloud"
-                                : "border-white/[0.08] text-mute"
-                            }`}
-                          >
-                            {p.user_id ? "Signed in" : "Anon"}
-                          </span>
-                        </td>
-                        <td className="py-2 pr-3 text-xs">
-                          {[p.city, p.country].filter(Boolean).join(", ") || "—"}
-                        </td>
-                        <td className="max-w-[14rem] truncate py-2 pr-3 font-mono text-xs">
-                          {p.path || "/"}
-                        </td>
-                        <td className="py-2 text-xs tabular-nums">
-                          {new Date(p.last_seen).toLocaleString()}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {presence.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="py-6 text-center text-mute">
-                        No live presence yet — open the site in another tab.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
+            {pulseMetrics}
+
+            <div className="grid gap-2 sm:grid-cols-3">
+              <AdminMetricCard
+                label="Total accounts"
+                value={metrics.total_signups}
+                hint={
+                  metrics.signups_7d / 7 >= 0.1
+                    ? `${metrics.signups_7d} this week · ~${(metrics.signups_7d / 7).toFixed(1)}/day`
+                    : `${metrics.signups_7d} in the last 7 days`
+                }
+                spark={sparkSource.signups}
+              />
+              <AdminMetricCard
+                label="New / returning · today"
+                value={`${Math.max(0, metrics.unique_visitors_today - metrics.returning_visitors_today)} · ${metrics.returning_visitors_today}`}
+                hint="Distinct browsers since midnight UTC"
+              />
+              <AdminMetricCard
+                label="Live now"
+                value={metrics.live_users}
+                hint={`${presence.length} listed · ${globePeople.length} on globe`}
+                tone="live"
+                live={metrics.live_users > 0}
+              />
             </div>
 
-            <ul className="space-y-1 md:hidden">
-              {presence.slice(0, 48).map((p) => {
-                const active = p.id === selectedId && drawerOpen;
-                const detail = visitorDetail(p);
-                return (
-                  <li key={p.id}>
-                    <button
-                      type="button"
-                      onClick={() => openVisitor(p)}
-                      className={`flex w-full flex-col gap-0.5 rounded-lg px-2.5 py-2 text-left transition ${
-                        active
-                          ? "bg-white/[0.08] text-snow"
-                          : "text-cloud hover:bg-white/[0.04] hover:text-snow"
-                      }`}
-                    >
-                      <span className="flex items-center justify-between gap-2">
-                        <span className="truncate text-sm">{visitorLabel(p)}</span>
-                        <span className="shrink-0 text-[0.6rem] uppercase tracking-wider text-mute">
-                          {p.user_id ? "Signed in" : "Anon"}
-                        </span>
-                      </span>
-                      <span className="truncate text-[0.65rem] text-mute">
-                        {detail || (p.user_id ? "Signed in" : "Anonymous")}
-                      </span>
-                      <span className="truncate font-mono text-[0.65rem] text-mute">
-                        {p.path || "/"}
-                      </span>
-                      <span className="flex justify-between gap-2 text-[0.65rem] text-mute">
-                        <span>
-                          {[p.city, p.country].filter(Boolean).join(", ") || "—"}
-                        </span>
-                        <span className="tabular-nums">
-                          {new Date(p.last_seen).toLocaleTimeString()}
-                        </span>
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-              {presence.length === 0 ? (
-                <li className="rounded-lg border border-dashed border-white/[0.08] px-3 py-5 text-center text-sm text-mute">
-                  No live presence yet.
-                </li>
-              ) : null}
-            </ul>
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 hover:border-white/[0.12] sm:p-4">
+              <div className="mb-1">
+                <h3 className="text-[0.95rem] tracking-[-0.02em] text-snow">
+                  Equity curves
+                </h3>
+                <p className="text-xs text-mute">
+                  Cumulative signups, views, sessions, and watch hours · hover to
+                  scrub
+                </p>
+              </div>
+              <AdminEquityCurve series={equitySeries} height={260} />
+            </div>
           </section>
         ) : null}
 
@@ -821,57 +533,6 @@ function AdminDashboardInner({
                 emptyTitle="No page heat yet"
                 emptyBody="Views will rank here once traffic lands after midnight UTC."
               />
-            </div>
-          </section>
-        ) : null}
-
-        {tab === "growth" ? (
-          <section className="space-y-2.5">
-            <div className="flex flex-wrap items-end justify-between gap-2">
-              <div>
-                <h2 className="text-[0.65rem] uppercase tracking-[0.16em] text-mute">
-                  Growth
-                </h2>
-                <p className="mt-0.5 text-xs text-cloud">
-                  Equity curves · cumulative over range
-                </p>
-              </div>
-              {curveRangeToggle}
-            </div>
-
-            <div className="grid gap-2 sm:grid-cols-3">
-              <AdminMetricCard
-                label={
-                  range === "today" ? "Signups today" : `Signups · ${range}`
-                }
-                value={ranged.signups}
-                hint={ranged.signupsHint}
-                spark={signupSpark}
-              />
-              <AdminMetricCard
-                label="Total accounts"
-                value={metrics.total_signups}
-                hint={avg7}
-                spark={signupSpark}
-              />
-              <AdminMetricCard
-                label="Page views"
-                value={ranged.pageViews}
-                hint={ranged.pageViewsHint}
-                spark={viewsSpark}
-              />
-            </div>
-
-            <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 hover:border-white/[0.12] sm:p-4">
-              <div className="mb-1">
-                <h3 className="text-[0.95rem] tracking-[-0.02em] text-snow">
-                  Equity curves
-                </h3>
-                <p className="text-xs text-mute">
-                  Cumulative signups, page views, and watch hours · hover to scrub
-                </p>
-              </div>
-              <AdminEquityCurve series={equitySeries} height={240} />
             </div>
           </section>
         ) : null}
@@ -1017,7 +678,7 @@ function AdminDashboardInner({
 
       <p className="mt-7 text-center text-[0.65rem] text-mute">
         Shortcuts ·{" "}
-        <span className="text-cloud">1–6</span> switch tabs ·{" "}
+        <span className="text-cloud">1–5</span> switch tabs ·{" "}
         <span className="text-cloud">R</span> refresh ·{" "}
         <Link href="/" className="text-cloud transition hover:text-snow">
           View site

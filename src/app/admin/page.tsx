@@ -4,6 +4,7 @@ import { AdminRefresh } from "@/components/admin/admin-refresh";
 import {
   enrichHotPages,
   enrichHotWatched,
+  labelAdminPath,
   type HotPageRow,
   type HotWatchRow,
 } from "@/lib/admin-hot-paths";
@@ -67,8 +68,8 @@ export default async function AdminPage() {
   ] = await Promise.all([
     supabase.rpc("admin_dashboard_metrics", { p_live_seconds: 120 }),
     supabase.rpc("admin_live_presence", { p_live_seconds: 120 }),
-    supabase.rpc("admin_signup_series", { p_days: 30 }),
-    supabase.rpc("admin_activity_series", { p_days: 30 }),
+    supabase.rpc("admin_signup_series", { p_days: 90 }),
+    supabase.rpc("admin_activity_series", { p_days: 90 }),
     supabase.rpc("admin_hot_activity", { p_limit: 8 }),
     getCatalog(),
   ]);
@@ -104,6 +105,7 @@ export default async function AdminPage() {
     lng: number | null;
     country: string | null;
     city: string | null;
+    first_seen?: string | null;
     last_seen: string;
     path: string | null;
   }>;
@@ -121,6 +123,8 @@ export default async function AdminPage() {
     sessions: Number(row.sessions ?? 0),
     watch_seconds: Number(row.watch_seconds ?? 0),
   }));
+
+  const byId = new Map(catalog.map((a) => [a.id, a]));
 
   return (
     <>
@@ -147,20 +151,26 @@ export default async function AdminPage() {
         }}
         presence={presenceRows
           .filter((p) => Boolean(p.id))
-          .map((p) => ({
-            id: p.id,
-            session_id: p.session_id,
-            user_id: p.user_id,
-            email: p.email,
-            nickname: p.nickname,
-            username: p.username ?? null,
-            lat: p.lat,
-            lng: p.lng,
-            country: p.country,
-            city: p.city,
-            last_seen: p.last_seen,
-            path: p.path,
-          }))}
+          .map((p) => {
+            const labeled = labelAdminPath(p.path || "/", byId);
+            return {
+              id: p.id,
+              session_id: p.session_id,
+              user_id: p.user_id,
+              email: p.email,
+              nickname: p.nickname,
+              username: p.username ?? null,
+              lat: p.lat,
+              lng: p.lng,
+              country: p.country,
+              city: p.city,
+              first_seen: p.first_seen ?? null,
+              last_seen: p.last_seen,
+              path: p.path,
+              path_label: labeled.label,
+              path_meta: labeled.meta,
+            };
+          })}
         series={((series ?? []) as Array<{ day: string; signups: number }>).map(
           (row) => ({
             day: String(row.day).slice(0, 10),
