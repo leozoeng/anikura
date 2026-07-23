@@ -22,14 +22,6 @@ export function NovelPoster({
 }: Props) {
   const score = formatNovelRating(novel.rating);
   const views = formatNovelViews(novel.views);
-  const originLabel =
-    novel.origin === "japanese"
-      ? "JP"
-      : novel.origin === "korean"
-        ? "KR"
-        : novel.origin === "chinese"
-          ? "CN"
-          : null;
   const delay =
     typeof index === "number"
       ? { animationDelay: `${Math.min(index, 14) * 18}ms` }
@@ -38,7 +30,7 @@ export function NovelPoster({
   return (
     <Link
       href={novelHref(novel.id)}
-      className={`poster-link group relative block ${className}`}
+      className={`poster-link pressable group relative block ${className}`}
       style={delay}
     >
       <div className="poster-frame relative aspect-[2/3] overflow-hidden rounded-[1.1rem] bg-raised">
@@ -59,21 +51,16 @@ export function NovelPoster({
             {score}
           </span>
         ) : null}
-        {originLabel ? (
-          <span className="absolute bottom-2.5 left-2.5 z-[1] rounded-md border border-white/10 bg-black/55 px-1.5 py-0.5 text-[0.62rem] font-medium tracking-[0.06em] text-snow/90 backdrop-blur-sm">
-            {originLabel}
-          </span>
-        ) : null}
       </div>
-      <div className="mt-2.5 px-0.5">
-        <h3 className="line-clamp-2 text-[0.9rem] font-medium leading-snug tracking-[-0.02em] text-snow transition group-hover:text-sakura-soft">
+      <div className="mt-3 space-y-0.5 px-0.5">
+        <h3 className="line-clamp-2 text-[0.8125rem] font-medium leading-snug tracking-[-0.02em] transition duration-300 group-hover:text-sakura-mist">
           {novel.title}
         </h3>
-        <p className="mt-1 text-[0.72rem] text-mute">
+        <p className="text-[0.75rem] text-mute transition duration-300 group-hover:text-cloud">
           {novel.chaptersCount
             ? `${novel.chaptersCount.toLocaleString()} ch`
             : novel.status || "Novel"}
-          {views ? ` · ${views} views` : ""}
+          {views ? ` · ${views}` : ""}
         </p>
       </div>
     </Link>

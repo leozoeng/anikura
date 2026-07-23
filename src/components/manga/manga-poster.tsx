@@ -1,9 +1,5 @@
 import { SafeImage } from "@/components/safe-image";
-import {
-  formatMangaRating,
-  formatMangaType,
-  mangaHref,
-} from "@/lib/atsu";
+import { formatMangaRating, mangaHref } from "@/lib/atsu";
 import type { MangaListItem } from "@/lib/manga-types";
 import Link from "next/link";
 
@@ -21,7 +17,6 @@ export function MangaPoster({
   index,
 }: Props) {
   const score = formatMangaRating(manga.rating);
-  const typeLabel = formatMangaType(manga.type);
   const delay =
     typeof index === "number"
       ? { animationDelay: `${Math.min(index, 14) * 18}ms` }
@@ -30,7 +25,7 @@ export function MangaPoster({
   return (
     <Link
       href={mangaHref(manga.id)}
-      className={`poster-link group relative block ${className}`}
+      className={`poster-link pressable group relative block ${className}`}
       style={delay}
     >
       <div className="poster-frame relative aspect-[2/3] overflow-hidden rounded-[1.1rem] bg-raised">
@@ -52,18 +47,16 @@ export function MangaPoster({
             {score}
           </span>
         ) : null}
-
-        <span className="absolute bottom-2.5 left-2.5 z-[1] rounded-md border border-white/10 bg-black/55 px-1.5 py-0.5 text-[0.62rem] font-medium tracking-[0.04em] text-snow/90 backdrop-blur-sm">
-          {typeLabel}
-        </span>
       </div>
 
-      <div className="mt-2.5 px-0.5">
-        <h3 className="line-clamp-2 text-[0.9rem] font-medium leading-snug tracking-[-0.02em] text-snow transition group-hover:text-sakura-soft">
+      <div className="mt-3 space-y-0.5 px-0.5">
+        <h3 className="line-clamp-2 text-[0.8125rem] font-medium leading-snug tracking-[-0.02em] transition duration-300 group-hover:text-sakura-mist">
           {manga.title}
         </h3>
         {manga.views ? (
-          <p className="mt-1 text-[0.72rem] text-mute">{manga.views} views</p>
+          <p className="text-[0.75rem] text-mute transition duration-300 group-hover:text-cloud">
+            {manga.views} views
+          </p>
         ) : null}
       </div>
     </Link>

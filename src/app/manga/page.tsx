@@ -1,165 +1,171 @@
+import { SafeImage } from "@/components/safe-image";
 import { MangaPoster } from "@/components/manga/manga-poster";
 import { MangaRow } from "@/components/manga/manga-row";
 import { PagePagination } from "@/components/page-pagination";
 import {
+  MANGA_SHELF_GENRES,
+  browseManga,
+  getMangaByGenre,
   getRecentlyUpdatedManga,
   getTrendingManga,
+  mangaGenreBySlug,
   searchManga,
-  type MangaShelfType,
+  type MangaBrowseSort,
 } from "@/lib/atsu";
+import { genreWash, moodAccent } from "@/lib/genre-moods";
 import type { MangaListItem } from "@/lib/manga-types";
 import Link from "next/link";
+import type { CSSProperties } from "react";
 
 export const dynamic = "force-dynamic";
 
-type ShelfTab = "manga" | "manhwa" | "manhua";
-
 type Props = {
   searchParams: Promise<{
-    type?: string;
     sort?: string;
     page?: string;
     q?: string;
+    genre?: string;
   }>;
 };
 
-function parseTab(raw: string | undefined): ShelfTab | "home" {
-  if (raw === "manhwa" || raw === "manhua" || raw === "manga") return raw;
-  return "home";
+function parseSort(raw: string | undefined): MangaBrowseSort {
+  if (raw === "trending" || raw === "latest" || raw === "rating") return raw;
+  return "popular";
 }
 
-function apiType(tab: ShelfTab): MangaShelfType {
-  if (tab === "manhwa") return "Manwha";
-  if (tab === "manhua") return "Manhua";
-  return "Manga";
-}
-
-function tabLabel(tab: ShelfTab) {
-  if (tab === "manhwa") return "Manhwa";
-  if (tab === "manhua") return "Manhua";
-  return "Manga";
+function sortLabel(sort: MangaBrowseSort) {
+  if (sort === "trending") return "Trending";
+  if (sort === "latest") return "Latest";
+  if (sort === "rating") return "Top rated";
+  return "Most popular";
 }
 
 export default async function MangaPage({ searchParams }: Props) {
   const params = await searchParams;
-  const tab = parseTab(params.type);
-  const sort = params.sort === "updated" ? "updated" : "trending";
-  const page = Math.max(1, Number(params.page || 1));
   const query = (params.q || "").trim();
-  const apiPage = page - 1;
+  const genre = mangaGenreBySlug(params.genre);
+  const sort = parseSort(params.sort);
+  const page = Math.max(1, Number(params.page || 1));
+  const isHome = !query && !genre && !params.sort;
 
-  let trendingManga: MangaListItem[] = [];
-  let latestManga: MangaListItem[] = [];
-  let trendingManhwa: MangaListItem[] = [];
-  let trendingManhua: MangaListItem[] = [];
+  let trending: MangaListItem[] = [];
+  let popular: MangaListItem[] = [];
+  let latest: MangaListItem[] = [];
+  let topRated: MangaListItem[] = [];
+  let action: MangaListItem[] = [];
+  let fantasy: MangaListItem[] = [];
+  let romance: MangaListItem[] = [];
+  let genreCovers = new Map<string, string | null>();
   let shelfItems: MangaListItem[] = [];
   let searchItems: MangaListItem[] = [];
-  let searchFound = 0;
+  let found = 0;
   let loadError: string | null = null;
 
   try {
     if (query) {
-      const typeFilter =
-        tab === "home" ? "all" : apiType(tab);
-      const result = await searchManga(query, page, 48, undefined, typeFilter);
+      const result = await searchManga(query, page, 48);
       searchItems = result.items;
-      searchFound = result.found;
-    } else if (tab === "home") {
-      const [tm, lm, thw, thu] = await Promise.all([
-        getTrendingManga(0, "Manga"),
-        getRecentlyUpdatedManga(0, "Manga"),
-        getTrendingManga(0, "Manwha"),
-        getTrendingManga(0, "Manhua"),
-      ]);
-      trendingManga = tm;
-      latestManga = lm;
-      trendingManhwa = thw;
-      trendingManhua = thu;
+      found = result.found;
+    } else if (genre || params.sort) {
+      const result = await browseManga({
+        sort: genre
+          ? sort === "trending"
+            ? "popular"
+            : sort
+          : sort,
+        genre: genre?.slug,
+        page,
+        limit: 48,
+      });
+      shelfItems = result.items;
+      found = result.found;
     } else {
-      const type = apiType(tab);
-      shelfItems =
-        sort === "updated"
-          ? await getRecentlyUpdatedManga(apiPage, type)
-          : await getTrendingManga(apiPage, type);
+      const [
+        trendingItems,
+        popularResult,
+        latestItems,
+        ratingResult,
+        actionItems,
+        fantasyItems,
+        romanceItems,
+        ...genreSamples
+      ] = await Promise.all([
+        getTrendingManga(0, "Manga"),
+        browseManga({ sort: "popular", limit: 18 }),
+        getRecentlyUpdatedManga(0, "Manga"),
+        browseManga({ sort: "rating", limit: 18 }),
+        getMangaByGenre("action", 18),
+        getMangaByGenre("fantasy", 18),
+        getMangaByGenre("romance", 18),
+        ...MANGA_SHELF_GENRES.map((g) => getMangaByGenre(g.slug, 1)),
+      ]);
+
+      trending = trendingItems.slice(0, 18);
+      popular = popularResult.items;
+      latest = latestItems.slice(0, 18);
+      topRated = ratingResult.items;
+      action = actionItems;
+      fantasy = fantasyItems;
+      romance = romanceItems;
+
+      MANGA_SHELF_GENRES.forEach((g, i) => {
+        genreCovers.set(g.slug, genreSamples[i]?.[0]?.poster ?? null);
+      });
     }
   } catch (err) {
     loadError = err instanceof Error ? err.message : "Failed to load manga";
   }
 
-  const totalPages = query
-    ? Math.max(1, Math.ceil(searchFound / 48))
-    : tab === "home"
-      ? 1
-      : page + (shelfItems.length >= 24 ? 1 : 0);
-
-  const tabs: { id: "home" | ShelfTab; label: string; href: string }[] = [
-    { id: "home", label: "For you", href: "/manga" },
-    { id: "manga", label: "Manga", href: "/manga?type=manga" },
-    { id: "manhwa", label: "Manhwa", href: "/manga?type=manhwa" },
-    { id: "manhua", label: "Manhua", href: "/manga?type=manhua" },
-  ];
+  const totalPages = Math.max(1, Math.ceil(found / 48));
+  const browseTitle = genre
+    ? genre.name
+    : query
+      ? `Results for “${query}”`
+      : sortLabel(sort);
 
   return (
-    <div className="page-shell page-enter relative pb-16 pt-28">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 overflow-hidden"
-      >
-        <div className="absolute left-[-8%] top-8 h-48 w-[42%] rounded-full bg-[radial-gradient(circle,rgba(255,140,170,0.12),transparent_68%)] blur-3xl" />
-        <div className="absolute right-[-6%] top-16 h-40 w-[36%] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.04),transparent_70%)] blur-3xl" />
-      </div>
-
-      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-mute uppercase">
-        <span className="sakura-dot h-1.5 w-1.5 rounded-full bg-sakura" />
-        Library
-      </div>
-      <h1 className="mt-5 text-[clamp(2.4rem,6vw,4rem)] font-semibold tracking-[-0.05em] text-snow">
-        Manga
-      </h1>
-      <p className="mt-3 max-w-xl text-cloud">
-        Japanese manga first — then manhwa and manhua on their own shelves.
-      </p>
-
-      <form action="/manga" method="get" className="mt-8 max-w-xl">
-        {tab !== "home" ? (
-          <input type="hidden" name="type" value={tab} />
-        ) : null}
-        <label className="sr-only" htmlFor="manga-search">
-          Search manga
-        </label>
-        <div className="flex gap-2">
-          <input
-            id="manga-search"
-            name="q"
-            defaultValue={query}
-            placeholder="Search titles…"
-            className="h-12 flex-1 rounded-full border border-white/10 bg-white/[0.04] px-5 text-sm text-snow outline-none placeholder:text-mute focus:border-sakura/40"
-          />
-          <button type="submit" className="btn-primary shrink-0 !px-5">
-            Search
-          </button>
+    <div className="pb-16">
+      <div className="page-shell page-enter relative pt-28">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 overflow-hidden"
+        >
+          <div className="absolute left-[-8%] top-8 h-48 w-[42%] rounded-full bg-[radial-gradient(circle,rgba(255,140,170,0.12),transparent_68%)] blur-3xl" />
+          <div className="absolute right-[-6%] top-16 h-40 w-[36%] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.04),transparent_70%)] blur-3xl" />
         </div>
-      </form>
 
-      <div className="filter-rail mt-8" role="tablist" aria-label="Manga type">
-        {tabs.map((t) => {
-          const active = tab === t.id;
-          return (
-            <Link
-              key={t.id}
-              href={t.href}
-              role="tab"
-              aria-selected={active}
-              className={`filter-pill ${active ? "is-active" : ""}`}
-            >
-              {t.label}
-            </Link>
-          );
-        })}
+        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-mute uppercase">
+          <span className="sakura-dot h-1.5 w-1.5 rounded-full bg-sakura" />
+          Japanese only
+        </div>
+        <h1 className="mt-5 text-[clamp(2.4rem,6vw,4rem)] font-semibold tracking-[-0.05em] text-snow">
+          Manga
+        </h1>
+        <p className="mt-3 max-w-xl text-cloud">
+          Trending, popular, and genre shelves — Japanese manga only.
+        </p>
+
+        <form action="/manga" method="get" className="mt-8 max-w-xl">
+          <label className="sr-only" htmlFor="manga-search">
+            Search manga
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="manga-search"
+              name="q"
+              defaultValue={query}
+              placeholder="Search titles…"
+              className="h-12 flex-1 rounded-full border border-white/10 bg-white/[0.04] px-5 text-sm text-snow outline-none placeholder:text-mute focus:border-sakura/40"
+            />
+            <button type="submit" className="btn-primary shrink-0 !px-5">
+              Search
+            </button>
+          </div>
+        </form>
       </div>
 
       {loadError ? (
-        <div className="mt-16 border border-dashed border-white/15 px-8 py-14 text-center">
+        <div className="page-shell mt-16 border border-dashed border-white/15 px-8 py-14 text-center">
           <h2 className="text-2xl font-semibold tracking-[-0.03em]">
             Couldn&apos;t reach the library
           </h2>
@@ -167,132 +173,190 @@ export default async function MangaPage({ searchParams }: Props) {
         </div>
       ) : null}
 
-      {!loadError && query ? (
-        <>
-          <div className="mt-10 flex items-end justify-between gap-4">
-            <div>
-              <p className="section-eyebrow">Search</p>
-              <h2 className="section-title">
-                Results for “{query}”
-                {tab !== "home" ? ` · ${tabLabel(tab)}` : ""}
-              </h2>
+      {!loadError && isHome ? (
+        <div className="page-shell relative z-10 space-y-12 pt-10 sm:space-y-14">
+          <MangaRow
+            title="Trending now"
+            subtitle="What people are reading"
+            items={trending}
+            seeAllHref="/manga?sort=trending"
+            priorityCount={3}
+          />
+          <MangaRow
+            title="Most popular"
+            subtitle="All-time views on the shelf"
+            items={popular}
+            seeAllHref="/manga?sort=popular"
+          />
+          <MangaRow
+            title="Latest updates"
+            subtitle="Fresh chapters dropping now"
+            items={latest}
+            seeAllHref="/manga?sort=latest"
+          />
+          <MangaRow
+            title="Highly rated"
+            subtitle="Critically loved titles"
+            items={topRated}
+            seeAllHref="/manga?sort=rating"
+          />
+          <MangaRow
+            title="Action"
+            items={action}
+            seeAllHref="/manga?genre=action"
+          />
+          <MangaRow
+            title="Fantasy"
+            items={fantasy}
+            seeAllHref="/manga?genre=fantasy"
+          />
+          <MangaRow
+            title="Romance"
+            items={romance}
+            seeAllHref="/manga?genre=romance"
+          />
+
+          <section className="page-enter space-y-5">
+            <div className="flex w-full items-end justify-between gap-4">
+              <div>
+                <h2 className="section-title">Genres</h2>
+                <p className="section-sub">Pick a mood</p>
+              </div>
             </div>
-            <Link
-              href={tab === "home" ? "/manga" : `/manga?type=${tab}`}
-              className="text-sm text-mute hover:text-sakura-soft"
-            >
-              Clear
+            <div className="fade-x scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:gap-3.5">
+              {MANGA_SHELF_GENRES.map((g, i) => {
+                const cover = genreCovers.get(g.slug);
+                const accent = moodAccent(g.slug);
+                const wash = genreWash(g.slug);
+                return (
+                  <Link
+                    key={g.slug}
+                    href={`/manga?genre=${g.slug}`}
+                    className="genre-tile pressable group relative h-[9.5rem] w-[9.75rem] shrink-0 snap-start overflow-hidden rounded-[1.2rem] sm:h-[10.5rem] sm:w-[11rem]"
+                    style={
+                      {
+                        animationDelay: `${Math.min(i, 9) * 28}ms`,
+                        "--genre-tile-accent": accent.solid,
+                      } as CSSProperties
+                    }
+                  >
+                    <div className="absolute inset-0 bg-elevated" />
+                    {cover ? (
+                      <SafeImage
+                        src={cover}
+                        alt=""
+                        fill
+                        sizes="180px"
+                        className="object-cover object-center transition duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
+                      />
+                    ) : null}
+                    <div
+                      className="absolute inset-0 transition duration-500"
+                      style={{
+                        background: `
+                          linear-gradient(180deg, rgba(0,0,0,0.14) 0%, rgba(0,0,0,0.38) 40%, rgba(0,0,0,0.88) 78%, rgba(0,0,0,0.96) 100%),
+                          linear-gradient(135deg, ${wash} 0%, transparent 54%),
+                          radial-gradient(ellipse 90% 48% at 50% 110%, ${accent.solid}28, transparent 68%)
+                        `,
+                      }}
+                    />
+                    <div className="relative z-10 flex h-full flex-col justify-end p-3.5 sm:p-4">
+                      <span
+                        aria-hidden
+                        className="sakura-dot mb-1.5 block h-1.5 w-1.5 rounded-full"
+                        style={{ background: accent.solid }}
+                      />
+                      <span
+                        className="block text-[1.05rem] font-medium leading-tight tracking-[-0.03em] text-snow"
+                        style={{
+                          textShadow: `0 2px 22px color-mix(in oklab, ${accent.solid} 38%, transparent), 0 1px 2px rgba(0,0,0,0.6)`,
+                        }}
+                      >
+                        {g.name}
+                      </span>
+                      <span
+                        aria-hidden
+                        className="mt-1 text-[0.72rem] transition duration-300 group-hover:translate-x-0.5"
+                        style={{ color: accent.soft }}
+                      >
+                        →
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {!loadError && !isHome ? (
+        <div className="page-shell pt-10">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="section-eyebrow">
+                {genre ? "Genre" : query ? "Search" : "Browse"}
+              </p>
+              <h2 className="section-title">{browseTitle}</h2>
+            </div>
+            <Link href="/manga" className="link-quiet text-sm">
+              Back to shelves →
             </Link>
           </div>
-          {searchItems.length === 0 ? (
-            <p className="mt-10 text-mute">No titles matched that search.</p>
+
+          {!query ? (
+            <div className="filter-rail mt-6" role="tablist" aria-label="Sort">
+              {(
+                [
+                  { id: "popular", label: "Popular" },
+                  { id: "trending", label: "Trending" },
+                  { id: "latest", label: "Latest" },
+                  { id: "rating", label: "Top rated" },
+                ] as const
+              )
+                .filter((s) => !(genre && s.id === "trending"))
+                .map((s) => {
+                  const active = sort === s.id;
+                  const href = genre
+                    ? `/manga?genre=${genre.slug}&sort=${s.id}`
+                    : `/manga?sort=${s.id}`;
+                  return (
+                    <Link
+                      key={s.id}
+                      href={href}
+                      role="tab"
+                      aria-selected={active}
+                      className={`filter-pill ${active ? "is-active" : ""}`}
+                    >
+                      {s.label}
+                    </Link>
+                  );
+                })}
+            </div>
+          ) : null}
+
+          {(query ? searchItems : shelfItems).length === 0 ? (
+            <p className="mt-10 text-mute">No titles matched.</p>
           ) : (
             <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {searchItems.map((manga, i) => (
+              {(query ? searchItems : shelfItems).map((manga, i) => (
                 <MangaPoster key={manga.id} manga={manga} index={i} />
               ))}
             </div>
           )}
+
           <PagePagination
             page={Math.min(page, totalPages)}
             totalPages={totalPages}
             hrefForPage={(p) => {
-              const qs = new URLSearchParams({
-                q: query,
-                page: String(p),
-              });
-              if (tab !== "home") qs.set("type", tab);
+              const qs = new URLSearchParams({ page: String(p) });
+              if (query) qs.set("q", query);
+              if (genre) qs.set("genre", genre.slug);
+              else if (params.sort) qs.set("sort", sort);
               return `/manga?${qs}`;
             }}
           />
-        </>
-      ) : null}
-
-      {!loadError && !query && tab === "home" ? (
-        <>
-          <MangaRow
-            eyebrow="Japan"
-            title="Trending manga"
-            subtitle="The main shelf — Japanese titles first"
-            items={trendingManga.slice(0, 18)}
-            seeAllHref="/manga?type=manga"
-          />
-          <MangaRow
-            eyebrow="Fresh ink"
-            title="Latest manga"
-            subtitle="New chapters from the Japanese shelf"
-            items={latestManga.slice(0, 18)}
-            seeAllHref="/manga?type=manga&sort=updated"
-          />
-
-          <div className="mt-16 border-t border-white/[0.06] pt-2">
-            <MangaRow
-              eyebrow="Korea"
-              title="Manhwa"
-              subtitle="Webtoon energy on its own row"
-              items={trendingManhwa.slice(0, 18)}
-              seeAllHref="/manga?type=manhwa"
-            />
-            <MangaRow
-              eyebrow="China"
-              title="Manhua"
-              subtitle="Cultivation nights and long roads"
-              items={trendingManhua.slice(0, 18)}
-              seeAllHref="/manga?type=manhua"
-            />
-          </div>
-        </>
-      ) : null}
-
-      {!loadError && !query && tab !== "home" ? (
-        <>
-          <div
-            className="filter-rail mt-6"
-            role="tablist"
-            aria-label={`${tabLabel(tab)} sort`}
-          >
-            {(
-              [
-                { id: "trending", label: "Trending" },
-                { id: "updated", label: "Latest" },
-              ] as const
-            ).map((s) => {
-              const active = sort === s.id;
-              return (
-                <Link
-                  key={s.id}
-                  href={`/manga?type=${tab}&sort=${s.id}`}
-                  role="tab"
-                  aria-selected={active}
-                  className={`filter-pill ${active ? "is-active" : ""}`}
-                >
-                  {s.label}
-                </Link>
-              );
-            })}
-          </div>
-
-          <div className="mt-4">
-            <p className="section-eyebrow">{tabLabel(tab)}</p>
-            <h2 className="section-title">
-              {sort === "updated" ? "Latest updates" : "Trending now"}
-            </h2>
-          </div>
-
-          <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {shelfItems.map((manga, i) => (
-              <MangaPoster key={manga.id} manga={manga} index={i} />
-            ))}
-          </div>
-
-          <PagePagination
-            page={page}
-            totalPages={Math.max(page, totalPages)}
-            hrefForPage={(p) =>
-              `/manga?type=${tab}&sort=${sort}&page=${p}`
-            }
-          />
-        </>
+        </div>
       ) : null}
     </div>
   );

@@ -1,48 +1,85 @@
+"use client";
+
 import { MangaPoster } from "@/components/manga/manga-poster";
-import { SectionHeading } from "@/components/section-heading";
 import type { MangaListItem } from "@/lib/manga-types";
 import Link from "next/link";
+import { useRef } from "react";
 
 type Props = {
-  eyebrow?: string;
   title: string;
   subtitle?: string;
   items: MangaListItem[];
   seeAllHref?: string;
+  priorityCount?: number;
 };
 
 export function MangaRow({
-  eyebrow,
   title,
   subtitle,
   items,
   seeAllHref,
+  priorityCount = 0,
 }: Props) {
+  const scroller = useRef<HTMLDivElement>(null);
+
   if (!items.length) return null;
 
+  function scrollBy(dir: 1 | -1) {
+    const el = scroller.current;
+    if (!el) return;
+    el.scrollBy({
+      left: dir * Math.min(640, el.clientWidth * 0.85),
+      behavior: "smooth",
+    });
+  }
+
   return (
-    <section className="mt-12">
-      <div className="mb-5 flex items-end justify-between gap-4">
-        <SectionHeading eyebrow={eyebrow} title={title} subtitle={subtitle} />
+    <section className="group/row relative space-y-5">
+      <div className="flex w-full items-end justify-between gap-4">
+        <div>
+          <h2 className="section-title">{title}</h2>
+          {subtitle ? <p className="section-sub">{subtitle}</p> : null}
+        </div>
         {seeAllHref ? (
-          <Link
-            href={seeAllHref}
-            className="shrink-0 text-sm text-mute transition hover:text-sakura-soft"
-          >
-            See all
+          <Link href={seeAllHref} className="link-quiet text-sm">
+            See all →
           </Link>
         ) : null}
       </div>
 
-      <div className="fade-x -mx-1 overflow-x-auto px-1 scrollbar-none">
-        <div className="flex w-max gap-3.5 pb-1 sm:gap-4">
+      <div className="relative">
+        <button
+          type="button"
+          aria-label="Scroll left"
+          onClick={() => scrollBy(-1)}
+          className="absolute left-2 top-[28%] z-10 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-black/60 text-snow opacity-0 backdrop-blur transition group-hover/row:opacity-100 hover:bg-black/80 md:grid"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          aria-label="Scroll right"
+          onClick={() => scrollBy(1)}
+          className="absolute right-2 top-[28%] z-10 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-black/60 text-snow opacity-0 backdrop-blur transition group-hover/row:opacity-100 hover:bg-black/80 md:grid"
+        >
+          ›
+        </button>
+
+        <div
+          ref={scroller}
+          className="fade-x scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 sm:gap-5"
+        >
           {items.map((manga, i) => (
-            <MangaPoster
+            <div
               key={manga.id}
-              manga={manga}
-              index={i}
-              className="w-[9.5rem] shrink-0 sm:w-[11rem]"
-            />
+              className="w-[118px] shrink-0 snap-start sm:w-[156px]"
+            >
+              <MangaPoster
+                manga={manga}
+                priority={i < priorityCount}
+                index={i}
+              />
+            </div>
           ))}
         </div>
       </div>

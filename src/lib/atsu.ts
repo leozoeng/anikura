@@ -9,9 +9,36 @@ import type {
 const DOMAIN = "atsu.moe";
 const ORIGIN = `https://${DOMAIN}`;
 const CDN = `https://cdn.${DOMAIN}`;
-const DEFAULT_TYPES = "Manga,Manwha,Manhua";
+/** Anikura manga shelf is Japanese only. */
+const DEFAULT_TYPES = "Manga";
 
 export type MangaShelfType = "Manga" | "Manwha" | "Manhua";
+
+/** Curated Japanese manga genres (Atsumaru `tags` field). */
+export const MANGA_SHELF_GENRES = [
+  { slug: "action", name: "Action", tag: "Action" },
+  { slug: "adventure", name: "Adventure", tag: "Adventure" },
+  { slug: "fantasy", name: "Fantasy", tag: "Fantasy" },
+  { slug: "romance", name: "Romance", tag: "Romance" },
+  { slug: "comedy", name: "Comedy", tag: "Comedy" },
+  { slug: "drama", name: "Drama", tag: "Drama" },
+  { slug: "horror", name: "Horror", tag: "Horror" },
+  { slug: "mystery", name: "Mystery", tag: "Mystery" },
+  { slug: "supernatural", name: "Supernatural", tag: "Supernatural" },
+  { slug: "sci-fi", name: "Sci-Fi", tag: "Sci-Fi" },
+  { slug: "slice-of-life", name: "Slice of Life", tag: "Slice of Life" },
+  { slug: "psychological", name: "Psychological", tag: "Psychological" },
+  { slug: "historical", name: "Historical", tag: "Historical" },
+  { slug: "martial-arts", name: "Martial Arts", tag: "Martial Arts" },
+] as const;
+
+export type MangaShelfGenreSlug = (typeof MANGA_SHELF_GENRES)[number]["slug"];
+export type MangaBrowseSort = "trending" | "popular" | "latest" | "rating";
+
+export function mangaGenreBySlug(slug: string | undefined | null) {
+  if (!slug) return null;
+  return MANGA_SHELF_GENRES.find((g) => g.slug === slug) ?? null;
+}
 
 type FetchOptions = {
   revalidate?: number | false;
@@ -250,42 +277,116 @@ type SearchResponse = {
   found?: number;
 };
 
+function mangaSearchFilter(genreTag?: string | null) {
+  const parts = ["type:=Manga", "isAdult:=false"];
+  if (genreTag) parts.push(`tags:=${genreTag}`);
+  return parts.join(" && ");
+}
+
+async function typesenseManga(
+  params: {
+    query?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    genreTag?: string | null;
+  },
+  options: FetchOptions = { revalidate: 180 },
+) {
+  const q = params.query?.trim() || "*";
+  const search = new URLSearchParams({
+    q,
+    query_by: "title,englishTitle,otherNames",
+    limit: String(params.limit ?? 24),
+    page: String(params.page ?? 1),
+    query_by_weights: "3,2,1",
+    include_fields:
+      "id,title,englishTitle,poster,posterMedium,posterSmall,type,isAdult,mbRating,avgRating,views",
+    filter_by: mangaSearchFilter(params.genreTag),
+    num_typos: "4,3,2",
+  });
+  if (params.sortBy) search.set("sort_by", params.sortBy);
+
+  const url = `${ORIGIN}/collections/manga/documents/search?${search}`;
+  const json = await fetchJson<SearchResponse>(url, options);
+  const items = (json.hits || [])
+    .map((hit) => hit.document)
+    .filter(Boolean)
+    .map((doc) => {
+      const raw = doc as Record<string, unknown>;
+      // Prefer Typesense poster fields when infinite-API shape is missing.
+      if (!raw.poster && raw.posterMedium) raw.poster = raw.posterMedium;
+      return asListItem(raw);
+    })
+    .filter((item) => !item.isAdult && item.type === "Manga");
+
+  return { items, found: json.found ?? items.length };
+}
+
 export async function searchManga(
   query: string,
   page = 1,
   limit = 24,
   options: FetchOptions = { revalidate: 120 },
-  typeFilter?: MangaShelfType | "all",
+  _typeFilter?: MangaShelfType | "all",
 ) {
   const q = query.trim();
   if (!q) return { items: [] as MangaListItem[], found: 0 };
+  return typesenseManga({ query: q, page, limit }, options);
+}
 
-  const params = new URLSearchParams({
-    q,
-    query_by: "title,englishTitle,otherNames",
-    limit: String(limit),
-    page: String(page),
-    query_by_weights: "3,2,1",
-    include_fields: "id,title,englishTitle,poster,type,isAdult,avgRating,views",
-    num_typos: "4,3,2",
-  });
+/** Browse Japanese manga by popularity, rating, or genre. */
+export async function browseManga(
+  opts: {
+    sort?: MangaBrowseSort;
+    genre?: string | null;
+    page?: number;
+    limit?: number;
+  } = {},
+  options: FetchOptions = { revalidate: 180 },
+) {
+  const sort = opts.sort ?? "popular";
+  const page = opts.page ?? 1;
+  const limit = opts.limit ?? 24;
+  const genre = mangaGenreBySlug(opts.genre);
 
-  const url = `${ORIGIN}/collections/manga/documents/search?${params}`;
-  const json = await fetchJson<SearchResponse>(url, options);
-  let items = (json.hits || [])
-    .map((hit) => hit.document)
-    .filter(Boolean)
-    .map((doc) => asListItem(doc as Record<string, unknown>))
-    .filter((item) => !item.isAdult);
-
-  if (typeFilter && typeFilter !== "all") {
-    items = items.filter((item) => {
-      const t = item.type === "Manhwa" ? "Manwha" : item.type;
-      return t === typeFilter;
-    });
+  if (sort === "trending" && !genre) {
+    const items = await getTrendingManga(page - 1, "Manga", options);
+    return { items: items.slice(0, limit), found: items.length };
+  }
+  if (sort === "latest" && !genre) {
+    const items = await getRecentlyUpdatedManga(page - 1, "Manga", options);
+    return { items: items.slice(0, limit), found: items.length };
   }
 
-  return { items, found: json.found ?? items.length };
+  const sortBy =
+    sort === "rating"
+      ? "mbRating:desc"
+      : sort === "latest"
+        ? "dateAdded:desc"
+        : "views:desc";
+
+  return typesenseManga(
+    {
+      page,
+      limit,
+      sortBy,
+      genreTag: genre?.tag,
+    },
+    options,
+  );
+}
+
+export async function getMangaByGenre(
+  genreSlug: string,
+  limit = 18,
+  options?: FetchOptions,
+) {
+  const result = await browseManga(
+    { sort: "popular", genre: genreSlug, page: 1, limit },
+    options,
+  );
+  return result.items;
 }
 
 type MangaPageResponse = { mangaPage?: Record<string, unknown> };

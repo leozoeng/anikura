@@ -215,6 +215,33 @@ const ACTION_SPINE = new Set([
 
 export type NovelOrigin = "japanese" | "korean" | "chinese";
 
+/** Curated anime-shelf novel genres shown on /novels. */
+export const NOVEL_SHELF_GENRES = [
+  { slug: "action", name: "Action" },
+  { slug: "adventure", name: "Adventure" },
+  { slug: "fantasy", name: "Fantasy" },
+  { slug: "comedy", name: "Comedy" },
+  { slug: "drama", name: "Drama" },
+  { slug: "romance", name: "Romance" },
+  { slug: "mystery", name: "Mystery" },
+  { slug: "horror", name: "Horror" },
+  { slug: "sci-fi", name: "Sci-Fi" },
+  { slug: "school-life", name: "School Life" },
+  { slug: "slice-of-life", name: "Slice of Life" },
+  { slug: "supernatural", name: "Supernatural" },
+  { slug: "mecha", name: "Mecha" },
+  { slug: "seinen", name: "Seinen" },
+  { slug: "shounen", name: "Shounen" },
+] as const;
+
+export type NovelShelfGenreSlug = (typeof NOVEL_SHELF_GENRES)[number]["slug"];
+export type NovelBrowseSort = "popular" | "latest";
+
+export function novelGenreBySlug(slug: string | undefined | null) {
+  if (!slug) return null;
+  return NOVEL_SHELF_GENRES.find((g) => g.slug === slug) ?? null;
+}
+
 function isAnimeShelfNovel(item: NovelListItem) {
   if (item.isMtl) return false;
   if (BLOCKED_TITLE.test(item.title) || FANFIC_PREFIX.test(item.title)) {
@@ -306,9 +333,10 @@ export async function searchNovels(
   page = 1,
   limit = 24,
   options: FetchOptions = { revalidate: 180 },
-  origin?: NovelOrigin | "all",
+  origin: NovelOrigin | "all" = "japanese",
+  extras?: { genre?: string | null; sort?: NovelBrowseSort },
 ) {
-  // Oversample — anime filter drops a lot of KR/CN web-novel spam.
+  // Oversample — anime filter drops romance/MTL spam.
   const fetchLimit = Math.min(48, Math.max(limit * 3, limit));
   const params = new URLSearchParams({
     page: String(page),
@@ -317,8 +345,11 @@ export async function searchNovels(
   const q = query?.trim();
   if (q) params.set("q", q);
   if (origin && origin !== "all") params.set("type", origin);
-  // Default browse is newest junk; popular keeps ORV / Slime / LotM on top.
-  if (!q) params.set("sort", "popular");
+  if (extras?.genre) params.set("genres", extras.genre);
+  // Default browse is newest junk; popular keeps real LNs on top.
+  const sort = extras?.sort ?? (q ? undefined : "popular");
+  if (sort === "popular") params.set("sort", "popular");
+  if (sort === "latest") params.set("sort", "latest");
 
   const json = await fetchJson<SearchResponse>(
     `/titles/search?${params}`,
@@ -343,67 +374,48 @@ export async function searchNovels(
   };
 }
 
-/** Japanese light novels — primary Anikura shelf. */
+/** Japanese light novels — the only Anikura novel shelf. */
 export async function getJapaneseNovels(
   page = 1,
   limit = 24,
   options?: FetchOptions,
+  extras?: { genre?: string | null; sort?: NovelBrowseSort },
 ) {
-  return searchNovels(null, page, limit, options, "japanese");
+  return searchNovels(null, page, limit, options, "japanese", extras);
 }
 
-/** Korean web novels that still feel anime/manhwa adjacent. */
-export async function getKoreanNovels(
-  page = 1,
-  limit = 24,
+export async function getNovelsByGenre(
+  genreSlug: string,
+  limit = 18,
   options?: FetchOptions,
 ) {
-  return searchNovels(null, page, limit, options, "korean");
+  const genre = novelGenreBySlug(genreSlug);
+  if (!genre) return [] as NovelListItem[];
+  const result = await getJapaneseNovels(1, limit, options, {
+    genre: genre.slug,
+    sort: "popular",
+  });
+  return result.items;
 }
 
-/** Chinese xianxia / web novels on the anime-adjacent shelf. */
-export async function getChineseNovels(
-  page = 1,
-  limit = 24,
-  options?: FetchOptions,
-) {
-  return searchNovels(null, page, limit, options, "chinese");
-}
-
-/** Fresh ink — Japanese first. */
+/** Fresh ink — Japanese only. */
 export async function getLatestNovels(
   page = 1,
   limit = 24,
   options?: FetchOptions,
 ) {
-  return getJapaneseNovels(page, limit, options);
+  return getJapaneseNovels(page, limit, options, { sort: "latest" });
 }
 
-/** Popular shelf — Japanese ranked by views, topped up with KR/CN hits. */
+/** Popular Japanese light novels. */
 export async function getPopularNovels(
   limit = 24,
   options: FetchOptions = { revalidate: 300 },
 ) {
-  const [jp1, jp2, kr, cn] = await Promise.all([
-    searchNovels(null, 1, 48, options, "japanese"),
-    searchNovels(null, 2, 48, options, "japanese"),
-    searchNovels(null, 1, 36, options, "korean"),
-    searchNovels(null, 1, 36, options, "chinese"),
-  ]);
-
-  const map = new Map<string, NovelListItem>();
-  for (const page of [jp1, jp2, kr, cn]) {
-    for (const item of page.items) {
-      const existing = map.get(item.id);
-      if (!existing || (item.views || 0) > (existing.views || 0)) {
-        map.set(item.id, item);
-      }
-    }
-  }
-
-  return [...map.values()]
-    .sort((a, b) => (b.views || 0) - (a.views || 0))
-    .slice(0, limit);
+  const result = await getJapaneseNovels(1, limit, options, {
+    sort: "popular",
+  });
+  return result.items;
 }
 
 type DetailResponse = {
@@ -569,11 +581,23 @@ export async function getNovelGenres(
     .map((g) => ({
       id: String(g.id || g.slug || g.name),
       name: String(g.name || ""),
-      slug: String(g.slug || g.name || ""),
+      slug: String(g.slug || g.name || "")
+        .toLowerCase()
+        .replace(/\s+/g, "-"),
+      titlesCount:
+        typeof g.titles_count === "number" ? g.titles_count : null,
     }))
     .filter(
       (g) =>
         g.name &&
-        !["adult", "smut", "ecchi"].includes(g.name.toLowerCase()),
+        ![
+          "adult",
+          "smut",
+          "ecchi",
+          "fan-fiction",
+          "fanfiction",
+          "yaoi",
+          "yuri",
+        ].includes(g.name.toLowerCase()),
     );
 }
