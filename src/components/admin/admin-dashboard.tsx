@@ -33,6 +33,12 @@ import {
   type DeskRange,
   utcTodayKey,
 } from "@/lib/admin-desk-range";
+import {
+  normalizePresenceDevice,
+  PRESENCE_DEVICE_LABEL,
+  PRESENCE_DEVICE_ORDER,
+  type PresenceDevice,
+} from "@/lib/presence-device";
 import { adminDisplayName, adminIdentityDetail } from "@/lib/profile";
 
 export type DashboardMetrics = {
@@ -76,7 +82,7 @@ type AdminDashboardProps = {
 
 const NAV: AdminNavItem[] = [
   { id: "overview", label: "Overview", shortcut: "1" },
-  { id: "growth", label: "Growth", shortcut: "2" },
+  { id: "live", label: "Live users", shortcut: "2" },
   { id: "hot", label: "What's hot", shortcut: "3" },
   { id: "globe", label: "Globe", shortcut: "4" },
   { id: "members", label: "Members", shortcut: "5" },
@@ -185,6 +191,25 @@ function AdminDashboardInner({
     return [...counts.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6);
+  }, [presence]);
+
+  const deviceMix = useMemo(() => {
+    const counts = new Map<PresenceDevice, number>();
+    for (const key of PRESENCE_DEVICE_ORDER) counts.set(key, 0);
+    let known = 0;
+    for (const p of presence) {
+      const device = normalizePresenceDevice(p.device);
+      if (!device) continue;
+      known += 1;
+      counts.set(device, (counts.get(device) ?? 0) + 1);
+    }
+    const rows = PRESENCE_DEVICE_ORDER.map((id) => ({
+      id,
+      label: PRESENCE_DEVICE_LABEL[id],
+      count: counts.get(id) ?? 0,
+    })).filter((row) => row.count > 0 || known === 0);
+    const max = Math.max(1, ...rows.map((r) => r.count));
+    return { rows, known, max, total: presence.length };
   }, [presence]);
 
   const rangeSlice = useMemo(() => {
@@ -381,7 +406,7 @@ function AdminDashboardInner({
             Night desk
           </h1>
           <p className="mt-1 max-w-xl text-xs text-cloud sm:text-sm">
-            Live presence first — then growth, heat, and geography.
+            Growth, live presence, heat, and geography — one desk.
           </p>
         </div>
         <div className="text-xs text-mute sm:text-sm">
@@ -405,59 +430,11 @@ function AdminDashboardInner({
         className="admin-tab-panel min-h-[20rem]"
       >
         {tab === "overview" ? (
-          <section aria-label="Overview" className="space-y-3">
-            <LivePresenceTable
-              people={presence}
-              liveCount={metrics.live_users}
-              selectedId={selectedId}
-              drawerOpen={drawerOpen}
-              onSelect={openVisitor}
-            />
-
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h2 className="text-[0.65rem] uppercase tracking-[0.16em] text-mute">
-                  Pulse
-                </h2>
-                <p className="mt-0.5 text-xs text-cloud">
-                  {ranged.rangeLabel} · shared with Growth
-                </p>
-              </div>
-              {rangeControl}
-            </div>
-
-            {pulseMetrics}
-
-            <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 hover:border-white/[0.12] sm:p-4">
-              <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
-                <div>
-                  <h3 className="text-[0.95rem] tracking-[-0.02em] text-snow">
-                    Equity
-                  </h3>
-                  <p className="text-xs text-mute">
-                    Cumulative over {ranged.rangeLabel.toLowerCase()} · scrub to
-                    inspect
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setTab("growth")}
-                  className="text-[0.65rem] text-mute transition hover:text-snow"
-                >
-                  Open Growth →
-                </button>
-              </div>
-              <AdminEquityCurve series={equitySeries} height={180} />
-            </div>
-          </section>
-        ) : null}
-
-        {tab === "growth" ? (
-          <section className="space-y-3" aria-label="Growth">
+          <section className="space-y-3" aria-label="Overview">
             <div className="flex flex-wrap items-end justify-between gap-2">
               <div>
                 <h2 className="text-[0.95rem] tracking-[-0.02em] text-snow">
-                  Growth
+                  Overview
                 </h2>
                 <p className="text-xs text-mute">
                   Equity curves and period totals · {ranged.rangeLabel}
@@ -505,6 +482,18 @@ function AdminDashboardInner({
               </div>
               <AdminEquityCurve series={equitySeries} height={260} />
             </div>
+          </section>
+        ) : null}
+
+        {tab === "live" ? (
+          <section aria-label="Live users" className="space-y-3">
+            <LivePresenceTable
+              people={presence}
+              liveCount={metrics.live_users}
+              selectedId={selectedId}
+              drawerOpen={drawerOpen}
+              onSelect={openVisitor}
+            />
           </section>
         ) : null}
 
@@ -631,6 +620,94 @@ function AdminDashboardInner({
                       );
                     })}
                   </ul>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 hover:border-white/[0.12] sm:p-4">
+                <h2 className="text-[0.95rem] tracking-[-0.02em] text-snow">
+                  Device mix
+                </h2>
+                <p className="mb-3 text-xs text-mute">
+                  {deviceMix.known > 0
+                    ? `${deviceMix.known} of ${deviceMix.total} with device · live window`
+                    : "From User-Agent on heartbeats"}
+                </p>
+                {deviceMix.known === 0 ? (
+                  <div className="flex min-h-[5.5rem] flex-col items-center justify-center rounded-xl border border-dashed border-white/[0.08] bg-black/20 px-4 text-center">
+                    <p className="text-sm text-cloud">No device data yet</p>
+                    <p className="mt-1 text-xs text-mute">
+                      New heartbeats classify desktop, iOS, and Android.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div
+                      className="mb-3 flex h-1.5 overflow-hidden rounded-full bg-white/[0.06]"
+                      aria-hidden
+                    >
+                      {deviceMix.rows.map((row) => {
+                        if (row.count <= 0) return null;
+                        const share = (row.count / deviceMix.known) * 100;
+                        const tone =
+                          row.id === "desktop"
+                            ? "bg-white/50"
+                            : row.id === "ios"
+                              ? "bg-white/35"
+                              : row.id === "android"
+                                ? "bg-white/25"
+                                : "bg-white/15";
+                        return (
+                          <div
+                            key={row.id}
+                            className={`h-full ${tone}`}
+                            style={{ width: `${share}%` }}
+                            title={`${row.label}: ${row.count}`}
+                          />
+                        );
+                      })}
+                    </div>
+                    <ul className="space-y-0.5">
+                      {deviceMix.rows.map((row, index) => {
+                        const width = Math.max(
+                          8,
+                          Math.round((row.count / deviceMix.max) * 100),
+                        );
+                        const pct =
+                          deviceMix.known > 0
+                            ? Math.round((row.count / deviceMix.known) * 100)
+                            : 0;
+                        return (
+                          <li
+                            key={row.id}
+                            className="group flex items-center gap-3 rounded-lg px-1 py-1.5 transition hover:bg-white/[0.03]"
+                          >
+                            <span className="w-4 text-right text-[0.65rem] tabular-nums text-mute">
+                              {index + 1}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="mb-1 flex items-center justify-between gap-2 text-sm">
+                                <span className="truncate text-cloud group-hover:text-snow">
+                                  {row.label}
+                                </span>
+                                <span className="tabular-nums text-snow">
+                                  {row.count}
+                                  <span className="ml-1.5 text-[0.65rem] text-mute">
+                                    {pct}%
+                                  </span>
+                                </span>
+                              </div>
+                              <div className="h-0.5 overflow-hidden rounded-full bg-white/[0.06]">
+                                <div
+                                  className="h-full rounded-full bg-white/35 transition group-hover:bg-white/55"
+                                  style={{ width: `${width}%` }}
+                                />
+                              </div>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </>
                 )}
               </div>
 

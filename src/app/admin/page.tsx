@@ -105,6 +105,8 @@ export default async function AdminPage() {
     lng: number | null;
     country: string | null;
     city: string | null;
+    device?: string | null;
+    user_agent?: string | null;
     first_seen?: string | null;
     last_seen: string;
     path: string | null;
@@ -164,6 +166,8 @@ export default async function AdminPage() {
               lng: p.lng,
               country: p.country,
               city: p.city,
+              device: p.device ?? null,
+              user_agent: p.user_agent ?? null,
               first_seen: p.first_seen ?? null,
               last_seen: p.last_seen,
               path: p.path,

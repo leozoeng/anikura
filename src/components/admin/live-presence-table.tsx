@@ -83,14 +83,14 @@ export function LivePresenceTable({
               }`}
             />
             <h2 className="text-[0.95rem] tracking-[-0.02em] text-snow">
-              Live now
+              Live users
             </h2>
             <span className="tabular-nums text-sm text-cloud">
               {liveCount}
             </span>
           </div>
           <p className="mt-0.5 text-xs text-mute">
-            Who&apos;s here · session time · what they&apos;re on
+            Identity · session · watching / path · place · last seen
           </p>
         </div>
       </div>

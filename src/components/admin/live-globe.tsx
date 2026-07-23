@@ -10,6 +10,8 @@ export type GlobePerson = {
   country: string | null;
   city: string | null;
   path: string | null;
+  device?: string | null;
+  user_agent?: string | null;
   first_seen?: string | null;
   last_seen: string;
   session_id: string | null;

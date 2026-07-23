@@ -8,6 +8,10 @@ import {
   formatSessionDuration,
   watchingFromPath,
 } from "@/lib/admin-presence";
+import {
+  normalizePresenceDevice,
+  PRESENCE_DEVICE_LABEL,
+} from "@/lib/presence-device";
 import { adminDisplayName, adminIdentityDetail } from "@/lib/profile";
 
 type VisitorDrawerProps = {
@@ -172,6 +176,15 @@ export function VisitorDrawer({ person, open, onClose }: VisitorDrawerProps) {
                 <dt className="text-mute">Signed in</dt>
                 <dd className="text-right text-cloud">
                   {person.user_id ? "Yes" : "Guest"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-3">
+                <dt className="text-mute">Device</dt>
+                <dd className="text-right text-cloud">
+                  {(() => {
+                    const device = normalizePresenceDevice(person.device);
+                    return device ? PRESENCE_DEVICE_LABEL[device] : "—";
+                  })()}
                 </dd>
               </div>
               <div className="flex justify-between gap-4 border-b border-white/[0.05] pb-3">

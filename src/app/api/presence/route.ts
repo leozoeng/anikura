@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { resolveRequestGeo } from "@/lib/geo";
+import { classifyUserAgent } from "@/lib/presence-device";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -27,6 +28,8 @@ export async function POST(request: Request) {
   }
 
   const geo = await resolveRequestGeo(request);
+  const userAgent = request.headers.get("user-agent");
+  const device = classifyUserAgent(userAgent);
   const supabase = await createClient();
 
   const { error } = await supabase.rpc("upsert_presence", {
@@ -36,6 +39,8 @@ export async function POST(request: Request) {
     p_country: geo.country,
     p_city: geo.city,
     p_path: body.path ?? null,
+    p_device: device,
+    p_user_agent: userAgent ? userAgent.slice(0, 512) : null,
   });
 
   if (error) {
