@@ -27,7 +27,7 @@ export function HotList({
   emptyBody: string;
 }) {
   return (
-    <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 hover:border-white/[0.12] sm:p-4">
+    <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 ease-[var(--ease-out-soft)] hover:border-white/[0.14] sm:p-4">
       <h3 className="text-[0.95rem] tracking-[-0.02em] text-snow">{title}</h3>
       <p className="mb-2.5 text-xs text-mute">{subtitle}</p>
       {items.length === 0 ? (
@@ -38,7 +38,7 @@ export function HotList({
             <li key={`${item.path}-${index}`}>
               <Link
                 href={item.href}
-                className="group flex items-center gap-2.5 rounded-lg px-1 py-1.5 transition hover:bg-white/[0.04] focus-visible:bg-white/[0.04] focus-visible:outline-none"
+                className="group flex items-center gap-2.5 rounded-lg px-1 py-1.5 transition duration-200 ease-[var(--ease-out-soft)] hover:bg-white/[0.04] focus-visible:bg-white/[0.04] focus-visible:outline-none"
               >
                 <span className="w-4 shrink-0 text-right text-[0.65rem] tabular-nums text-mute group-hover:text-cloud">
                   {index + 1}

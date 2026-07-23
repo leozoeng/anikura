@@ -7,7 +7,6 @@ import {
   type HotPageRow,
   type HotWatchRow,
 } from "@/lib/admin-hot-paths";
-import { fetchAllSocialAnnouncements } from "@/lib/announcements";
 import { ensureAdminRole, getProfile, isAdminUser } from "@/lib/auth";
 import { getCatalog } from "@/lib/catalog";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -64,7 +63,6 @@ export default async function AdminPage() {
     { data: series },
     { data: activityRaw },
     { data: hotRaw },
-    announcements,
     catalog,
   ] = await Promise.all([
     supabase.rpc("admin_dashboard_metrics", { p_live_seconds: 120 }),
@@ -72,7 +70,6 @@ export default async function AdminPage() {
     supabase.rpc("admin_signup_series", { p_days: 30 }),
     supabase.rpc("admin_activity_series", { p_days: 30 }),
     supabase.rpc("admin_hot_activity", { p_limit: 8 }),
-    fetchAllSocialAnnouncements(),
     getCatalog(),
   ]);
 
@@ -125,7 +122,6 @@ export default async function AdminPage() {
       <AdminRefresh intervalMs={45_000} />
       <AdminDashboard
         adminEmail={profile.email}
-        announcements={announcements}
         activity={activity}
         topPages={enrichHotPages(hot.top_pages ?? [], catalog)}
         topWatched={enrichHotWatched(hot.top_watched ?? [], catalog)}

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type { GlobePerson } from "@/components/admin/live-globe";
-import { adminDisplayName } from "@/lib/profile";
+import { adminDisplayName, adminIdentityDetail } from "@/lib/profile";
 
 type VisitorDrawerProps = {
   person: GlobePerson | null;
@@ -42,6 +42,14 @@ export function VisitorDrawer({ person, open, onClose }: VisitorDrawerProps) {
       )
     : "—";
 
+  const detail = person
+    ? adminIdentityDetail({
+        username: person.username,
+        email: person.email,
+        user_id: person.user_id,
+      })
+    : null;
+
   return (
     <>
       <div
@@ -63,16 +71,23 @@ export function VisitorDrawer({ person, open, onClose }: VisitorDrawerProps) {
         }`}
       >
         <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
-          <div>
+          <div className="min-w-0">
             <p className="text-[0.65rem] uppercase tracking-[0.14em] text-mute">
               Visitor
             </p>
-            <p className="mt-0.5 text-lg tracking-[-0.03em] text-snow">{name}</p>
+            <p className="mt-0.5 truncate text-lg tracking-[-0.03em] text-snow">
+              {name}
+            </p>
+            {detail ? (
+              <p className="mt-0.5 truncate text-xs text-cloud">{detail}</p>
+            ) : person?.user_id ? null : (
+              <p className="mt-0.5 text-xs text-mute">Guest session</p>
+            )}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-mute transition hover:border-white/25 hover:text-snow"
+            className="shrink-0 rounded-full border border-white/10 px-3 py-1.5 text-xs text-mute transition hover:border-white/25 hover:text-snow"
           >
             Close
           </button>

@@ -1315,9 +1315,25 @@ body[data-theater="true"] .site-atmosphere {
   animation: admin-toast-in 0.28s var(--ease-out-soft) both;
 }
 
+@keyframes admin-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-tab-panel {
+  animation: admin-panel-in 0.26s var(--ease-out-soft) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .admin-live-pulse,
-  .admin-toast {
+  .admin-toast,
+  .admin-tab-panel {
     animation: none;
   }
 

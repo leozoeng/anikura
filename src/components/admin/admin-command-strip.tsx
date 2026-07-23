@@ -59,10 +59,10 @@ export function AdminCommandStrip({
   }, [items, onRefresh, select]);
 
   return (
-    <div className="sticky top-16 z-40 -mx-5 mb-3 border-y border-white/[0.06] bg-black/70 px-5 backdrop-blur-xl sm:-mx-8 sm:px-8">
+    <div className="sticky top-16 z-40 -mx-5 mb-2.5 border-y border-white/[0.06] bg-black/75 px-5 backdrop-blur-xl sm:-mx-8 sm:mb-3 sm:px-8">
       <div className="flex items-center gap-2 py-1.5">
         <nav
-          className="flex min-w-0 flex-1 gap-1 overflow-x-auto scrollbar-none"
+          className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto scrollbar-none sm:gap-1"
           aria-label="Admin tabs"
           role="tablist"
         >
@@ -76,9 +76,9 @@ export function AdminCommandStrip({
                 aria-selected={isActive}
                 id={`admin-tab-${item.id}`}
                 onClick={() => select(item.id)}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs transition ${
+                className={`shrink-0 rounded-full px-3 py-1.5 text-xs transition duration-200 ease-[var(--ease-out-soft)] ${
                   isActive
-                    ? "bg-snow text-void"
+                    ? "bg-snow text-void shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
                     : "text-mute hover:bg-white/[0.05] hover:text-snow"
                 }`}
                 title={`${item.label} (${item.shortcut})`}
@@ -95,7 +95,7 @@ export function AdminCommandStrip({
           type="button"
           onClick={onRefresh}
           disabled={refreshing}
-          className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-cloud transition hover:border-white/20 hover:text-snow disabled:opacity-60"
+          className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-cloud transition duration-200 ease-[var(--ease-out-soft)] hover:border-white/20 hover:text-snow disabled:opacity-60"
           title="Refresh (R)"
         >
           <span

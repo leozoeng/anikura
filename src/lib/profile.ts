@@ -123,6 +123,7 @@ export function displayName(
 /**
  * Admin desk only — may fall back to email local-part.
  * Do not use on public pages (privacy scrub keeps email out of public identity).
+ * Priority: nickname → username → email local-part.
  */
 export function adminDisplayName(
   profile: Pick<PublicProfile, "nickname" | "username" | "email"> & {
@@ -136,6 +137,22 @@ export function adminDisplayName(
     profile.email?.split("@")[0]?.trim() ||
     (profile.user_id ? "Signed in" : guestLabel)
   );
+}
+
+/**
+ * Admin desk secondary line under the display name.
+ * Signed-in → email (or @username fallback). Guests → null (name already says Guest/Anonymous).
+ */
+export function adminIdentityDetail(
+  profile: Pick<PublicProfile, "username" | "email"> & {
+    user_id?: string | null;
+  },
+): string | null {
+  if (!profile.user_id) return null;
+  const email = profile.email?.trim();
+  if (email) return email;
+  const handle = profile.username?.trim();
+  return handle ? `@${handle}` : null;
 }
 
 /** Normalize vanity username input → lowercase handle or null if invalid. */

@@ -100,6 +100,8 @@ export function AdminEquityCurve({
   );
 
   const scrub = scrubIndex != null ? coords[scrubIndex] : null;
+  const scrubDay =
+    scrubIndex != null && active ? active.points[scrubIndex] : null;
   const fmt = active?.format ?? formatDefault;
   const end = coords[coords.length - 1];
   const rangeAdd = active
@@ -263,13 +265,23 @@ export function AdminEquityCurve({
 
         {scrub ? (
           <div
-            className="pointer-events-none absolute top-2 z-10 -translate-x-1/2 rounded-md border border-white/12 bg-black/90 px-2 py-1 text-[0.65rem] text-snow shadow-lg"
+            className="pointer-events-none absolute top-2 z-10 -translate-x-1/2 rounded-md border border-white/12 bg-black/92 px-2.5 py-1.5 text-[0.65rem] text-snow shadow-lg backdrop-blur-sm"
             style={{
-              left: `${(scrub.x / w) * 100}%`,
+              left: `${Math.min(92, Math.max(8, (scrub.x / w) * 100))}%`,
             }}
           >
             <span className="block text-mute">{scrub.day}</span>
-            <span className="tabular-nums">{fmt(scrub.value)}</span>
+            <span className="block tabular-nums">
+              {fmt(scrub.value)}{" "}
+              <span className="text-mute">cum</span>
+            </span>
+            {scrubDay ? (
+              <span className="mt-0.5 block tabular-nums text-cloud">
+                {scrubDay.value >= 0 ? "+" : ""}
+                {fmt(scrubDay.value)}{" "}
+                <span className="text-mute">day</span>
+              </span>
+            ) : null}
           </div>
         ) : null}
       </div>

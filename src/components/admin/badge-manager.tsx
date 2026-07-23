@@ -41,7 +41,7 @@ function UserRow({
   const handle = handleFromProfile(user);
 
   return (
-    <li className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+    <li className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2 transition duration-200 hover:border-white/[0.1] hover:bg-black/35 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
       <div className="flex min-w-0 items-center gap-2.5">
         <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/10">
           {user.avatar_url ? (
@@ -69,9 +69,13 @@ function UserRow({
             <ProfileBadges badges={user.badges} size="sm" />
           </div>
           <p className="truncate text-[0.7rem] text-mute">
-            {handle}
-            {user.email ? ` · ${user.email}` : ""}
-            {user.role === "admin" ? " · admin" : ""}
+            {[
+              user.email,
+              user.username ? `@${user.username}` : null,
+              user.role === "admin" ? "admin" : null,
+            ]
+              .filter(Boolean)
+              .join(" · ") || handle}
           </p>
           {showJoined && user.created_at ? (
             <p className="mt-0.5 text-[0.65rem] text-mute/80">
@@ -250,7 +254,7 @@ export function BadgeManager() {
   const list = tab === "signups" ? signups : badged;
 
   return (
-    <section className="mt-5 rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 hover:border-white/[0.12] sm:p-4">
+    <section className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 hover:border-white/[0.12] sm:p-4">
       <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-[0.95rem] tracking-[-0.02em] text-snow">Members</h2>
@@ -269,8 +273,8 @@ export function BadgeManager() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by email or nickname…"
-          className="w-full rounded-xl border border-white/[0.1] bg-black/30 px-3.5 py-2.5 text-sm text-snow outline-none transition placeholder:text-mute focus:border-white/25"
+          placeholder="Search email, @username, or nickname…"
+          className="w-full rounded-xl border border-white/[0.1] bg-black/30 px-3.5 py-2.5 text-sm text-snow outline-none transition duration-200 placeholder:text-mute focus:border-white/25"
         />
       </label>
 
@@ -295,7 +299,7 @@ export function BadgeManager() {
             <div className="rounded-xl border border-dashed border-white/[0.08] bg-black/20 px-4 py-8 text-center">
               <p className="text-sm text-cloud">No profiles matched</p>
               <p className="mt-1 text-xs text-mute">
-                Try another email or nickname fragment.
+                Try another email, @username, or nickname fragment.
               </p>
             </div>
           ) : (
