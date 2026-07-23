@@ -21,3 +21,12 @@ next-env.d.ts
 # Keep synced catalog in repo so production deploys have browse data
 # (regenerate locally with: npm run sync)
 .vercel
+.vercel-cache/
+
+# local tooling / marketing scratch (never ship)
+/promo/
+/.cache/
+/.fakehome/
+**/__pycache__/
+*.pyc
+.DS_Store
