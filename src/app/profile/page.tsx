@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
 import { ProfileView } from "@/components/profile/profile-view";
+import { GuestSocialPreview } from "@/components/social/guest-social-preview";
 import { getSessionUser } from "@/lib/auth";
 import type { AnimeListEntry } from "@/lib/anime-list";
 import { fetchUserProfileComments } from "@/lib/comments-server";
@@ -17,12 +17,12 @@ export const metadata = {
 
 export default async function ProfilePage() {
   if (!isSupabaseConfigured()) {
-    redirect("/login?next=/profile");
+    return <GuestSocialPreview />;
   }
 
   const user = await getSessionUser();
   if (!user) {
-    redirect("/login?next=/profile");
+    return <GuestSocialPreview />;
   }
 
   const supabase = await createClient();

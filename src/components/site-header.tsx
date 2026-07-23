@@ -59,9 +59,7 @@ export function SiteHeader({
 
   const solid = scrolled || searchOpen || menuOpen;
 
-  const navLinks = email
-    ? [...links, { href: "/profile", label: "Social" }]
-    : links;
+  const navLinks = [...links, { href: "/profile", label: "Social" }];
 
   if (hideChrome) {
     return (
