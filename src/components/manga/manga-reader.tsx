@@ -10,6 +10,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type MouseEvent,
 } from "react";
 
 type Props = {
@@ -47,10 +48,11 @@ export function MangaReader({
   nextChapter,
 }: Props) {
   const router = useRouter();
-  const [chromeVisible, setChromeVisible] = useState(true);
+  const [chromeVisible, setChromeVisible] = useState(false);
   const [progress, setProgress] = useState(0);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastTap = useRef(0);
+  const scrolling = useRef(false);
+  const scrollHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const chapterLabel = chapter.title || `Chapter ${chapter.number}`;
 
@@ -59,20 +61,29 @@ export function MangaReader({
     [mangaId, nextChapter],
   );
 
-  const bumpChrome = useCallback(() => {
-    setChromeVisible(true);
-    if (hideTimer.current) clearTimeout(hideTimer.current);
-    hideTimer.current = setTimeout(() => setChromeVisible(false), 3200);
+  const clearHideTimer = useCallback(() => {
+    if (hideTimer.current) {
+      clearTimeout(hideTimer.current);
+      hideTimer.current = null;
+    }
   }, []);
+
+  const showChromeBriefly = useCallback(() => {
+    setChromeVisible(true);
+    clearHideTimer();
+    hideTimer.current = setTimeout(() => setChromeVisible(false), 2600);
+  }, [clearHideTimer]);
 
   useEffect(() => {
     saveProgress(mangaId, chapter.id, chapter.number);
-    bumpChrome();
+    setChromeVisible(false);
+    clearHideTimer();
     window.scrollTo({ top: 0 });
     return () => {
-      if (hideTimer.current) clearTimeout(hideTimer.current);
+      clearHideTimer();
+      if (scrollHideTimer.current) clearTimeout(scrollHideTimer.current);
     };
-  }, [mangaId, chapter.id, chapter.number, bumpChrome]);
+  }, [mangaId, chapter.id, chapter.number, clearHideTimer]);
 
   useEffect(() => {
     if (!preloadNext) return;
@@ -84,12 +95,20 @@ export function MangaReader({
       const el = document.documentElement;
       const max = el.scrollHeight - el.clientHeight;
       setProgress(max > 0 ? Math.min(1, window.scrollY / max) : 0);
-      bumpChrome();
+
+      // Never cover panels while reading — hide chrome the moment scroll starts.
+      scrolling.current = true;
+      setChromeVisible(false);
+      clearHideTimer();
+      if (scrollHideTimer.current) clearTimeout(scrollHideTimer.current);
+      scrollHideTimer.current = setTimeout(() => {
+        scrolling.current = false;
+      }, 140);
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [bumpChrome, pages.length]);
+  }, [clearHideTimer, pages.length]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -115,44 +134,55 @@ export function MangaReader({
     return () => window.removeEventListener("keydown", onKey);
   }, [mangaId, nextChapter, prevChapter, router]);
 
-  const onPageClick = () => {
-    const now = Date.now();
-    if (now - lastTap.current < 320) {
-      setChromeVisible((v) => !v);
-      if (hideTimer.current) clearTimeout(hideTimer.current);
-      lastTap.current = 0;
-      return;
-    }
-    lastTap.current = now;
-    bumpChrome();
+  const onPageClick = (e: MouseEvent) => {
+    // Ignore clicks that landed on links / buttons inside the reader chrome.
+    if ((e.target as HTMLElement).closest("a, button")) return;
+    if (scrolling.current) return;
+
+    setChromeVisible((visible) => {
+      if (visible) {
+        clearHideTimer();
+        return false;
+      }
+      clearHideTimer();
+      hideTimer.current = setTimeout(() => setChromeVisible(false), 2600);
+      return true;
+    });
   };
 
   return (
     <div className="relative min-h-screen bg-void">
+      {/* Hairline progress only — never blocks art */}
       <div
-        className="pointer-events-none fixed inset-x-0 top-0 z-50 h-0.5 bg-white/10"
+        className="pointer-events-none fixed inset-x-0 top-0 z-50 h-[2px] bg-transparent"
         aria-hidden
       >
         <div
-          className="h-full bg-sakura transition-[width] duration-150 ease-out"
+          className="h-full bg-sakura/90 transition-[width] duration-150 ease-out"
           style={{ width: `${progress * 100}%` }}
         />
       </div>
 
+      {/* Compact overlay — tap to show, scroll to hide */}
       <header
-        className={`fixed inset-x-0 top-0 z-40 border-b border-white/[0.06] bg-void/85 backdrop-blur-xl transition duration-300 ${
+        className={`pointer-events-none fixed inset-x-0 top-0 z-40 flex justify-center px-3 pt-[max(0.5rem,env(safe-area-inset-top))] transition duration-200 ${
           chromeVisible
             ? "translate-y-0 opacity-100"
-            : "pointer-events-none -translate-y-full opacity-0"
+            : "-translate-y-2 opacity-0"
         }`}
       >
-        <div className="mx-auto flex h-14 max-w-3xl items-center gap-3 px-3 pt-[env(safe-area-inset-top)] sm:px-4">
+        <div
+          className={`pointer-events-auto flex max-w-lg items-center gap-2 rounded-full border border-white/10 bg-void/80 px-1.5 py-1 shadow-[0_8px_28px_rgba(0,0,0,0.45)] backdrop-blur-xl ${
+            chromeVisible ? "" : "pointer-events-none"
+          }`}
+        >
           <Link
             href={mangaHref(mangaId)}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-cloud transition hover:bg-white/10 hover:text-snow"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-cloud transition hover:bg-white/10 hover:text-snow"
             aria-label="Back to series"
+            onClick={() => showChromeBriefly()}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path
                 d="M15 6 9 12l6 6"
                 stroke="currentColor"
@@ -162,22 +192,23 @@ export function MangaReader({
               />
             </svg>
           </Link>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[0.7rem] tracking-[0.12em] text-mute uppercase">
+          <div className="min-w-0 flex-1 py-0.5 pr-2">
+            <p className="truncate text-[0.65rem] leading-tight tracking-[0.1em] text-mute uppercase">
               {mangaTitle}
             </p>
-            <p className="truncate text-sm font-medium tracking-[-0.02em] text-snow">
+            <p className="truncate text-[0.8rem] font-medium leading-tight tracking-[-0.02em] text-snow">
               {chapterLabel}
             </p>
           </div>
-          <span className="shrink-0 text-[0.7rem] tabular-nums text-mute">
-            {pages.length} pg
+          <span className="shrink-0 pr-2 text-[0.65rem] tabular-nums text-mute">
+            {pages.length}
           </span>
         </div>
       </header>
 
+      {/* Full-bleed pages — no reserved chrome padding */}
       <div
-        className="relative z-10 mx-auto w-full max-w-[860px] pt-[calc(3.5rem+env(safe-area-inset-top))] pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
+        className="relative z-10 mx-auto w-full max-w-[860px]"
         onClick={onPageClick}
         onKeyDown={() => undefined}
         role="presentation"
@@ -200,76 +231,83 @@ export function MangaReader({
           ))}
         </div>
 
-        <div className="border-t border-white/[0.06] px-4 py-10 text-center">
+        {/* Chapter controls live after the pages — never over them */}
+        <div className="border-t border-white/[0.06] px-4 py-12 text-center">
           <p className="text-sm text-mute">End of {chapterLabel}</p>
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
             {prevChapter ? (
               <Link
                 href={mangaReadHref(mangaId, prevChapter.id)}
-                className="btn-ghost"
+                className="inline-flex h-10 items-center rounded-full border border-white/15 bg-white/[0.04] px-4 text-sm text-cloud transition hover:border-white/25 hover:text-snow"
                 onClick={(e) => e.stopPropagation()}
               >
-                Previous
+                ← Previous
               </Link>
             ) : null}
             <Link
               href={mangaHref(mangaId)}
-              className="btn-ghost"
+              className="inline-flex h-10 items-center rounded-full border border-white/15 bg-white/[0.04] px-4 text-sm text-cloud transition hover:border-white/25 hover:text-snow"
               onClick={(e) => e.stopPropagation()}
             >
-              Series
+              Chapters
             </Link>
             {nextChapter ? (
               <Link
                 href={mangaReadHref(mangaId, nextChapter.id)}
-                className="btn-primary"
+                className="inline-flex h-10 items-center rounded-full bg-white px-4 text-sm font-semibold text-void transition hover:bg-sakura-mist"
                 onClick={(e) => e.stopPropagation()}
               >
-                Next chapter
+                Next chapter →
               </Link>
             ) : (
               <span className="text-sm text-mute">You&apos;re caught up</span>
             )}
           </div>
+          <p className="mt-5 text-[0.7rem] text-mute/80">
+            Tip: tap the page for title ·{" "}
+            <kbd className="text-cloud">j</kbd>/<kbd className="text-cloud">k</kbd>{" "}
+            for chapters · <kbd className="text-cloud">esc</kbd> to leave
+          </p>
         </div>
       </div>
 
+      {/* Slim floating chapter hop — only when chrome is open, not a full dock */}
       <nav
         aria-label="Chapter navigation"
-        className={`fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.08] bg-void/88 backdrop-blur-xl transition duration-300 ${
+        className={`fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-[max(0.65rem,env(safe-area-inset-bottom))] transition duration-200 ${
           chromeVisible
             ? "translate-y-0 opacity-100"
-            : "pointer-events-none translate-y-full opacity-0"
+            : "pointer-events-none translate-y-3 opacity-0"
         }`}
       >
-        <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-4">
+        <div className="flex items-center gap-1 rounded-full border border-white/10 bg-void/80 p-1 shadow-[0_8px_28px_rgba(0,0,0,0.45)] backdrop-blur-xl">
           {prevChapter ? (
             <Link
               href={mangaReadHref(mangaId, prevChapter.id)}
-              className="btn-ghost flex-1 justify-center !px-3 text-center text-sm"
+              className="inline-flex h-9 items-center rounded-full px-3.5 text-[0.8rem] text-cloud transition hover:bg-white/10 hover:text-snow"
             >
               ← Prev
             </Link>
           ) : (
-            <span className="btn-ghost flex-1 pointer-events-none justify-center !px-3 text-center text-sm opacity-35">
+            <span className="inline-flex h-9 items-center px-3.5 text-[0.8rem] text-mute/40">
               ← Prev
             </span>
           )}
           <Link
             href={mangaHref(mangaId)}
-            className="btn-ghost shrink-0 !px-3 text-sm"
+            className="inline-flex h-9 items-center rounded-full px-3.5 text-[0.8rem] text-cloud transition hover:bg-white/10 hover:text-snow"
           >
             Chapters
           </Link>
           {nextChapter ? (
             <Link
               href={mangaReadHref(mangaId, nextChapter.id)}
-              className="btn-primary flex-1 justify-center !px-3 text-center text-sm"
+              className="inline-flex h-9 items-center rounded-full bg-white px-3.5 text-[0.8rem] font-semibold text-void transition hover:bg-sakura-mist"
             >
               Next →
             </Link>
           ) : (
-            <span className="btn-primary flex-1 pointer-events-none justify-center !px-3 text-center text-sm opacity-35">
+            <span className="inline-flex h-9 items-center px-3.5 text-[0.8rem] text-mute/40">
               Next →
             </span>
           )}
