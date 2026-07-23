@@ -5,7 +5,7 @@ export const DESK_AD_RPM = {
   high: 4.0,
 } as const;
 
-export function estimateAdRevenue(pageViews: number, rpm = DESK_AD_RPM.mid) {
+export function estimateAdRevenue(pageViews: number, rpm: number = DESK_AD_RPM.mid) {
   return (Math.max(0, pageViews) / 1000) * rpm;
 }
 
