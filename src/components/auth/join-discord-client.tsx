@@ -11,6 +11,8 @@ import { MOOD_ART } from "@/lib/genre-moods";
 
 const GATE_ART = MOOD_ART.fantasy ?? MOOD_ART.romance ?? Object.values(MOOD_ART)[0]!;
 
+type Phase = "link" | "checking" | "need_join" | "error";
+
 export function JoinDiscordClient({
   nextPath = "/",
   inviteUrl,
@@ -23,22 +25,29 @@ export function JoinDiscordClient({
   gateConfigured: boolean;
 }) {
   const router = useRouter();
-  const [busy, setBusy] = useState<
-    "link" | "verify" | "unlink" | "signout" | null
-  >(null);
+  const [busy, setBusy] = useState<"link" | "verify" | "unlink" | "signout" | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [linked, setLinked] = useState(discordLinked);
+  const [phase, setPhase] = useState<Phase>(
+    discordLinked ? "checking" : "link",
+  );
   const autoVerifyOnce = useRef(false);
 
   useEffect(() => {
     setLinked(discordLinked);
+    if (!discordLinked) {
+      setPhase("link");
+      autoVerifyOnce.current = false;
+    }
   }, [discordLinked]);
 
-  // After OAuth link returns, verify immediately — don't make them hunt for the button.
+  // After OAuth link (or already linked): check membership and unlock if in server.
   useEffect(() => {
     if (!gateConfigured || !linked || autoVerifyOnce.current) return;
     autoVerifyOnce.current = true;
-    void verifyMembership({ silent: true });
+    void checkMembership();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gateConfigured, linked]);
 
@@ -68,6 +77,7 @@ export function JoinDiscordClient({
         setError(raw);
       }
       setBusy(null);
+      setPhase("error");
     }
   }
 
@@ -82,6 +92,7 @@ export function JoinDiscordClient({
       const discord = data?.identities?.find((i) => i.provider === "discord");
       if (!discord) {
         setLinked(false);
+        setPhase("link");
         return;
       }
 
@@ -90,6 +101,7 @@ export function JoinDiscordClient({
       if (unlinkError) throw unlinkError;
 
       setLinked(false);
+      setPhase("link");
       autoVerifyOnce.current = false;
       router.refresh();
     } catch (err) {
@@ -98,6 +110,7 @@ export function JoinDiscordClient({
           ? err.message
           : "Could not unlink Discord. Try signing out.",
       );
+      setPhase("error");
     } finally {
       setBusy(null);
     }
@@ -116,9 +129,10 @@ export function JoinDiscordClient({
     }
   }
 
-  async function verifyMembership(opts?: { silent?: boolean }) {
+  async function checkMembership() {
     setBusy("verify");
-    if (!opts?.silent) setError(null);
+    setPhase("checking");
+    setError(null);
     try {
       const res = await fetch("/api/discord/verify", { method: "POST" });
       const json = (await res.json().catch(() => ({}))) as {
@@ -129,13 +143,17 @@ export function JoinDiscordClient({
       if (!res.ok) {
         if (json.error === "discord_not_linked") {
           setLinked(false);
+          setPhase("link");
+          setBusy(null);
+          return;
         }
-        throw new Error(
-          json.message ||
-            (json.error === "not_in_server"
-              ? "Join the Anikura Discord server with this Discord account, then verify again."
-              : json.error || "Verification failed."),
-        );
+        if (json.error === "not_in_server") {
+          // Already in Discord app identity, but not this guild — only then ask to join.
+          setPhase("need_join");
+          setBusy(null);
+          return;
+        }
+        throw new Error(json.message || json.error || "Verification failed.");
       }
 
       const supabase = createClient();
@@ -148,11 +166,8 @@ export function JoinDiscordClient({
       router.replace(nextPath.startsWith("/") ? nextPath : "/");
       router.refresh();
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Verification failed.");
-      }
+      setError(err instanceof Error ? err.message : "Verification failed.");
+      setPhase("error");
       setBusy(null);
     }
   }
@@ -239,10 +254,9 @@ export function JoinDiscordClient({
             One more step
           </h1>
           <p className="mt-3 max-w-md text-[clamp(0.95rem,2.2vw,1.2rem)] font-medium leading-snug tracking-[-0.02em] text-snow/90">
-            Link Discord and join the server to open the theater.
-          </p>
-          <p className="mt-2 hidden max-w-sm text-sm leading-relaxed text-cloud/90 sm:block">
-            This keeps Anikura for people who show up — not drive-by guests.
+            {phase === "need_join"
+              ? "Join the Anikura Discord, then we’ll let you in."
+              : "Connect Discord — if you’re already in the server, you’re in."}
           </p>
         </div>
 
@@ -263,102 +277,107 @@ export function JoinDiscordClient({
               Required
             </p>
             <h2 className="mt-1 text-[1.45rem] font-semibold tracking-[-0.04em] text-snow sm:text-[1.55rem]">
-              Join Discord
+              {phase === "need_join" ? "Join the server" : "Connect Discord"}
             </h2>
 
-            <ol className="mt-5 space-y-5">
-              <li className="flex gap-3.5 sm:gap-4">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/[0.08] text-sm font-medium text-snow">
-                  1
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-snow">Link Discord</p>
-                  <p className="mt-1 text-sm text-mute">
-                    Use the Discord account that&apos;s in the Anikura server.
-                  </p>
-                  {linked ? (
-                    <div className="mt-3 space-y-2">
-                      <p className="text-sm text-emerald-300/90">
-                        Discord linked
-                        {busy === "verify" ? " — checking the server…" : "."}
-                      </p>
-                      <button
-                        type="button"
-                        disabled={busy !== null}
-                        onClick={() => void unlinkDiscord()}
-                        className="text-left text-xs text-mute underline-offset-2 transition hover:text-cloud hover:underline disabled:opacity-60"
-                      >
-                        {busy === "unlink"
-                          ? "Unlinking…"
-                          : "Linked the wrong account? Unlink and try again"}
-                      </button>
-                    </div>
-                  ) : (
+            {/* Step 1 — always: link (or checking after link) */}
+            {phase === "link" || phase === "checking" || phase === "error" ? (
+              <div className="mt-5 space-y-4">
+                <p className="text-sm text-mute">
+                  {phase === "checking"
+                    ? "Checking if this Discord is already in the Anikura server…"
+                    : "Link the Discord account you use on the Anikura server. If you’re already a member, we verify you automatically."}
+                </p>
+
+                {phase === "checking" ? (
+                  <div className="flex min-h-11 items-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-4 text-sm text-cloud">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-snow" />
+                    Checking membership…
+                  </div>
+                ) : linked ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-emerald-300/90">Discord linked.</p>
                     <button
                       type="button"
                       disabled={busy !== null}
-                      onClick={() => void linkDiscord()}
-                      className="mt-3 flex min-h-11 w-full items-center justify-center rounded-full bg-[#5865F2] px-4 text-sm font-medium text-white transition active:scale-[0.98] hover:bg-[#4752c4] disabled:opacity-60 sm:w-auto"
+                      onClick={() => {
+                        autoVerifyOnce.current = false;
+                        void checkMembership();
+                      }}
+                      className="flex min-h-11 w-full items-center justify-center rounded-full bg-snow px-4 text-sm font-medium text-void transition active:scale-[0.98] disabled:opacity-50"
                     >
-                      {busy === "link" ? "Opening Discord…" : "Link Discord"}
+                      Check again
                     </button>
-                  )}
-                </div>
-              </li>
-
-              <li className="flex gap-3.5 sm:gap-4">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/[0.08] text-sm font-medium text-snow">
-                  2
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-snow">Join the server</p>
-                  <p className="mt-1 text-sm text-mute">
-                    Open the invite and accept membership.
-                  </p>
-                  <a
-                    href={inviteUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-3 flex min-h-11 w-full items-center justify-center rounded-full border border-white/20 px-4 text-sm font-medium text-snow transition active:scale-[0.98] hover:border-white/35 hover:bg-white/[0.06] sm:inline-flex sm:w-auto"
-                  >
-                    Open Discord invite
-                  </a>
-                </div>
-              </li>
-
-              <li className="flex gap-3.5 sm:gap-4">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/[0.08] text-sm font-medium text-snow">
-                  3
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-snow">
-                    Verify membership
-                  </p>
-                  <p className="mt-1 text-sm text-mute">
-                    We check that your linked Discord is in the Anikura server.
-                  </p>
+                    <button
+                      type="button"
+                      disabled={busy !== null}
+                      onClick={() => void unlinkDiscord()}
+                      className="w-full text-center text-xs text-mute underline-offset-2 hover:text-cloud hover:underline disabled:opacity-60"
+                    >
+                      {busy === "unlink"
+                        ? "Unlinking…"
+                        : "Wrong Discord? Unlink"}
+                    </button>
+                  </div>
+                ) : (
                   <button
                     type="button"
-                    disabled={busy !== null || !linked}
-                    onClick={() => void verifyMembership()}
-                    className="mt-3 flex min-h-11 w-full items-center justify-center rounded-full bg-snow px-4 text-sm font-medium text-void transition active:scale-[0.98] hover:bg-white disabled:opacity-50 sm:w-auto"
+                    disabled={busy !== null}
+                    onClick={() => void linkDiscord()}
+                    className="flex min-h-11 w-full items-center justify-center rounded-full bg-[#5865F2] px-4 text-sm font-medium text-white transition active:scale-[0.98] hover:bg-[#4752c4] disabled:opacity-60"
                   >
-                    {busy === "verify" ? "Checking…" : "I’ve joined — verify"}
+                    {busy === "link" ? "Opening Discord…" : "Connect Discord"}
                   </button>
-                </div>
-              </li>
-            </ol>
+                )}
+              </div>
+            ) : null}
 
-            {error ? (
+            {/* Only if linked but NOT in guild */}
+            {phase === "need_join" ? (
+              <div className="mt-5 space-y-4">
+                <p className="text-sm text-mute">
+                  That Discord is linked, but it isn&apos;t in the Anikura server
+                  yet. Join once — you won&apos;t need to leave if you&apos;re
+                  already in.
+                </p>
+                <a
+                  href={inviteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex min-h-11 w-full items-center justify-center rounded-full border border-white/20 px-4 text-sm font-medium text-snow transition active:scale-[0.98] hover:border-white/35 hover:bg-white/[0.06]"
+                >
+                  Open Discord invite
+                </a>
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  onClick={() => void checkMembership()}
+                  className="flex min-h-11 w-full items-center justify-center rounded-full bg-snow px-4 text-sm font-medium text-void transition active:scale-[0.98] disabled:opacity-50"
+                >
+                  {busy === "verify" ? "Checking…" : "I’ve joined — check again"}
+                </button>
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  onClick={() => void unlinkDiscord()}
+                  className="w-full text-center text-xs text-mute underline-offset-2 hover:text-cloud hover:underline disabled:opacity-60"
+                >
+                  {busy === "unlink"
+                    ? "Unlinking…"
+                    : "Wrong Discord? Unlink and use another"}
+                </button>
+              </div>
+            ) : null}
+
+            {error && phase === "error" ? (
               <p className="mt-5 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-sm text-red-200">
                 {error}
               </p>
             ) : null}
 
             <p className="mt-6 text-center text-xs leading-relaxed text-mute">
-              Already in the server? Link Discord — we verify automatically
-              after linking. Or <span className="text-cloud">Sign out</span> at
-              the top.
+              Already in the server? Just connect Discord — we unlock you
+              automatically.
             </p>
           </div>
         </div>
