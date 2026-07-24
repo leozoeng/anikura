@@ -4,6 +4,7 @@ import {
   isAllowlistedAdminEmail,
   isDiscordGateConfigured,
   isDiscordGuildMember,
+  type DiscordIdentityLike,
 } from "@/lib/discord-gate";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -29,6 +30,13 @@ async function markVerified(
   if (!service) return false;
 
   const verifiedAt = new Date().toISOString();
+
+  await service
+    .from("profiles")
+    .update({ discord_id: null, discord_verified_at: null })
+    .eq("discord_id", discordId)
+    .neq("id", userId);
+
   const { error: profileError } = await service
     .from("profiles")
     .update({
@@ -48,6 +56,28 @@ async function markVerified(
   });
 
   return !metaError;
+}
+
+async function resolveDiscordId(
+  userId: string,
+  identities: DiscordIdentityLike[] | null | undefined,
+): Promise<string | null> {
+  const fromUser = discordIdFromIdentities(identities);
+  if (fromUser) return fromUser;
+
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUserIdentities();
+  const fromList = discordIdFromIdentities(
+    data?.identities as DiscordIdentityLike[] | undefined,
+  );
+  if (fromList) return fromList;
+
+  const service = createServiceClient();
+  if (!service) return null;
+  const { data: adminUser } = await service.auth.admin.getUserById(userId);
+  return discordIdFromIdentities(
+    adminUser?.user?.identities as DiscordIdentityLike[] | undefined,
+  );
 }
 
 /**
@@ -90,7 +120,10 @@ export async function GET() {
     } satisfies StatusBody);
   }
 
-  const discordId = discordIdFromIdentities(user.identities);
+  const discordId = await resolveDiscordId(
+    user.id,
+    user.identities as DiscordIdentityLike[] | undefined,
+  );
   const linked = Boolean(discordId);
 
   if (user.app_metadata?.discord_verified === true) {
@@ -108,8 +141,10 @@ export async function GET() {
     .maybeSingle();
 
   const profileDiscordId =
-    (typeof profile?.discord_id === "string" && profile.discord_id) ||
-    discordId;
+    (typeof profile?.discord_id === "string" &&
+    /^\d{5,}$/.test(profile.discord_id)
+      ? profile.discord_id
+      : null) || discordId;
 
   // Already finished onboarding earlier — repair JWT so proxy stops redirecting.
   if (profile?.discord_verified_at && profileDiscordId) {

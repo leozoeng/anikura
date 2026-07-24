@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import {
   discordIdFromIdentities,
+  discordMembershipErrorMessage,
   isDiscordGateConfigured,
   isDiscordGuildMember,
+  type DiscordIdentityLike,
 } from "@/lib/discord-gate";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -10,6 +12,34 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+async function resolveDiscordId(
+  userId: string,
+  identities: DiscordIdentityLike[] | null | undefined,
+): Promise<string | null> {
+  const fromUser = discordIdFromIdentities(identities);
+  if (fromUser) return fromUser;
+
+  // Fresh linkIdentity sometimes leaves getUser().identities stale — ask again.
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUserIdentities();
+  if (!error) {
+    const fromList = discordIdFromIdentities(
+      data?.identities as DiscordIdentityLike[] | undefined,
+    );
+    if (fromList) return fromList;
+  }
+
+  // Admin API has the canonical identity rows.
+  const service = createServiceClient();
+  if (!service) return null;
+  const { data: adminUser, error: adminError } =
+    await service.auth.admin.getUserById(userId);
+  if (adminError || !adminUser?.user) return null;
+  return discordIdFromIdentities(
+    adminUser.user.identities as DiscordIdentityLike[] | undefined,
+  );
+}
 
 /**
  * Confirm the signed-in user linked Discord and is in the Anikura guild.
@@ -36,12 +66,16 @@ export async function POST() {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const discordId = discordIdFromIdentities(user.identities);
+  const discordId = await resolveDiscordId(
+    user.id,
+    user.identities as DiscordIdentityLike[] | undefined,
+  );
   if (!discordId) {
     return NextResponse.json(
       {
         error: "discord_not_linked",
-        message: "Link your Discord account first.",
+        message:
+          "Link your Discord account first (step 1). If you already did, unlink and link again.",
       },
       { status: 400 },
     );
@@ -50,15 +84,19 @@ export async function POST() {
   const membership = await isDiscordGuildMember(discordId);
   if (!membership.ok) {
     return NextResponse.json(
-      { error: membership.error },
-      { status: 502 },
+      {
+        error: membership.error,
+        message: discordMembershipErrorMessage(membership),
+      },
+      { status: membership.status === 403 ? 503 : 502 },
     );
   }
   if (!membership.member) {
     return NextResponse.json(
       {
         error: "not_in_server",
-        message: "Join the Anikura Discord server, then try again.",
+        message: discordMembershipErrorMessage(membership),
+        discordId,
       },
       { status: 403 },
     );
@@ -74,6 +112,13 @@ export async function POST() {
 
   const verifiedAt = new Date().toISOString();
 
+  // Clear this discord_id from any other profile first (re-link / old accounts).
+  await service
+    .from("profiles")
+    .update({ discord_id: null, discord_verified_at: null })
+    .eq("discord_id", discordId)
+    .neq("id", user.id);
+
   const { error: profileError } = await service
     .from("profiles")
     .update({
@@ -83,9 +128,16 @@ export async function POST() {
     .eq("id", user.id);
 
   if (profileError) {
+    const dup = /duplicate|unique/i.test(profileError.message);
     return NextResponse.json(
-      { error: "profile_update_failed", detail: profileError.message },
-      { status: 500 },
+      {
+        error: dup ? "discord_already_linked" : "profile_update_failed",
+        message: dup
+          ? "This Discord is already tied to another Anikura account. Unlink there or contact admin."
+          : profileError.message,
+        detail: profileError.message,
+      },
+      { status: dup ? 409 : 500 },
     );
   }
 

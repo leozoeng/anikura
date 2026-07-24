@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnikuraMark } from "@/components/anikura-logo";
 import { SafeImage } from "@/components/safe-image";
 import { createClient } from "@/lib/supabase/client";
@@ -28,6 +28,19 @@ export function JoinDiscordClient({
   >(null);
   const [error, setError] = useState<string | null>(null);
   const [linked, setLinked] = useState(discordLinked);
+  const autoVerifyOnce = useRef(false);
+
+  useEffect(() => {
+    setLinked(discordLinked);
+  }, [discordLinked]);
+
+  // After OAuth link returns, verify immediately — don't make them hunt for the button.
+  useEffect(() => {
+    if (!gateConfigured || !linked || autoVerifyOnce.current) return;
+    autoVerifyOnce.current = true;
+    void verifyMembership({ silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gateConfigured, linked]);
 
   async function linkDiscord() {
     setBusy("link");
@@ -77,6 +90,7 @@ export function JoinDiscordClient({
       if (unlinkError) throw unlinkError;
 
       setLinked(false);
+      autoVerifyOnce.current = false;
       router.refresh();
     } catch (err) {
       setError(
@@ -102,9 +116,9 @@ export function JoinDiscordClient({
     }
   }
 
-  async function verifyMembership() {
+  async function verifyMembership(opts?: { silent?: boolean }) {
     setBusy("verify");
-    setError(null);
+    if (!opts?.silent) setError(null);
     try {
       const res = await fetch("/api/discord/verify", { method: "POST" });
       const json = (await res.json().catch(() => ({}))) as {
@@ -119,7 +133,7 @@ export function JoinDiscordClient({
         throw new Error(
           json.message ||
             (json.error === "not_in_server"
-              ? "Join the Discord server first, then try again."
+              ? "Join the Anikura Discord server with this Discord account, then verify again."
               : json.error || "Verification failed."),
         );
       }
@@ -134,7 +148,11 @@ export function JoinDiscordClient({
       router.replace(nextPath.startsWith("/") ? nextPath : "/");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Verification failed.");
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Verification failed.");
+      }
       setBusy(null);
     }
   }
@@ -192,7 +210,6 @@ export function JoinDiscordClient({
         <div className="login-gate-mist absolute right-0 top-1/3 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(126,184,255,0.14),transparent_70%)] blur-3xl" />
       </div>
 
-      {/* Always-visible escape on mobile */}
       <div className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-white/[0.08] bg-black/55 px-4 py-3 backdrop-blur-xl pt-[max(0.75rem,env(safe-area-inset-top))] lg:hidden">
         <div className="flex min-w-0 items-center gap-2">
           <AnikuraMark size={28} className="ring-1 ring-white/15" />
@@ -262,17 +279,18 @@ export function JoinDiscordClient({
                   {linked ? (
                     <div className="mt-3 space-y-2">
                       <p className="text-sm text-emerald-300/90">
-                        Discord linked.
+                        Discord linked
+                        {busy === "verify" ? " — checking the server…" : "."}
                       </p>
                       <button
                         type="button"
                         disabled={busy !== null}
                         onClick={() => void unlinkDiscord()}
-                        className="flex min-h-11 w-full items-center justify-center rounded-full border border-amber-400/35 bg-amber-400/10 px-4 text-sm font-medium text-amber-100 transition active:scale-[0.98] disabled:opacity-60"
+                        className="text-left text-xs text-mute underline-offset-2 transition hover:text-cloud hover:underline disabled:opacity-60"
                       >
                         {busy === "unlink"
                           ? "Unlinking…"
-                          : "Wrong Discord — unlink & retry"}
+                          : "Linked the wrong account? Unlink and try again"}
                       </button>
                     </div>
                   ) : (
@@ -338,10 +356,9 @@ export function JoinDiscordClient({
             ) : null}
 
             <p className="mt-6 text-center text-xs leading-relaxed text-mute">
-              Wrong Discord on your phone? Tap{" "}
-              <span className="text-cloud">Wrong Discord — unlink</span>, then
-              link your main account. Or use{" "}
-              <span className="text-cloud">Sign out</span> at the top.
+              Already in the server? Link Discord — we verify automatically
+              after linking. Or <span className="text-cloud">Sign out</span> at
+              the top.
             </p>
           </div>
         </div>
