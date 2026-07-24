@@ -68,6 +68,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
     anime,
     episode: current,
     language,
+    aniListId: anilist?.id ?? anime.ani_id,
   });
 
   const prev = episodes.find((e) => e.number === current.number - 1);

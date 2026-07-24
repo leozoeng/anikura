@@ -13,18 +13,95 @@ type Props = {
 };
 
 const COUNTDOWN_SEC = 8;
+/** Only treat "complete" as real once we've seen substantial playback. */
+const ARM_PROGRESS = 0.85;
+
+const EMBED_ORIGINS = new Set([
+  "https://megaplay.buzz",
+  "https://supaplay.fun",
+  "https://player.videasy.to",
+  "https://player.videasy.net",
+  "https://vidsrc.pm",
+  "https://www.vidsrc.pm",
+]);
+
+type PlayerPayload = {
+  event?: unknown;
+  type?: unknown;
+  time?: unknown;
+  duration?: unknown;
+  percent?: unknown;
+  currentTime?: unknown;
+};
+
+function parsePayload(data: unknown): PlayerPayload | null {
+  if (data == null) return null;
+  if (typeof data === "object") return data as PlayerPayload;
+  if (typeof data !== "string") return null;
+  try {
+    const parsed: unknown = JSON.parse(data);
+    if (parsed && typeof parsed === "object") return parsed as PlayerPayload;
+  } catch {
+    /* ignore non-JSON strings */
+  }
+  return null;
+}
+
+function progressFrom(payload: PlayerPayload): number | null {
+  if (typeof payload.percent === "number" && Number.isFinite(payload.percent)) {
+    // MegaPlay sends 0–100 in some builds and 0–1 in others.
+    return payload.percent > 1 ? payload.percent / 100 : payload.percent;
+  }
+
+  const time =
+    typeof payload.time === "number"
+      ? payload.time
+      : typeof payload.currentTime === "number"
+        ? payload.currentTime
+        : null;
+  const duration =
+    typeof payload.duration === "number" ? payload.duration : null;
+
+  if (time != null && duration != null && duration > 30 && time >= 0) {
+    return Math.min(1, time / duration);
+  }
+
+  return null;
+}
+
+function isTrustedOrigin(origin: string) {
+  if (EMBED_ORIGINS.has(origin)) return true;
+  try {
+    const host = new URL(origin).hostname;
+    return (
+      host === "megaplay.buzz" ||
+      host.endsWith(".megaplay.buzz") ||
+      host === "supaplay.fun" ||
+      host.endsWith(".supaplay.fun") ||
+      host === "player.videasy.to" ||
+      host === "player.videasy.net" ||
+      host === "vidsrc.pm" ||
+      host.endsWith(".vidsrc.pm")
+    );
+  } catch {
+    return false;
+  }
+}
 
 export function AutoplayNext({
   nextHref,
   nextLabel,
   enabled,
-  armed,
+  armed: _armed,
   onArm,
 }: Props) {
   const router = useRouter();
   const [seconds, setSeconds] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const firedRef = useRef(false);
+  const maxProgressRef = useRef(0);
+  const onArmRef = useRef(onArm);
+  onArmRef.current = onArm;
 
   const cancel = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -53,30 +130,35 @@ export function AutoplayNext({
 
   useEffect(() => {
     cancel();
+    maxProgressRef.current = 0;
   }, [nextHref, cancel]);
 
   useEffect(() => {
-    if (!enabled || !nextHref || !armed) return;
+    if (!enabled || !nextHref) return;
 
     function onMessage(e: MessageEvent) {
-      try {
-        const raw =
-          typeof e.data === "string"
-            ? e.data
-            : typeof e.data === "object"
-              ? JSON.stringify(e.data)
-              : "";
-        if (/ended|complete|finish|next.?ep|video.?end/i.test(raw)) {
-          start();
-        }
-      } catch {
-        /* ignore */
+      if (!isTrustedOrigin(e.origin)) return;
+
+      const payload = parsePayload(e.data);
+      if (!payload) return;
+
+      const progress = progressFrom(payload);
+      if (progress != null && progress > maxProgressRef.current) {
+        maxProgressRef.current = progress;
+        if (progress >= ARM_PROGRESS) onArmRef.current();
       }
+
+      // MegaPlay / SupaPlay: only `event: "complete"` means the episode ended.
+      // Never substring-match free-form postMessage traffic.
+      if (payload.event !== "complete") return;
+      if (maxProgressRef.current < ARM_PROGRESS) return;
+      onArmRef.current();
+      start();
     }
 
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [enabled, nextHref, armed, start]);
+  }, [enabled, nextHref, start]);
 
   useEffect(() => () => cancel(), [cancel]);
 
@@ -102,13 +184,13 @@ export function AutoplayNext({
               >
                 Cancel
               </button>
-              <button
-                type="button"
-                onClick={start}
+              <Link
+                href={nextHref || "#"}
                 className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-black"
+                onClick={cancel}
               >
                 Play now
-              </button>
+              </Link>
             </div>
           </div>
         </div>

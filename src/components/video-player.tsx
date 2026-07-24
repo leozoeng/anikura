@@ -129,22 +129,22 @@ export function VideoPlayer({
           return;
         }
 
-        const fallback =
-          (preferredId && servers.find((s) => s.id === preferredId)) ||
-          servers[0];
-        if (fallback) {
-          applyServer(fallback.id);
-          setResolveError("Using best available server");
-        } else {
-          setResolveError("All servers appear unavailable");
-        }
+        // Do not iframe a known-dead MegaPlay page — pick nothing and show retry.
+        setServerId(null);
+        setResolveError(
+          "No working stream found for this episode. Try another server.",
+        );
         setResolving(false);
       } catch {
         if (gen !== resolveGen.current) return;
-        const fallback =
-          servers.find((s) => s.id === preferredId) || servers[0];
-        if (fallback) applyServer(fallback.id);
-        setResolveError("Could not verify servers");
+        // Prefer AniList/MAL backups over blindly loading a dead MegaPlay URL.
+        const soft =
+          servers.find((s) => s.id === "videasy") ||
+          servers.find((s) => s.id === "vidsrc") ||
+          servers.find((s) => s.id === preferredId) ||
+          servers[0];
+        if (soft) applyServer(soft.id);
+        setResolveError("Could not verify servers — trying a backup");
         setResolving(false);
       }
     },
@@ -222,8 +222,25 @@ export function VideoPlayer({
           )}
 
           {!resolving && !active && (
-            <div className="absolute inset-0 flex items-center justify-center text-mute">
-              No playable server found
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+              <p className="text-sm text-cloud">
+                {resolveError || "No playable server found"}
+              </p>
+              {servers.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const backup =
+                      servers.find((s) => s.id === "videasy") ||
+                      servers.find((s) => s.id === "vidsrc") ||
+                      servers[0];
+                    if (backup) selectManual(backup.id);
+                  }}
+                  className="rounded-full bg-snow px-4 py-2 text-sm font-medium text-void transition hover:bg-white"
+                >
+                  Try backup server
+                </button>
+              ) : null}
             </div>
           )}
         </div>

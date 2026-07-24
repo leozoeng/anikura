@@ -1,5 +1,10 @@
+import { getPublicSiteUrl } from "@/lib/site-url";
+
 const FAILURE_PATTERNS = [
   /error code:\s*410/i,
+  /error code:\s*404/i,
+  /oops!\s*something went wrong/i,
+  /error - megaplay/i,
   /we're sorry/i,
   /content removed/i,
   /can't find the file/i,
@@ -8,6 +13,7 @@ const FAILURE_PATTERNS = [
   /file you are looking for/i,
   /no input file specified/i,
   /route not found/i,
+  /404 not found/i,
   /"success"\s*:\s*false/i,
 ];
 
@@ -19,15 +25,20 @@ const SUCCESS_HINTS = [
   /<video/i,
   /plyr/i,
   /videolink/i,
+  /videasy/i,
+  /vidsrc/i,
   /player\.js/i,
-  /embed/i,
+  /e1-player/i,
+  /file \d+ - megaplay/i,
 ];
 
 const ALLOWED_HOSTS = new Set([
   "megaplay.buzz",
-  "www.megaplay.buzz",
   "supaplay.fun",
-  "www.supaplay.fun",
+  "player.videasy.to",
+  "player.videasy.net",
+  "vidsrc.pm",
+  "www.vidsrc.pm",
 ]);
 
 export type EmbedCheckResult = {
@@ -48,9 +59,95 @@ export function isAllowedEmbedUrl(raw: string): boolean {
   }
 }
 
+function siteReferer(): string {
+  try {
+    return `${getPublicSiteUrl()}/`;
+  } catch {
+    return "https://anikura.club/";
+  }
+}
+
+/** MegaPlay /stream/s-2/{fileId}/{lang} → probe getSources (needs AJAX + Referer). */
+function megaPlayFileId(rawUrl: string): string | null {
+  try {
+    const url = new URL(rawUrl);
+    if (
+      url.hostname !== "megaplay.buzz" &&
+      url.hostname !== "supaplay.fun"
+    ) {
+      return null;
+    }
+    const match = url.pathname.match(/\/stream\/s-\d+\/(\d+)\//i);
+    return match?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function checkMegaPlaySources(fileId: string): Promise<EmbedCheckResult> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  const url = `https://megaplay.buzz/stream/getSources?id=${encodeURIComponent(fileId)}&lang=sub`;
+
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      redirect: "follow",
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json, text/plain, */*",
+        "X-Requested-With": "XMLHttpRequest",
+        Referer: siteReferer(),
+        "User-Agent":
+          "Mozilla/5.0 (compatible; AnikuraBot/1.0; +https://anikura.club)",
+      },
+      cache: "no-store",
+    });
+
+    if (res.status === 404 || res.status === 410) {
+      return { ok: false, status: res.status, reason: `http_${res.status}` };
+    }
+
+    const text = await res.text();
+    if (FAILURE_PATTERNS.some((p) => p.test(text))) {
+      return { ok: false, status: res.status, reason: "error_page" };
+    }
+
+    try {
+      const json = JSON.parse(text) as {
+        sources?: { file?: string };
+        error?: string;
+      };
+      if (json.error) {
+        return { ok: false, status: res.status, reason: "api_error" };
+      }
+      if (json.sources?.file && /m3u8|mp4/i.test(json.sources.file)) {
+        return { ok: true, status: res.status, reason: "ok_sources" };
+      }
+      return { ok: false, status: res.status, reason: "no_sources" };
+    } catch {
+      return { ok: false, status: res.status, reason: "invalid_json" };
+    }
+  } catch (err) {
+    const aborted = err instanceof Error && err.name === "AbortError";
+    return {
+      ok: false,
+      status: null,
+      reason: aborted ? "timeout" : "fetch_failed",
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function checkEmbedUrl(rawUrl: string): Promise<EmbedCheckResult> {
   if (!isAllowedEmbedUrl(rawUrl)) {
     return { ok: false, status: null, reason: "host_not_allowed" };
+  }
+
+  const fileId = megaPlayFileId(rawUrl);
+  if (fileId) {
+    return checkMegaPlaySources(fileId);
   }
 
   const controller = new AbortController();
@@ -63,8 +160,9 @@ export async function checkEmbedUrl(rawUrl: string): Promise<EmbedCheckResult> {
       signal: controller.signal,
       headers: {
         Accept: "text/html,application/xhtml+xml",
+        Referer: siteReferer(),
         "User-Agent":
-          "Mozilla/5.0 (compatible; AnikuraBot/1.0; +https://localhost)",
+          "Mozilla/5.0 (compatible; AnikuraBot/1.0; +https://anikura.club)",
       },
       cache: "no-store",
     });
@@ -142,6 +240,17 @@ export async function resolveBestServer(
     if (preferred) return { best: preferred, results };
   }
 
-  const best = results.find((r) => r.ok) ?? null;
+  // Prefer providers that passed a strong check.
+  const ranked = [...results].sort((a, b) => {
+    const score = (r: ServerProbeResult) => {
+      if (!r.ok) return 0;
+      if (r.reason === "ok_sources" || r.reason === "ok_player") return 3;
+      if (r.reason === "ok") return 2;
+      return 1;
+    };
+    return score(b) - score(a);
+  });
+
+  const best = ranked.find((r) => r.ok) ?? null;
   return { best, results };
 }
