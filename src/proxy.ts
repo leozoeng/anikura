@@ -44,7 +44,9 @@ function isPublicPath(pathname: string): boolean {
   if (
     pathname === "/login" ||
     pathname === "/auth/callback" ||
-    pathname.startsWith("/auth/callback/")
+    pathname.startsWith("/auth/callback/") ||
+    pathname === "/api/auth/signup" ||
+    pathname === "/api/auth/confirm"
   ) {
     return true;
   }

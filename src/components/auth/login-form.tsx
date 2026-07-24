@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { formatAuthError, signupWithPassword } from "@/lib/auth-client";
-import { createClient } from "@/lib/supabase/client";
+import {
+  formatAuthError,
+  signInWithPassword,
+  signupWithPassword,
+} from "@/lib/auth-client";
 
 export function LoginForm({
   nextPath = "/",
@@ -25,18 +28,11 @@ export function LoginForm({
     setMessage(null);
 
     try {
-      const supabase = createClient();
       const trimmed = email.trim();
-
       if (mode === "signup") {
         await signupWithPassword(trimmed, password);
       }
-
-      const { error: err } = await supabase.auth.signInWithPassword({
-        email: trimmed,
-        password,
-      });
-      if (err) throw err;
+      await signInWithPassword(trimmed, password);
       window.location.assign(
         `/join-discord?next=${encodeURIComponent(nextPath)}`,
       );

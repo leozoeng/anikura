@@ -4,8 +4,11 @@ import { SafeImage } from "@/components/safe-image";
 import { useEffect, useMemo, useState } from "react";
 import { AnikuraMark } from "@/components/anikura-logo";
 import { MOOD_ART } from "@/lib/genre-moods";
-import { formatAuthError, signupWithPassword } from "@/lib/auth-client";
-import { createClient } from "@/lib/supabase/client";
+import {
+  formatAuthError,
+  signInWithPassword,
+  signupWithPassword,
+} from "@/lib/auth-client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 
@@ -88,18 +91,11 @@ export function AuthModal({
 
     setBusy(true);
     try {
-      const supabase = createClient();
       const trimmed = email.trim();
-
       if (mode === "signup") {
         await signupWithPassword(trimmed, password);
       }
-
-      const { error: signError } = await supabase.auth.signInWithPassword({
-        email: trimmed,
-        password,
-      });
-      if (signError) throw signError;
+      await signInWithPassword(trimmed, password);
       onClose();
       window.location.assign("/join-discord");
     } catch (err) {

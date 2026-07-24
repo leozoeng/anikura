@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createConfirmedAccount,
+  isValidEmail,
+  MIN_PASSWORD,
+  normalizeEmail,
+} from "@/lib/auth-server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MIN_PASSWORD = 6;
 /** Soft per-IP cap so the signup endpoint cannot be spammed. */
 const WINDOW_MS = 60 * 60 * 1000;
-const MAX_PER_WINDOW = 20;
+const MAX_PER_WINDOW = 30;
 
 const hits = new Map<string, { count: number; resetAt: number }>();
 
@@ -50,11 +53,6 @@ export async function POST(req: Request) {
     return publicError("Auth isn’t configured on this deploy yet.", 503);
   }
 
-  const service = createServiceClient();
-  if (!service) {
-    return publicError("Sign-up is temporarily unavailable.", 503);
-  }
-
   const ip = clientIp(req);
   if (!allowIp(ip)) {
     return publicError(
@@ -75,7 +73,7 @@ export async function POST(req: Request) {
     body &&
     "email" in body &&
     typeof (body as { email: unknown }).email === "string"
-      ? (body as { email: string }).email.trim().toLowerCase()
+      ? normalizeEmail((body as { email: string }).email)
       : "";
   const password =
     typeof body === "object" &&
@@ -85,7 +83,7 @@ export async function POST(req: Request) {
       ? (body as { password: string }).password
       : "";
 
-  if (!EMAIL_RE.test(email)) {
+  if (!isValidEmail(email)) {
     return publicError("Enter a valid email address.", 400);
   }
   if (password.length < MIN_PASSWORD) {
@@ -95,36 +93,9 @@ export async function POST(req: Request) {
     );
   }
 
-  const { data, error } = await service.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-  });
-
-  if (error) {
-    const msg = error.message.toLowerCase();
-    if (
-      msg.includes("already") ||
-      msg.includes("registered") ||
-      msg.includes("exists") ||
-      error.status === 422
-    ) {
-      return publicError(
-        "An account with this email already exists. Sign in instead.",
-        409,
-      );
-    }
-    if (msg.includes("rate") || msg.includes("email rate")) {
-      return publicError(
-        "Sign-up is busy right now. Please try again in a few minutes.",
-        429,
-      );
-    }
-    return publicError(error.message || "Could not create account.", 400);
-  }
-
-  if (!data.user) {
-    return publicError("Could not create account.", 500);
+  const result = await createConfirmedAccount(email, password);
+  if (!result.ok) {
+    return publicError(result.error, result.status);
   }
 
   return NextResponse.json({ ok: true });
