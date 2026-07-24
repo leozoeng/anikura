@@ -6,7 +6,9 @@ import { getOrCreateSessionId } from "@/lib/session-id";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 /** Wall-clock seconds on /watch while the tab is visible (embed proxy). */
-const TICK_MS = 60_000;
+const TICK_MS = 180_000;
+/** Cap per flush — must cover one full tick interval. */
+const MAX_FLUSH_SECONDS = 240;
 
 export function WatchTimeTracker() {
   const pathname = usePathname();
@@ -27,7 +29,7 @@ export function WatchTimeTracker() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             sessionId,
-            seconds: Math.min(180, Math.round(seconds)),
+            seconds: Math.min(MAX_FLUSH_SECONDS, Math.round(seconds)),
             path: pathname,
           }),
           keepalive: true,

@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   if (sessionId.length < 8) {
     return NextResponse.json({ ok: false, reason: "bad_session" }, { status: 400 });
   }
-  if (!Number.isFinite(seconds) || seconds < 1 || seconds > 180) {
+  if (!Number.isFinite(seconds) || seconds < 1 || seconds > 300) {
     return NextResponse.json({ ok: false, reason: "bad_seconds" }, { status: 400 });
   }
 

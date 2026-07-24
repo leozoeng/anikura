@@ -5,7 +5,8 @@ import { useEffect, useRef } from "react";
 import { getOrCreateSessionId } from "@/lib/session-id";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
-const HEARTBEAT_MS = 90_000;
+/** Keep admin “live” window in sync (see admin page p_live_seconds). */
+const HEARTBEAT_MS = 240_000;
 
 export function PresenceTracker() {
   const pathname = usePathname();

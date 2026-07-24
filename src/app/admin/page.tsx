@@ -66,8 +66,9 @@ export default async function AdminPage() {
     { data: hotRaw },
     catalog,
   ] = await Promise.all([
-    supabase.rpc("admin_dashboard_metrics", { p_live_seconds: 120 }),
-    supabase.rpc("admin_live_presence", { p_live_seconds: 120 }),
+    // Presence heartbeats are ~4m; keep a ~10m live window so desks stay accurate.
+    supabase.rpc("admin_dashboard_metrics", { p_live_seconds: 600 }),
+    supabase.rpc("admin_live_presence", { p_live_seconds: 600 }),
     supabase.rpc("admin_signup_series", { p_days: 90 }),
     supabase.rpc("admin_activity_series", { p_days: 90 }),
     supabase.rpc("admin_hot_activity", { p_limit: 8 }),
@@ -130,7 +131,7 @@ export default async function AdminPage() {
 
   return (
     <>
-      <AdminRefresh intervalMs={90_000} />
+      <AdminRefresh intervalMs={180_000} />
       <AdminDashboard
         adminEmail={profile.email}
         activity={activity}
