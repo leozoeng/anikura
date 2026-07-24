@@ -12,7 +12,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export const metadata = {
-  title: "Join Discord",
+  title: "Connect Discord",
 };
 
 export const dynamic = "force-dynamic";

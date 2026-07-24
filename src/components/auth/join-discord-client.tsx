@@ -337,8 +337,7 @@ export function JoinDiscordClient({
               <div className="mt-5 space-y-4">
                 <p className="text-sm text-mute">
                   That Discord is linked, but it isn&apos;t in the Anikura server
-                  yet. Join once — you won&apos;t need to leave if you&apos;re
-                  already in.
+                  yet. Open the invite, join, then check again.
                 </p>
                 <a
                   href={inviteUrl}
