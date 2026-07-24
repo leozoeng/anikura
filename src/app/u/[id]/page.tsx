@@ -9,6 +9,11 @@ import {
   vanityUsernameFromParam,
   type PublicProfile,
 } from "@/lib/profile";
+import {
+  WATCH_ACTIVITY_SELECT,
+  watchActivityToProgress,
+  type WatchActivityRow,
+} from "@/lib/watch-activity";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -67,27 +72,41 @@ export default async function PublicProfilePage({ params }: Props) {
   }
 
   const supabase = await createClient();
-  const [{ data: list }, me, comments] = await Promise.all([
+  const me = await getSessionUser();
+  const isOwner = me?.id === profile.id;
+  const canViewActivity = isOwner || Boolean(profile.activity_public);
+
+  const [{ data: list }, { data: activityRows }, comments] = await Promise.all([
     supabase
       .from("anime_list")
       .select("*")
       .eq("user_id", profile.id)
       .order("updated_at", { ascending: false }),
-    getSessionUser(),
+    canViewActivity
+      ? supabase
+          .from("watch_activity")
+          .select(WATCH_ACTIVITY_SELECT)
+          .eq("user_id", profile.id)
+          .order("updated_at", { ascending: false })
+          .limit(24)
+      : Promise.resolve({ data: [] as WatchActivityRow[] }),
     fetchUserProfileComments(profile.id),
   ]);
-
-  const isOwner = me?.id === profile.id;
 
   // Never ship operator/user email to other visitors' browsers.
   const publicProfile: PublicProfile = isOwner
     ? profile
     : { ...profile, email: null };
 
+  const activity = canViewActivity
+    ? ((activityRows ?? []) as WatchActivityRow[]).map(watchActivityToProgress)
+    : [];
+
   return (
     <ProfileView
       profile={publicProfile}
       list={(list ?? []) as AnimeListEntry[]}
+      activity={activity}
       comments={comments}
       isOwner={isOwner}
       showQuitProfile={Boolean(me) && !isOwner}

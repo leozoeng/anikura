@@ -21,6 +21,8 @@ export type PublicProfile = {
   accent_hex?: string | null;
   /** Soft ambient wash derived from accent_hex */
   accent_ambient?: boolean | null;
+  /** When true, visitors can see recently watched episodes on the Activity tab */
+  activity_public?: boolean | null;
   /** Persisted public badges (e.g. dev, vip) */
   badges?: string[] | null;
 };
@@ -28,11 +30,11 @@ export type PublicProfile = {
 export const DEFAULT_ACCENT_HEX = "#5865F2";
 
 export const PROFILE_SELECT =
-  "id, email, username, nickname, bio, avatar_url, banner_url, created_at, role, accent_hex, accent_ambient, badges";
+  "id, email, username, nickname, bio, avatar_url, banner_url, created_at, role, accent_hex, accent_ambient, activity_public, badges";
 
 /** Public-facing columns — no email (keeps operator identity out of client payloads). */
 export const PUBLIC_PROFILE_SELECT =
-  "id, username, nickname, bio, avatar_url, banner_url, created_at, role, accent_hex, accent_ambient, badges";
+  "id, username, nickname, bio, avatar_url, banner_url, created_at, role, accent_hex, accent_ambient, activity_public, badges";
 
 export const USERNAME_MIN = 3;
 export const USERNAME_MAX = 24;

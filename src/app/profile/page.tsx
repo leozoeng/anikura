@@ -8,6 +8,11 @@ import {
   PROFILE_SELECT,
   type PublicProfile,
 } from "@/lib/profile";
+import {
+  WATCH_ACTIVITY_SELECT,
+  watchActivityToProgress,
+  type WatchActivityRow,
+} from "@/lib/watch-activity";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -26,19 +31,26 @@ export default async function ProfilePage() {
   }
 
   const supabase = await createClient();
-  const [{ data: profile }, { data: list }, comments] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select(PROFILE_SELECT)
-      .eq("id", user.id)
-      .maybeSingle(),
-    supabase
-      .from("anime_list")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("updated_at", { ascending: false }),
-    fetchUserProfileComments(user.id),
-  ]);
+  const [{ data: profile }, { data: list }, { data: activityRows }, comments] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select(PROFILE_SELECT)
+        .eq("id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("anime_list")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("watch_activity")
+        .select(WATCH_ACTIVITY_SELECT)
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(24),
+      fetchUserProfileComments(user.id),
+    ]);
 
   const resolved: PublicProfile = profile ?? {
     id: user.id,
@@ -50,12 +62,18 @@ export default async function ProfilePage() {
     created_at: user.created_at,
     accent_hex: DEFAULT_ACCENT_HEX,
     accent_ambient: true,
+    activity_public: false,
   };
+
+  const activity = ((activityRows ?? []) as WatchActivityRow[]).map(
+    watchActivityToProgress,
+  );
 
   return (
     <ProfileView
       profile={resolved}
       list={(list ?? []) as AnimeListEntry[]}
+      activity={activity}
       comments={comments}
       isOwner
       showSocialRail

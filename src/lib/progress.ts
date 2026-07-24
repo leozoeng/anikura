@@ -137,6 +137,10 @@ export function saveWatchProgress(entry: {
     updatedAt: Date.now(),
   });
   writeContinue(items);
+  window.dispatchEvent(new CustomEvent("anikura:progress"));
+  void import("@/lib/watch-activity").then(({ syncWatchActivity }) =>
+    syncWatchActivity({ ...entry, percent }),
+  );
 }
 
 export function clearContinueWatching() {

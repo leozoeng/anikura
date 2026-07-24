@@ -24,6 +24,9 @@ import {
   type WatchProgress,
 } from "@/lib/progress";
 import {
+  flushContinueWatching,
+} from "@/lib/watch-activity";
+import {
   BoardShelfPicker,
   type BoardShelfId,
 } from "@/components/profile/board-shelf-picker";
@@ -38,6 +41,8 @@ import { preferHighResPoster } from "@/lib/cover-image";
 type Props = {
   profile: PublicProfile;
   list: AnimeListEntry[];
+  /** Server-synced continue-watching (visible to visitors when activity_public). */
+  activity?: WatchProgress[];
   comments?: ProfileCommentItem[];
   isOwner: boolean;
   /** Signed-in viewer looking at someone else — show Quit → /profile */
@@ -87,6 +92,7 @@ function relativeTime(ms: number) {
 export function ProfileView({
   profile,
   list,
+  activity = [],
   comments = [],
   isOwner,
   showQuitProfile = false,
@@ -96,7 +102,10 @@ export function ProfileView({
   const [tab, setTab] = useState<ProfileTab>("board");
   const [live, setLive] = useState(profile);
   const [liveList, setLiveList] = useState(list);
-  const [episodes, setEpisodes] = useState<WatchProgress[]>([]);
+  const [episodes, setEpisodes] = useState<WatchProgress[]>(() =>
+    isOwner ? [] : activity,
+  );
+  const [activityBusy, setActivityBusy] = useState(false);
   const [pickerShelf, setPickerShelf] = useState<BoardShelfId | null>(null);
   const [shelfBusyId, setShelfBusyId] = useState<string | null>(null);
   const tabRefs = useRef<Partial<Record<ProfileTab, HTMLButtonElement | null>>>(
@@ -121,14 +130,48 @@ export function ProfileView({
 
   useEffect(() => {
     if (!isOwner) {
-      setEpisodes([]);
+      setEpisodes(activity);
       return;
     }
-    const sync = () => setEpisodes(getContinueWatching());
+    const sync = () => {
+      const local = getContinueWatching();
+      setEpisodes(local.length > 0 ? local : activity);
+    };
     sync();
     window.addEventListener("anikura:progress", sync);
     return () => window.removeEventListener("anikura:progress", sync);
+  }, [isOwner, activity]);
+
+  useEffect(() => {
+    if (!isOwner) return;
+    void flushContinueWatching(getContinueWatching());
   }, [isOwner]);
+
+  async function setActivityPublic(next: boolean) {
+    if (!isOwner || activityBusy || !isSupabaseConfigured()) return;
+    setActivityBusy(true);
+    const prev = Boolean(live.activity_public);
+    setLive((p) => ({ ...p, activity_public: next }));
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({ activity_public: next })
+        .eq("id", live.id)
+        .select("activity_public")
+        .single();
+      if (error) throw error;
+      setLive((p) => ({
+        ...p,
+        activity_public: Boolean(data?.activity_public),
+      }));
+      if (next) void flushContinueWatching(getContinueWatching());
+    } catch {
+      setLive((p) => ({ ...p, activity_public: prev }));
+    } finally {
+      setActivityBusy(false);
+    }
+  }
 
   useEffect(() => {
     const el = tabRefs.current[tab];
@@ -355,7 +398,8 @@ export function ProfileView({
                 )}
               </section>
 
-              {isOwner && continueStrip.length > 0 ? (
+              {(isOwner || Boolean(live.activity_public)) &&
+              continueStrip.length > 0 ? (
                 <section className="mt-2.5 rounded-xl bg-[#1e1f22]/90 px-3 py-2.5 ring-1 ring-white/[0.04]">
                   <div className="mb-2 flex items-center justify-between gap-2">
                     <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[#949ba4]">
@@ -478,6 +522,9 @@ export function ProfileView({
                 <ActivityTab
                   items={episodes}
                   isOwner={isOwner}
+                  activityPublic={Boolean(live.activity_public)}
+                  activityBusy={activityBusy}
+                  onActivityPublicChange={setActivityPublic}
                   accent={accent}
                 />
               ) : null}
@@ -859,101 +906,138 @@ function EmptySlot({
 function ActivityTab({
   items,
   isOwner,
+  activityPublic,
+  activityBusy,
+  onActivityPublicChange,
   accent,
 }: {
   items: WatchProgress[];
   isOwner: boolean;
+  activityPublic: boolean;
+  activityBusy: boolean;
+  onActivityPublicChange: (next: boolean) => void;
   accent: string;
 }) {
-  if (!isOwner) {
+  if (!isOwner && !activityPublic) {
     return (
       <EmptyState
         title="Episode activity is private"
-        body="Recently watched episodes stay on this viewer’s device."
-      />
-    );
-  }
-
-  if (items.length === 0) {
-    return (
-      <EmptyState
-        title="No episodes yet"
-        body="Watch something — recently played episodes show up here."
+        body="This member keeps recently watched episodes to themselves."
       />
     );
   }
 
   return (
     <div>
-      <h2 className="mb-1 text-[0.95rem] font-semibold tracking-[-0.02em] text-snow">
-        Recently watched
-      </h2>
-      <p className="mb-3 text-[0.8125rem] text-[#949ba4]">
-        Episodes you’ve been watching.
-      </p>
-      <ul className="space-y-1.5">
-        {items.map((item) => (
-          <li key={`${item.id}-${item.episode}-${item.language}-${item.updatedAt}`}>
-            <Link
-              href={`/watch/${item.id}/${item.slug}?ep=${item.episode}&lang=${item.language}`}
-              aria-label={`Continue ${item.title}, episode ${item.episode}`}
-              className={`pressable flex min-h-11 items-center gap-3 rounded-xl bg-[#1e1f22]/90 p-2 ring-1 ring-white/[0.04] transition hover:bg-[#232428] hover:ring-white/[0.08] ${FOCUS_RING}`}
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-[0.95rem] font-semibold tracking-[-0.02em] text-snow">
+            Recently watched
+          </h2>
+          <p className="mt-0.5 text-[0.8125rem] text-[#949ba4]">
+            {isOwner
+              ? "Episodes you’ve been watching."
+              : "Episodes they’ve been watching."}
+          </p>
+        </div>
+        {isOwner ? (
+          <label className="flex cursor-pointer items-center gap-2 rounded-full bg-[#1e1f22] px-3 py-1.5 ring-1 ring-white/[0.06]">
+            <input
+              type="checkbox"
+              checked={activityPublic}
+              disabled={activityBusy}
+              onChange={(e) => onActivityPublicChange(e.target.checked)}
+              className="h-3.5 w-3.5 accent-white"
+            />
+            <span className="text-xs font-medium text-[#dbdee1]">
+              {activityPublic ? "Public" : "Private"}
+            </span>
+          </label>
+        ) : null}
+      </div>
+
+      {isOwner && !activityPublic ? (
+        <p className="mb-3 text-xs text-[#6d6f78]">
+          Only you can see this. Turn on Public to share it on your profile.
+        </p>
+      ) : null}
+
+      {items.length === 0 ? (
+        <EmptyState
+          title="No episodes yet"
+          body={
+            isOwner
+              ? "Watch something — recently played episodes show up here."
+              : "Nothing to show yet."
+          }
+        />
+      ) : (
+        <ul className="space-y-1.5">
+          {items.map((item) => (
+            <li
+              key={`${item.id}-${item.episode}-${item.language}-${item.updatedAt}`}
             >
-              <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-[#111214]">
-                {item.poster ? (
-                  <SafeImage
-                    src={item.poster}
-                    alt=""
-                    fill
-                    className="object-cover"
-                    sizes="40px"
-                  />
-                ) : null}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-snow">
-                  {item.title}
-                </p>
-                <p className="mt-0.5 text-xs text-[#949ba4]">
-                  <span style={{ color: accent }}>
-                    Episode {item.episode}
-                  </span>
-                  <span className="text-[#6d6f78]">
-                    {" "}
-                    · {item.language.toUpperCase()}
-                    {" · "}
-                    {relativeTime(item.updatedAt)}
-                  </span>
-                </p>
-                {item.percent > 0 && item.percent < 100 ? (
-                  <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10 sm:hidden">
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${Math.min(100, item.percent)}%`,
-                        background: accent,
-                      }}
+              <Link
+                href={`/watch/${item.id}/${item.slug}?ep=${item.episode}&lang=${item.language}`}
+                aria-label={`Continue ${item.title}, episode ${item.episode}`}
+                className={`pressable flex min-h-11 items-center gap-3 rounded-xl bg-[#1e1f22]/90 p-2 ring-1 ring-white/[0.04] transition hover:bg-[#232428] hover:ring-white/[0.08] ${FOCUS_RING}`}
+              >
+                <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-[#111214]">
+                  {item.poster ? (
+                    <SafeImage
+                      src={item.poster}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      sizes="40px"
                     />
-                  </div>
-                ) : null}
-              </div>
-              {item.percent > 0 && item.percent < 100 ? (
-                <div className="hidden w-16 shrink-0 sm:block">
-                  <div className="h-1 overflow-hidden rounded-full bg-white/10">
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${Math.min(100, item.percent)}%`,
-                        background: accent,
-                      }}
-                    />
-                  </div>
+                  ) : null}
                 </div>
-              ) : null}
-            </Link>
-          </li>
-        ))}
-      </ul>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-snow">
+                    {item.title}
+                  </p>
+                  <p className="mt-0.5 text-xs text-[#949ba4]">
+                    <span style={{ color: accent }}>
+                      Episode {item.episode}
+                    </span>
+                    <span className="text-[#6d6f78]">
+                      {" "}
+                      · {item.language.toUpperCase()}
+                      {" · "}
+                      {relativeTime(item.updatedAt)}
+                    </span>
+                  </p>
+                  {item.percent > 0 && item.percent < 100 ? (
+                    <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10 sm:hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${Math.min(100, item.percent)}%`,
+                          background: accent,
+                        }}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+                {item.percent > 0 && item.percent < 100 ? (
+                  <div className="hidden w-16 shrink-0 sm:block">
+                    <div className="h-1 overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${Math.min(100, item.percent)}%`,
+                          background: accent,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

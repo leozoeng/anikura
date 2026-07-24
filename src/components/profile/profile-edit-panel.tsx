@@ -51,6 +51,9 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
   const [bannerUrl, setBannerUrl] = useState(profile.banner_url);
   const [accentHex, setAccentHex] = useState(resolveAccentHex(profile));
   const [ambient, setAmbient] = useState(accentAmbientEnabled(profile));
+  const [activityPublic, setActivityPublic] = useState(
+    Boolean(profile.activity_public),
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [usernameHint, setUsernameHint] = useState<string | null>(null);
@@ -217,6 +220,7 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
           banner_url: bannerUrl,
           accent_hex: hex,
           accent_ambient: ambient,
+          activity_public: activityPublic,
         })
         .eq("id", profile.id)
         .select(PROFILE_SELECT)
@@ -468,6 +472,24 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
                   <span className="mt-0.5 block text-xs text-[#949ba4]">
                     Soft wash and avatar ring tint derived from your accent color
                     — like a theme behind the card.
+                  </span>
+                </span>
+              </label>
+
+              <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-2xl bg-[#1e1f22] px-3.5 py-3 ring-1 ring-white/[0.04]">
+                <input
+                  type="checkbox"
+                  checked={activityPublic}
+                  onChange={(e) => setActivityPublic(e.target.checked)}
+                  className="mt-1 h-4 w-4 accent-white"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-snow">
+                    Public activity
+                  </span>
+                  <span className="mt-0.5 block text-xs text-[#949ba4]">
+                    Let others see recently watched episodes on your Activity tab.
+                    Off by default.
                   </span>
                 </span>
               </label>
