@@ -48,6 +48,7 @@ export function MobileBottomNav() {
     pathname.startsWith("/admin") ||
     pathname.startsWith("/watch") ||
     pathname.startsWith("/login") ||
+    pathname.startsWith("/join-discord") ||
     /\/manga\/[^/]+\/read\//.test(pathname) ||
     /\/novels\/[^/]+\/read\//.test(pathname)
   ) {

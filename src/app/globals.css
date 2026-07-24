@@ -186,6 +186,49 @@ button {
   animation: rise 0.55s var(--ease-out-soft) both;
 }
 
+/* Members gate — cinematic login / Discord reveal */
+.login-gate-art {
+  animation: soft-zoom 22s ease-out both;
+  will-change: transform;
+}
+
+.login-gate-copy {
+  animation: rise 0.7s var(--ease-out-soft) 0.08s both;
+}
+
+.login-gate-panel {
+  animation: rise 0.75s var(--ease-out-soft) 0.18s both;
+}
+
+.login-gate-mist {
+  animation: login-mist-drift 14s ease-in-out infinite alternate;
+}
+
+.login-gate-mist-slow {
+  animation: login-mist-drift 20s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes login-mist-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.75;
+  }
+  to {
+    transform: translate3d(24px, -18px, 0) scale(1.12);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-gate-art,
+  .login-gate-copy,
+  .login-gate-panel,
+  .login-gate-mist,
+  .login-gate-mist-slow {
+    animation: none !important;
+  }
+}
+
 .animate-soft-zoom {
   animation: soft-zoom 22s ease-out forwards;
 }

@@ -8,7 +8,9 @@ import {
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export const metadata = {
-  title: "Sign in",
+  title: "Enter",
+  description:
+    "Members-only access to Anikura — create an account and join Discord to unlock the theater.",
 };
 
 type LoginPageProps = {
@@ -22,13 +24,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   if (!isSupabaseConfigured()) {
     return (
-      <div className="mx-auto max-w-md px-4 pb-20 pt-28 text-center">
+      <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col justify-center px-4 text-center">
         <h1 className="text-2xl text-snow">Auth not configured</h1>
         <p className="mt-2 text-sm text-cloud">
           Add <code className="text-snow">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
           <code className="text-snow">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> in
-          Vercel (or <code className="text-snow">.env.local</code>), then
-          redeploy.
+          Vercel, then redeploy.
         </p>
       </div>
     );
@@ -48,9 +49,5 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     redirect(next);
   }
 
-  return (
-    <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 pb-16 pt-24">
-      <LoginForm nextPath={next} initialMode={initialMode} />
-    </div>
-  );
+  return <LoginForm nextPath={next} initialMode={initialMode} />;
 }

@@ -27,6 +27,11 @@ export function SiteHeader() {
   const hideForReader =
     /\/manga\/[^/]+\/read\//.test(pathname) ||
     /\/novels\/[^/]+\/read\//.test(pathname);
+  const hideForGate =
+    pathname === "/login" ||
+    pathname.startsWith("/login/") ||
+    pathname === "/join-discord" ||
+    pathname.startsWith("/join-discord/");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -83,7 +88,7 @@ export function SiteHeader() {
     return () => subscription.unsubscribe();
   }, []);
 
-  if (hideForReader) return null;
+  if (hideForReader || hideForGate) return null;
 
   const solid = scrolled || searchOpen || menuOpen;
 
