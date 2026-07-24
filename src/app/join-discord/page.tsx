@@ -59,13 +59,11 @@ export default async function JoinDiscordPage({ searchParams }: Props) {
   const discordLinked = Boolean(discordIdFromIdentities(user.identities));
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col justify-center px-4 pb-16 pt-24">
-      <JoinDiscordClient
-        nextPath={next}
-        inviteUrl={getDiscordInviteUrl()}
-        discordLinked={discordLinked}
-        gateConfigured={isDiscordGateConfigured()}
-      />
-    </div>
+    <JoinDiscordClient
+      nextPath={next}
+      inviteUrl={getDiscordInviteUrl()}
+      discordLinked={discordLinked}
+      gateConfigured={isDiscordGateConfigured()}
+    />
   );
 }
