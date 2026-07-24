@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { formatAuthError, signupWithPassword } from "@/lib/auth-client";
 import { createClient } from "@/lib/supabase/client";
-import { getAuthCallbackUrl } from "@/lib/site-url";
 
 export function LoginForm({
   nextPath = "/",
@@ -26,40 +26,22 @@ export function LoginForm({
 
     try {
       const supabase = createClient();
-      if (mode === "signin") {
-        const { error: err } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
-        });
-        if (err) throw err;
-        window.location.assign(
-          `/join-discord?next=${encodeURIComponent(nextPath)}`,
-        );
-        return;
+      const trimmed = email.trim();
+
+      if (mode === "signup") {
+        await signupWithPassword(trimmed, password);
       }
 
-      const { data, error: err } = await supabase.auth.signUp({
-        email: email.trim(),
+      const { error: err } = await supabase.auth.signInWithPassword({
+        email: trimmed,
         password,
-        options: {
-          emailRedirectTo: getAuthCallbackUrl(
-            `/join-discord?next=${encodeURIComponent(nextPath)}`,
-          ),
-        },
       });
       if (err) throw err;
-
-      if (data.session) {
-        window.location.assign(
-          `/join-discord?next=${encodeURIComponent(nextPath)}`,
-        );
-        return;
-      }
-
-      setMessage("Account created. Confirm your email, then sign in.");
-      setMode("signin");
+      window.location.assign(
+        `/join-discord?next=${encodeURIComponent(nextPath)}`,
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(formatAuthError(err));
     } finally {
       setBusy(false);
     }

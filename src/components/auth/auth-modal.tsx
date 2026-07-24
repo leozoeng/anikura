@@ -4,8 +4,8 @@ import { SafeImage } from "@/components/safe-image";
 import { useEffect, useMemo, useState } from "react";
 import { AnikuraMark } from "@/components/anikura-logo";
 import { MOOD_ART } from "@/lib/genre-moods";
+import { formatAuthError, signupWithPassword } from "@/lib/auth-client";
 import { createClient } from "@/lib/supabase/client";
-import { getAuthCallbackUrl } from "@/lib/site-url";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 
@@ -89,36 +89,21 @@ export function AuthModal({
     setBusy(true);
     try {
       const supabase = createClient();
-      if (mode === "signin") {
-        const { error: signError } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
-        });
-        if (signError) throw signError;
-        onClose();
-        window.location.assign("/join-discord");
-        return;
+      const trimmed = email.trim();
+
+      if (mode === "signup") {
+        await signupWithPassword(trimmed, password);
       }
 
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: email.trim(),
+      const { error: signError } = await supabase.auth.signInWithPassword({
+        email: trimmed,
         password,
-        options: {
-          emailRedirectTo: getAuthCallbackUrl("/join-discord"),
-        },
       });
-      if (signUpError) throw signUpError;
-
-      if (data.session) {
-        onClose();
-        window.location.assign("/join-discord");
-        return;
-      }
-
-      setMessage("Check your email to confirm, then sign in.");
-      setMode("signin");
+      if (signError) throw signError;
+      onClose();
+      window.location.assign("/join-discord");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(formatAuthError(err));
     } finally {
       setBusy(false);
     }
