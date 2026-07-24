@@ -136,7 +136,7 @@ export function JoinDiscordClient({
 
   if (!gateConfigured) {
     return (
-      <div className="login-gate relative flex min-h-[100dvh] items-center justify-center overflow-hidden bg-void px-5">
+      <div className="login-gate relative flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-void px-5 py-10">
         <div className="relative z-10 w-full max-w-lg rounded-[1.4rem] border border-amber-500/25 bg-black/70 p-6 shadow-[0_40px_100px_rgba(0,0,0,0.55)] backdrop-blur-xl sm:p-8">
           <p className="text-[0.7rem] uppercase tracking-[0.18em] text-amber-200/80">
             Setup needed
@@ -145,28 +145,14 @@ export function JoinDiscordClient({
             Discord gate isn&apos;t live yet
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-cloud">
-            The site code is ready. Add these on Vercel → Settings → Environment
-            Variables for <span className="text-snow">Production</span>, then
-            Redeploy:
-          </p>
-          <ul className="mt-4 space-y-2 text-sm text-amber-100/95">
-            <li>
-              <code className="text-snow">DISCORD_GUILD_ID</code> — your server
-              ID
-            </li>
-            <li>
-              <code className="text-snow">DISCORD_BOT_TOKEN</code> — bot token
-              (Server Members Intent on)
-            </li>
-          </ul>
-          <p className="mt-4 text-sm text-mute">
-            Also enable Discord under Supabase → Authentication → Providers.
-            After redeploy, sign in again and you&apos;ll see Link Discord.
+            Add <code className="text-snow">DISCORD_GUILD_ID</code> and{" "}
+            <code className="text-snow">DISCORD_BOT_TOKEN</code> on Vercel
+            Production, then Redeploy.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               href={nextPath.startsWith("/") ? nextPath : "/"}
-              className="rounded-full bg-snow px-4 py-2.5 text-sm font-medium text-void"
+              className="min-h-11 rounded-full bg-snow px-4 py-2.5 text-sm font-medium text-void"
             >
               Continue for now
             </Link>
@@ -174,7 +160,7 @@ export function JoinDiscordClient({
               type="button"
               onClick={() => void signOut()}
               disabled={busy !== null}
-              className="rounded-full border border-white/20 px-4 py-2.5 text-sm font-medium text-snow disabled:opacity-60"
+              className="min-h-11 rounded-full border border-white/20 px-4 py-2.5 text-sm font-medium text-snow disabled:opacity-60"
             >
               Sign out
             </button>
@@ -185,8 +171,8 @@ export function JoinDiscordClient({
   }
 
   return (
-    <div className="login-gate relative min-h-[100dvh] overflow-hidden bg-void">
-      <div className="absolute inset-0" aria-hidden>
+    <div className="login-gate relative min-h-[100dvh] overflow-y-auto overflow-x-hidden bg-void">
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
         <SafeImage
           src={GATE_ART.src}
           alt=""
@@ -198,49 +184,78 @@ export function JoinDiscordClient({
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_35%,transparent_0%,rgba(0,0,0,0.4)_55%,rgba(0,0,0,0.85)_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-void via-void/60 to-black/30" />
         <div className="absolute inset-0 bg-gradient-to-r from-void/85 via-void/45 to-transparent" />
-        <div className="login-gate-mist pointer-events-none absolute right-0 top-1/3 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(126,184,255,0.14),transparent_70%)] blur-3xl" />
+        <div className="login-gate-mist absolute right-0 top-1/3 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(126,184,255,0.14),transparent_70%)] blur-3xl" />
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-6xl flex-col justify-end gap-10 px-5 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-8 sm:pb-14 lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:items-end lg:gap-16 lg:pb-16 lg:pt-16">
-        <div className="login-gate-copy max-w-xl pb-2 lg:pb-8">
-          <div className="flex items-center gap-3">
+      {/* Always-visible escape on mobile */}
+      <div className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-white/[0.08] bg-black/55 px-4 py-3 backdrop-blur-xl pt-[max(0.75rem,env(safe-area-inset-top))] lg:hidden">
+        <div className="flex min-w-0 items-center gap-2">
+          <AnikuraMark size={28} className="ring-1 ring-white/15" />
+          <span className="truncate text-sm font-medium tracking-[-0.02em] text-snow">
+            Anikura
+          </span>
+        </div>
+        <button
+          type="button"
+          disabled={busy !== null}
+          onClick={() => void signOut()}
+          className="min-h-10 shrink-0 rounded-full border border-white/20 bg-white/[0.06] px-3.5 text-sm font-medium text-snow transition active:scale-[0.98] disabled:opacity-60"
+        >
+          {busy === "signout" ? "…" : "Sign out"}
+        </button>
+      </div>
+
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-8 px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-6 sm:px-8 sm:pb-14 lg:min-h-[100dvh] lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:items-end lg:gap-16 lg:pb-16 lg:pt-16">
+        <div className="login-gate-copy max-w-xl lg:pb-8">
+          <div className="hidden items-center gap-3 lg:flex">
             <AnikuraMark size={44} className="ring-1 ring-white/15" />
             <p className="font-jp text-[0.72rem] tracking-[0.28em] text-sakura-soft/90">
               アニクラ
             </p>
           </div>
-          <h1 className="mt-5 text-[clamp(2.6rem,7vw,4.4rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-snow">
+          <h1 className="text-[clamp(2.1rem,8vw,4.4rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-snow lg:mt-5">
             One more step
           </h1>
-          <p className="mt-4 max-w-md text-[clamp(1rem,2.2vw,1.2rem)] font-medium leading-snug tracking-[-0.02em] text-snow/90">
+          <p className="mt-3 max-w-md text-[clamp(0.95rem,2.2vw,1.2rem)] font-medium leading-snug tracking-[-0.02em] text-snow/90">
             Link Discord and join the server to open the theater.
           </p>
-          <p className="mt-3 max-w-sm text-sm leading-relaxed text-cloud/90">
+          <p className="mt-2 hidden max-w-sm text-sm leading-relaxed text-cloud/90 sm:block">
             This keeps Anikura for people who show up — not drive-by guests.
           </p>
         </div>
 
         <div className="login-gate-panel w-full max-w-md self-stretch lg:self-end lg:justify-self-end">
           <div className="rounded-[1.4rem] border border-white/[0.12] bg-black/55 p-5 shadow-[0_40px_100px_rgba(0,0,0,0.55)] backdrop-blur-xl sm:p-6">
+            <div className="mb-1 hidden justify-end lg:flex">
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => void signOut()}
+                className="min-h-9 rounded-full border border-white/15 px-3 text-xs font-medium text-cloud transition hover:border-white/30 hover:text-snow disabled:opacity-60"
+              >
+                {busy === "signout" ? "Signing out…" : "Sign out"}
+              </button>
+            </div>
+
             <p className="text-[0.7rem] uppercase tracking-[0.18em] text-mute">
               Required
             </p>
-            <h2 className="mt-1 text-[1.55rem] font-semibold tracking-[-0.04em] text-snow">
+            <h2 className="mt-1 text-[1.45rem] font-semibold tracking-[-0.04em] text-snow sm:text-[1.55rem]">
               Join Discord
             </h2>
 
-            <ol className="mt-6 space-y-5">
-              <li className="flex gap-4">
+            <ol className="mt-5 space-y-5">
+              <li className="flex gap-3.5 sm:gap-4">
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/[0.08] text-sm font-medium text-snow">
                   1
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-snow">Link Discord</p>
                   <p className="mt-1 text-sm text-mute">
-                    Connect the Discord account you use on the server.
+                    Use the Discord account that&apos;s in the Anikura server.
                   </p>
                   {linked ? (
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <div className="mt-3 space-y-2">
                       <p className="text-sm text-emerald-300/90">
                         Discord linked.
                       </p>
@@ -248,11 +263,11 @@ export function JoinDiscordClient({
                         type="button"
                         disabled={busy !== null}
                         onClick={() => void unlinkDiscord()}
-                        className="rounded-full border border-white/20 px-3 py-1.5 text-xs font-medium text-cloud transition hover:border-white/35 hover:text-snow disabled:opacity-60"
+                        className="flex min-h-11 w-full items-center justify-center rounded-full border border-amber-400/35 bg-amber-400/10 px-4 text-sm font-medium text-amber-100 transition active:scale-[0.98] disabled:opacity-60"
                       >
                         {busy === "unlink"
                           ? "Unlinking…"
-                          : "Wrong Discord? Unlink"}
+                          : "Wrong Discord — unlink & retry"}
                       </button>
                     </div>
                   ) : (
@@ -260,7 +275,7 @@ export function JoinDiscordClient({
                       type="button"
                       disabled={busy !== null}
                       onClick={() => void linkDiscord()}
-                      className="mt-3 rounded-full bg-[#5865F2] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#4752c4] disabled:opacity-60"
+                      className="mt-3 flex min-h-11 w-full items-center justify-center rounded-full bg-[#5865F2] px-4 text-sm font-medium text-white transition active:scale-[0.98] hover:bg-[#4752c4] disabled:opacity-60 sm:w-auto"
                     >
                       {busy === "link" ? "Opening Discord…" : "Link Discord"}
                     </button>
@@ -268,7 +283,7 @@ export function JoinDiscordClient({
                 </div>
               </li>
 
-              <li className="flex gap-4">
+              <li className="flex gap-3.5 sm:gap-4">
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/[0.08] text-sm font-medium text-snow">
                   2
                 </span>
@@ -281,14 +296,14 @@ export function JoinDiscordClient({
                     href={inviteUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-3 inline-flex rounded-full border border-white/20 px-4 py-2.5 text-sm font-medium text-snow transition hover:border-white/35 hover:bg-white/[0.06]"
+                    className="mt-3 flex min-h-11 w-full items-center justify-center rounded-full border border-white/20 px-4 text-sm font-medium text-snow transition active:scale-[0.98] hover:border-white/35 hover:bg-white/[0.06] sm:inline-flex sm:w-auto"
                   >
                     Open Discord invite
                   </a>
                 </div>
               </li>
 
-              <li className="flex gap-4">
+              <li className="flex gap-3.5 sm:gap-4">
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/[0.08] text-sm font-medium text-snow">
                   3
                 </span>
@@ -303,7 +318,7 @@ export function JoinDiscordClient({
                     type="button"
                     disabled={busy !== null || !linked}
                     onClick={() => void verifyMembership()}
-                    className="mt-3 rounded-full bg-snow px-4 py-2.5 text-sm font-medium text-void transition hover:bg-white disabled:opacity-50"
+                    className="mt-3 flex min-h-11 w-full items-center justify-center rounded-full bg-snow px-4 text-sm font-medium text-void transition active:scale-[0.98] hover:bg-white disabled:opacity-50 sm:w-auto"
                   >
                     {busy === "verify" ? "Checking…" : "I’ve joined — verify"}
                   </button>
@@ -312,25 +327,17 @@ export function JoinDiscordClient({
             </ol>
 
             {error ? (
-              <p className="mt-6 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+              <p className="mt-5 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-sm text-red-200">
                 {error}
               </p>
             ) : null}
 
-            <div className="mt-8 flex flex-col items-center gap-2 text-center">
-              <button
-                type="button"
-                disabled={busy !== null}
-                onClick={() => void signOut()}
-                className="rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-cloud transition hover:border-white/30 hover:text-snow disabled:opacity-60"
-              >
-                {busy === "signout" ? "Signing out…" : "Sign out"}
-              </button>
-              <p className="text-xs text-mute">
-                Wrong Discord or Anikura account? Unlink above, or sign out and
-                start over.
-              </p>
-            </div>
+            <p className="mt-6 text-center text-xs leading-relaxed text-mute">
+              Wrong Discord on your phone? Tap{" "}
+              <span className="text-cloud">Wrong Discord — unlink</span>, then
+              link your main account. Or use{" "}
+              <span className="text-cloud">Sign out</span> at the top.
+            </p>
           </div>
         </div>
       </div>
