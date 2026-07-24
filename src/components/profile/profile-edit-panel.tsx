@@ -1,6 +1,7 @@
 "use client";
 
 import { SafeImage } from "@/components/safe-image";
+import { ImageCropDialog } from "@/components/profile/image-crop-dialog";
 import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
@@ -20,6 +21,11 @@ type Props = {
   profile: PublicProfile;
   onSaved: (profile: PublicProfile) => void;
   onCancel?: () => void;
+};
+
+type PendingCrop = {
+  kind: "avatar" | "banner";
+  src: string;
 };
 
 const PRESET_COLORS = [
@@ -48,6 +54,7 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [usernameHint, setUsernameHint] = useState<string | null>(null);
+  const [pendingCrop, setPendingCrop] = useState<PendingCrop | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -65,15 +72,48 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
   useEffect(() => {
     if (!onCancel) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !busy) onCancel();
+      if (e.key === "Escape" && !busy && !pendingCrop) onCancel();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [busy, onCancel]);
+  }, [busy, onCancel, pendingCrop]);
+
+  useEffect(() => {
+    return () => {
+      if (pendingCrop?.src.startsWith("blob:")) {
+        URL.revokeObjectURL(pendingCrop.src);
+      }
+    };
+  }, [pendingCrop]);
+
+  function revokePending() {
+    setPendingCrop((prev) => {
+      if (prev?.src.startsWith("blob:")) URL.revokeObjectURL(prev.src);
+      return null;
+    });
+  }
+
+  function openCropFromFile(kind: "avatar" | "banner", file: File) {
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose an image file.");
+      return;
+    }
+    setError(null);
+    const src = URL.createObjectURL(file);
+    setPendingCrop((prev) => {
+      if (prev?.src.startsWith("blob:")) URL.revokeObjectURL(prev.src);
+      return { kind, src };
+    });
+  }
 
   async function upload(kind: "avatars" | "banners", file: File) {
     const supabase = createClient();
-    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const ext =
+      file.type === "image/png"
+        ? "png"
+        : file.type === "image/webp"
+          ? "webp"
+          : "jpg";
     const path = `${profile.id}/${kind}-${Date.now()}.${ext}`;
     const { error: upErr } = await supabase.storage
       .from(kind)
@@ -83,34 +123,42 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
     return data.publicUrl;
   }
 
-  async function onAvatar(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function onCroppedFile(file: File) {
+    if (!pendingCrop) return;
+    const kind = pendingCrop.kind;
+    const bucket = kind === "avatar" ? "avatars" : "banners";
+    revokePending();
     setBusy(true);
     setError(null);
     try {
-      const url = await upload("avatars", file);
-      setAvatarUrl(url);
+      const url = await upload(bucket, file);
+      if (kind === "avatar") setAvatarUrl(url);
+      else setBannerUrl(url);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Avatar upload failed");
+      setError(
+        err instanceof Error
+          ? err.message
+          : kind === "avatar"
+            ? "Avatar upload failed"
+            : "Banner upload failed",
+      );
     } finally {
       setBusy(false);
     }
   }
 
-  async function onBanner(e: React.ChangeEvent<HTMLInputElement>) {
+  function onAvatarPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const url = await upload("banners", file);
-      setBannerUrl(url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Banner upload failed");
-    } finally {
-      setBusy(false);
-    }
+    openCropFromFile("avatar", file);
+  }
+
+  function onBannerPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    openCropFromFile("banner", file);
   }
 
   async function checkUsername(raw: string) {
@@ -192,23 +240,25 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
 
   if (!mounted) return null;
 
-  return createPortal(
-    <div className="fixed inset-0 z-[220] flex items-end justify-center p-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:items-center sm:p-6">
-      <button
-        type="button"
-        aria-label="Close edit profile"
-        className="absolute inset-0 bg-black/65 backdrop-blur-[4px]"
-        onClick={() => {
-          if (!busy) onCancel?.();
-        }}
-      />
-      <form
-        onSubmit={save}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        className="relative z-[1] flex max-h-[min(92dvh,52rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[24px] border border-white/[0.12] bg-[#111214] shadow-[0_40px_100px_rgba(0,0,0,0.65)]"
-      >
+  return (
+    <>
+      {createPortal(
+        <div className="fixed inset-0 z-[220] flex items-end justify-center p-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:items-center sm:p-6">
+          <button
+            type="button"
+            aria-label="Close edit profile"
+            className="absolute inset-0 bg-black/65 backdrop-blur-[4px]"
+            onClick={() => {
+              if (!busy && !pendingCrop) onCancel?.();
+            }}
+          />
+          <form
+            onSubmit={save}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            className="relative z-[1] flex max-h-[min(92dvh,52rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[24px] border border-white/[0.12] bg-[#111214] shadow-[0_40px_100px_rgba(0,0,0,0.65)]"
+          >
         <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] px-5 py-4">
           <div>
             <h2
@@ -317,13 +367,13 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
                   ) : null}
                 </div>
                 <label className="cursor-pointer rounded-full border border-white/15 px-3 py-1.5 text-sm text-[#dbdee1] transition hover:border-white/30 hover:text-snow">
-                  Upload
+                  {busy ? "Uploading…" : "Upload & crop"}
                   <input
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={onAvatar}
-                    disabled={busy}
+                    onChange={onAvatarPick}
+                    disabled={busy || pendingCrop !== null}
                   />
                 </label>
               </div>
@@ -352,13 +402,13 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
                   )}
                 </div>
                 <label className="inline-flex cursor-pointer rounded-full border border-white/15 px-3 py-1.5 text-sm text-[#dbdee1] transition hover:border-white/30 hover:text-snow">
-                  Upload
+                  {busy ? "Uploading…" : "Upload & crop"}
                   <input
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={onBanner}
-                    disabled={busy}
+                    onChange={onBannerPick}
+                    disabled={busy || pendingCrop !== null}
                   />
                 </label>
               </div>
@@ -451,7 +501,17 @@ export function ProfileEditPanel({ profile, onSaved, onCancel }: Props) {
           </button>
         </div>
       </form>
-    </div>,
-    document.body,
+        </div>,
+        document.body,
+      )}
+      {pendingCrop ? (
+        <ImageCropDialog
+          kind={pendingCrop.kind}
+          imageSrc={pendingCrop.src}
+          onCancel={revokePending}
+          onCropped={(file) => void onCroppedFile(file)}
+        />
+      ) : null}
+    </>
   );
 }
