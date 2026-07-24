@@ -4,6 +4,7 @@ import { getSessionUser } from "@/lib/auth";
 import {
   discordIdFromIdentities,
   getDiscordInviteUrl,
+  hasStaleDiscordBypass,
   isDiscordGateConfigured,
   skipsDiscordGate,
 } from "@/lib/discord-gate";
@@ -42,6 +43,25 @@ async function persistBypassVerified(
   });
 }
 
+/** Drop old admin/email exemption flags so the user must Connect Discord. */
+async function clearStaleBypass(
+  userId: string,
+  existingMeta: Record<string, unknown> | undefined,
+) {
+  const service = createServiceClient();
+  if (!service) return;
+  const nextMeta = { ...(existingMeta ?? {}) };
+  delete nextMeta.discord_verified;
+  delete nextMeta.discord_bypass;
+  await service.auth.admin.updateUserById(userId, {
+    app_metadata: nextMeta,
+  });
+  await service
+    .from("profiles")
+    .update({ discord_verified_at: null })
+    .eq("id", userId);
+}
+
 export default async function JoinDiscordPage({ searchParams }: Props) {
   const params = await searchParams;
   const next = params.next?.startsWith("/") ? params.next : "/";
@@ -56,21 +76,24 @@ export default async function JoinDiscordPage({ searchParams }: Props) {
   }
 
   const gateConfigured = isDiscordGateConfigured();
+  const appMeta = user.app_metadata as Record<string, unknown> | undefined;
 
-  // Admins + special-case bypass emails skip the Discord gate.
+  // Optional DISCORD_BYPASS_EMAILS only.
   if (gateConfigured && skipsDiscordGate(user.email)) {
     if (user.app_metadata?.discord_verified !== true) {
-      await persistBypassVerified(
-        user.id,
-        user.app_metadata as Record<string, unknown> | undefined,
-      );
+      await persistBypassVerified(user.id, appMeta);
       const supabase = await createClient();
       await supabase.auth.refreshSession();
     }
     redirect(next);
   }
 
-  if (gateConfigured && user.app_metadata?.discord_verified === true) {
+  // Admin (or others) previously auto-exempted — wipe and show Connect Discord.
+  if (gateConfigured && hasStaleDiscordBypass(user.email, appMeta)) {
+    await clearStaleBypass(user.id, appMeta);
+    const supabase = await createClient();
+    await supabase.auth.refreshSession();
+  } else if (gateConfigured && user.app_metadata?.discord_verified === true) {
     redirect(next);
   }
 
@@ -82,18 +105,22 @@ export default async function JoinDiscordPage({ searchParams }: Props) {
     .maybeSingle();
 
   // Profile says verified but JWT is stale — heal app_metadata so the proxy lets them through.
+  // Skip heal when this was a wiped bypass (no verified_at after clear).
   if (
     gateConfigured &&
     profile?.discord_verified_at &&
-    user.app_metadata?.discord_verified !== true
+    user.app_metadata?.discord_verified !== true &&
+    !hasStaleDiscordBypass(user.email, appMeta)
   ) {
     const service = createServiceClient();
     if (service) {
+      const healedMeta = { ...(appMeta ?? {}) };
+      delete healedMeta.discord_bypass;
       await service.auth.admin.updateUserById(user.id, {
         app_metadata: {
-          ...(user.app_metadata ?? {}),
+          ...healedMeta,
           discord_verified: true,
-          discord_id: profile.discord_id ?? user.app_metadata?.discord_id,
+          discord_id: profile.discord_id ?? appMeta?.discord_id,
         },
       });
       await supabase.auth.refreshSession();

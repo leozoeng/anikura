@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  hasStaleDiscordBypass,
   isDiscordGateConfigured,
   skipsDiscordGate,
 } from "@/lib/discord-gate";
@@ -37,11 +38,13 @@ export async function GET(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const appMeta = user?.app_metadata as Record<string, unknown> | undefined;
   if (
     user &&
     isDiscordGateConfigured() &&
     !skipsDiscordGate(user.email) &&
-    user.app_metadata?.discord_verified !== true
+    (user.app_metadata?.discord_verified !== true ||
+      hasStaleDiscordBypass(user.email, appMeta))
   ) {
     const join = new URL("/join-discord", site);
     join.searchParams.set("next", next === "/join-discord" ? "/" : next);

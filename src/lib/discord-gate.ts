@@ -1,15 +1,9 @@
 import { ANIKURA_DISCORD_INVITE } from "@/lib/discord-partners";
 
-import { isAllowlistedAdminEmail } from "@/lib/auth";
-
 /**
- * One-off Discord gate exemptions (email only — not admins).
- * itherealamon: already in Discord, can't complete OAuth link on their account.
+ * Optional one-off Discord gate exemptions via env only (`DISCORD_BYPASS_EMAILS`).
+ * Admins are NOT exempt — they go through Connect Discord like everyone else.
  */
-const DISCORD_BYPASS_EMAILS = new Set([
-  "itherealamon@gmail.com",
-]);
-
 export function getDiscordInviteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_DISCORD_INVITE_URL?.trim() || ANIKURA_DISCORD_INVITE
@@ -35,13 +29,12 @@ export function isDiscordGateConfigured(): boolean {
   return Boolean(getDiscordGuildId() && getDiscordBotToken());
 }
 
-/** Skip Discord onboarding for a tiny allowlist (special cases only). */
+/** Skip Discord onboarding for emails in DISCORD_BYPASS_EMAILS only. */
 export function isDiscordBypassEmail(
   email: string | null | undefined,
 ): boolean {
   if (!email) return false;
   const normalized = email.trim().toLowerCase();
-  if (DISCORD_BYPASS_EMAILS.has(normalized)) return true;
   const fromEnv = process.env.DISCORD_BYPASS_EMAILS ?? "";
   return fromEnv
     .split(",")
@@ -50,12 +43,22 @@ export function isDiscordBypassEmail(
     .includes(normalized);
 }
 
-/** Admins + explicit Discord bypass emails skip the join gate. */
-export function skipsDiscordGate(email: string | null | undefined): boolean {
-  return isAllowlistedAdminEmail(email) || isDiscordBypassEmail(email);
+/**
+ * True when verification was granted by an old email/admin exemption
+ * (`discord_bypass`) that no longer applies — force Connect Discord again.
+ */
+export function hasStaleDiscordBypass(
+  email: string | null | undefined,
+  appMetadata: Record<string, unknown> | null | undefined,
+): boolean {
+  if (appMetadata?.discord_bypass !== true) return false;
+  return !isDiscordBypassEmail(email);
 }
 
-export { isAllowlistedAdminEmail };
+/** Explicit Discord bypass emails only (admins must verify). */
+export function skipsDiscordGate(email: string | null | undefined): boolean {
+  return isDiscordBypassEmail(email);
+}
 
 /**
  * Check whether a Discord user is a member of the Anikura guild.

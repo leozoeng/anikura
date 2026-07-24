@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import {
+  hasStaleDiscordBypass,
   isDiscordGateConfigured,
   skipsDiscordGate,
 } from "@/lib/discord-gate";
@@ -98,9 +99,14 @@ function copyCookies(from: NextResponse, to: NextResponse) {
 
 function isDiscordVerified(claims: SessionClaims | null): boolean {
   if (!claims) return false;
+  const email = typeof claims.email === "string" ? claims.email : null;
+  // Old admin/email exemptions left discord_bypass — force Connect Discord again.
+  if (hasStaleDiscordBypass(email, claims.app_metadata ?? null)) {
+    return false;
+  }
   if (claims.app_metadata?.discord_verified === true) return true;
-  // Admins + explicit Discord bypass emails skip the gate.
-  if (skipsDiscordGate(typeof claims.email === "string" ? claims.email : null)) {
+  // Optional DISCORD_BYPASS_EMAILS only (admins must verify).
+  if (skipsDiscordGate(email)) {
     return true;
   }
   return false;

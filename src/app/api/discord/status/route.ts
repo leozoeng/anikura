@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   discordIdFromIdentities,
+  hasStaleDiscordBypass,
   isDiscordGateConfigured,
   isDiscordGuildMember,
   skipsDiscordGate,
@@ -142,6 +143,35 @@ export async function GET() {
       gateRequired: true,
       verified: true,
       linked: true,
+    } satisfies StatusBody);
+  }
+
+  const appMeta = user.app_metadata as Record<string, unknown> | undefined;
+
+  // Old admin/email exemption — clear so Connect Discord is required.
+  if (hasStaleDiscordBypass(user.email, appMeta)) {
+    const service = createServiceClient();
+    if (service) {
+      const nextMeta = { ...(appMeta ?? {}) };
+      delete nextMeta.discord_verified;
+      delete nextMeta.discord_bypass;
+      await service.auth.admin.updateUserById(user.id, {
+        app_metadata: nextMeta,
+      });
+      await service
+        .from("profiles")
+        .update({ discord_verified_at: null })
+        .eq("id", user.id);
+    }
+    return NextResponse.json({
+      gateRequired: true,
+      verified: false,
+      linked: Boolean(
+        discordIdFromIdentities(
+          user.identities as DiscordIdentityLike[] | undefined,
+        ),
+      ),
+      healed: true,
     } satisfies StatusBody);
   }
 

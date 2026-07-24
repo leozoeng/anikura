@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { getSessionUser } from "@/lib/auth";
 import {
+  hasStaleDiscordBypass,
   isDiscordGateConfigured,
   skipsDiscordGate,
 } from "@/lib/discord-gate";
@@ -37,11 +38,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   const user = await getSessionUser();
   if (user) {
-    if (
+    const appMeta = user.app_metadata as Record<string, unknown> | undefined;
+    const needsDiscord =
       isDiscordGateConfigured() &&
       !skipsDiscordGate(user.email) &&
-      user.app_metadata?.discord_verified !== true
-    ) {
+      (user.app_metadata?.discord_verified !== true ||
+        hasStaleDiscordBypass(user.email, appMeta));
+    if (needsDiscord) {
       redirect(
         `/join-discord?next=${encodeURIComponent(next === "/login" ? "/" : next)}`,
       );

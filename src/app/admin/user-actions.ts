@@ -162,8 +162,8 @@ export async function revokeDiscordVerification(
     .eq("id", userId)
     .maybeSingle();
 
-  if (isAllowlistedAdminEmail(profile?.email)) {
-    throw new Error("Cannot revoke Discord on an allowlisted admin");
+  if (!profile) {
+    throw new Error("User not found");
   }
 
   const { data: authData, error: getError } =
