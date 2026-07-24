@@ -43,7 +43,15 @@ export function JoinDiscordClient({
       });
       if (err) throw err;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not open Discord.");
+      const raw = err instanceof Error ? err.message : "Could not open Discord.";
+      const lower = raw.toLowerCase();
+      if (lower.includes("manual linking")) {
+        setError(
+          "Discord linking is turned off in Supabase. Open Authentication → Providers → enable “Allow manual linking”, then try again.",
+        );
+      } else {
+        setError(raw);
+      }
       setBusy(null);
     }
   }
