@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { getSessionUser } from "@/lib/auth";
 import {
-  isAllowlistedAdminEmail,
   isDiscordGateConfigured,
+  skipsDiscordGate,
 } from "@/lib/discord-gate";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -39,7 +39,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   if (user) {
     if (
       isDiscordGateConfigured() &&
-      !isAllowlistedAdminEmail(user.email) &&
+      !skipsDiscordGate(user.email) &&
       user.app_metadata?.discord_verified !== true
     ) {
       redirect(

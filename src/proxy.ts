@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import {
-  isAllowlistedAdminEmail,
   isDiscordGateConfigured,
+  skipsDiscordGate,
 } from "@/lib/discord-gate";
 import { vanityUsernameFromParam } from "@/lib/profile";
 import {
@@ -99,8 +99,8 @@ function copyCookies(from: NextResponse, to: NextResponse) {
 function isDiscordVerified(claims: SessionClaims | null): boolean {
   if (!claims) return false;
   if (claims.app_metadata?.discord_verified === true) return true;
-  // Admins bypass Discord so they can configure the gate.
-  if (isAllowlistedAdminEmail(typeof claims.email === "string" ? claims.email : null)) {
+  // Admins + explicit Discord bypass emails skip the gate.
+  if (skipsDiscordGate(typeof claims.email === "string" ? claims.email : null)) {
     return true;
   }
   return false;

@@ -14,6 +14,7 @@ import {
 import {
   deleteUserAccount,
   endUserSessions,
+  grantDiscordAccess,
   revokeDiscordVerification,
 } from "@/app/admin/user-actions";
 import { useAdminFeedback } from "@/components/admin/admin-feedback";
@@ -76,6 +77,7 @@ function UserRow({
   onEndSessions,
   onDelete,
   onRevokeDiscord,
+  onGrantDiscord,
 }: {
   user: AdminBadgeUser;
   busy: boolean;
@@ -84,6 +86,7 @@ function UserRow({
   onEndSessions: (userId: string) => void;
   onDelete: (user: AdminBadgeUser) => void;
   onRevokeDiscord: (user: AdminBadgeUser) => void;
+  onGrantDiscord: (user: AdminBadgeUser) => void;
 }) {
   const name = adminDisplayName(user);
   const handle = handleFromProfile(user);
@@ -162,6 +165,17 @@ function UserRow({
             className="rounded-md px-2 py-1 text-[0.7rem] text-amber-200/80 transition hover:bg-amber-500/10 hover:text-amber-100 disabled:opacity-50"
           >
             Reset Discord
+          </button>
+        ) : null}
+        {!user.discord_verified_at && user.role !== "admin" ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onGrantDiscord(user)}
+            title="Skip Discord gate for this account (special case)"
+            className="rounded-md px-2 py-1 text-[0.7rem] text-emerald-200/80 transition hover:bg-emerald-500/10 hover:text-emerald-100 disabled:opacity-50"
+          >
+            Grant Discord
           </button>
         ) : null}
         <button
@@ -409,6 +423,33 @@ export function BadgeManager() {
     }
   }
 
+  async function onGrantDiscord(user: AdminBadgeUser) {
+    const label = adminDisplayName(user);
+    const ok = window.confirm(
+      `Grant Discord access to ${label} without linking?\n\nUse only for special cases who are already in the server.`,
+    );
+    if (!ok) return;
+
+    setBusyId(user.id);
+    setError(null);
+    try {
+      await grantDiscordAccess(user.id);
+      const granted: AdminBadgeUser = {
+        ...user,
+        discord_verified_at: new Date().toISOString(),
+      };
+      patchUser(granted);
+      toast(`${label} · Discord access granted`);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Couldn’t grant Discord access";
+      setError(msg);
+      toast(msg, "err");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   const showResults = query.trim().length > 0;
   const list =
     tab === "signups"
@@ -479,6 +520,7 @@ export function BadgeManager() {
                   onEndSessions={onEndSessions}
                   onDelete={onDelete}
                   onRevokeDiscord={onRevokeDiscord}
+                  onGrantDiscord={onGrantDiscord}
                 />
               ))}
             </ul>
@@ -564,6 +606,7 @@ export function BadgeManager() {
                   onEndSessions={onEndSessions}
                   onDelete={onDelete}
                   onRevokeDiscord={onRevokeDiscord}
+                  onGrantDiscord={onGrantDiscord}
                 />
               ))}
             </ul>

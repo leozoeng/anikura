@@ -4,8 +4,8 @@ import { getSessionUser } from "@/lib/auth";
 import {
   discordIdFromIdentities,
   getDiscordInviteUrl,
-  isAllowlistedAdminEmail,
   isDiscordGateConfigured,
+  skipsDiscordGate,
 } from "@/lib/discord-gate";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -20,6 +20,27 @@ export const dynamic = "force-dynamic";
 type Props = {
   searchParams: Promise<{ next?: string }>;
 };
+
+async function persistBypassVerified(
+  userId: string,
+  existingMeta: Record<string, unknown> | undefined,
+) {
+  const service = createServiceClient();
+  if (!service) return;
+  const verifiedAt = new Date().toISOString();
+  await service
+    .from("profiles")
+    .update({ discord_verified_at: verifiedAt })
+    .eq("id", userId)
+    .is("discord_verified_at", null);
+  await service.auth.admin.updateUserById(userId, {
+    app_metadata: {
+      ...(existingMeta ?? {}),
+      discord_verified: true,
+      discord_bypass: true,
+    },
+  });
+}
 
 export default async function JoinDiscordPage({ searchParams }: Props) {
   const params = await searchParams;
@@ -36,8 +57,16 @@ export default async function JoinDiscordPage({ searchParams }: Props) {
 
   const gateConfigured = isDiscordGateConfigured();
 
-  // Admins skip the Discord gate.
-  if (gateConfigured && isAllowlistedAdminEmail(user.email)) {
+  // Admins + special-case bypass emails skip the Discord gate.
+  if (gateConfigured && skipsDiscordGate(user.email)) {
+    if (user.app_metadata?.discord_verified !== true) {
+      await persistBypassVerified(
+        user.id,
+        user.app_metadata as Record<string, unknown> | undefined,
+      );
+      const supabase = await createClient();
+      await supabase.auth.refreshSession();
+    }
     redirect(next);
   }
 

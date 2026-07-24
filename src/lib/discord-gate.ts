@@ -2,6 +2,14 @@ import { ANIKURA_DISCORD_INVITE } from "@/lib/discord-partners";
 
 import { isAllowlistedAdminEmail } from "@/lib/auth";
 
+/**
+ * One-off Discord gate exemptions (email only — not admins).
+ * itherealamon: already in Discord, can't complete OAuth link on their account.
+ */
+const DISCORD_BYPASS_EMAILS = new Set([
+  "itherealamon@gmail.com",
+]);
+
 export function getDiscordInviteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_DISCORD_INVITE_URL?.trim() || ANIKURA_DISCORD_INVITE
@@ -25,6 +33,26 @@ export function getDiscordBotToken(): string | null {
 /** Discord gate is active when guild + bot are configured. */
 export function isDiscordGateConfigured(): boolean {
   return Boolean(getDiscordGuildId() && getDiscordBotToken());
+}
+
+/** Skip Discord onboarding for a tiny allowlist (special cases only). */
+export function isDiscordBypassEmail(
+  email: string | null | undefined,
+): boolean {
+  if (!email) return false;
+  const normalized = email.trim().toLowerCase();
+  if (DISCORD_BYPASS_EMAILS.has(normalized)) return true;
+  const fromEnv = process.env.DISCORD_BYPASS_EMAILS ?? "";
+  return fromEnv
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(normalized);
+}
+
+/** Admins + explicit Discord bypass emails skip the join gate. */
+export function skipsDiscordGate(email: string | null | undefined): boolean {
+  return isAllowlistedAdminEmail(email) || isDiscordBypassEmail(email);
 }
 
 export { isAllowlistedAdminEmail };

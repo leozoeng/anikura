@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import {
   discordIdFromIdentities,
-  isAllowlistedAdminEmail,
   isDiscordGateConfigured,
   isDiscordGuildMember,
+  skipsDiscordGate,
   type DiscordIdentityLike,
 } from "@/lib/discord-gate";
 import { createClient } from "@/lib/supabase/server";
@@ -112,7 +112,32 @@ export async function GET() {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  if (isAllowlistedAdminEmail(user.email)) {
+  if (skipsDiscordGate(user.email)) {
+    // Persist so admin Members shows verified and JWT stays clear of the gate.
+    if (user.app_metadata?.discord_verified !== true) {
+      const service = createServiceClient();
+      if (service) {
+        const verifiedAt = new Date().toISOString();
+        await service
+          .from("profiles")
+          .update({ discord_verified_at: verifiedAt })
+          .eq("id", user.id)
+          .is("discord_verified_at", null);
+        await service.auth.admin.updateUserById(user.id, {
+          app_metadata: {
+            ...(user.app_metadata ?? {}),
+            discord_verified: true,
+            discord_bypass: true,
+          },
+        });
+        return NextResponse.json({
+          gateRequired: true,
+          verified: true,
+          linked: true,
+          healed: true,
+        } satisfies StatusBody);
+      }
+    }
     return NextResponse.json({
       gateRequired: true,
       verified: true,

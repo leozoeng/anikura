@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
-  isAllowlistedAdminEmail,
   isDiscordGateConfigured,
+  skipsDiscordGate,
 } from "@/lib/discord-gate";
 import { createClient } from "@/lib/supabase/server";
 import { getPublicSiteUrl, toPublicOrigin } from "@/lib/site-url";
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
   if (
     user &&
     isDiscordGateConfigured() &&
-    !isAllowlistedAdminEmail(user.email) &&
+    !skipsDiscordGate(user.email) &&
     user.app_metadata?.discord_verified !== true
   ) {
     const join = new URL("/join-discord", site);

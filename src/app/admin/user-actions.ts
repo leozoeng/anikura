@@ -177,6 +177,7 @@ export async function revokeDiscordVerification(
   const nextMeta = { ...existingMeta };
   delete nextMeta.discord_verified;
   delete nextMeta.discord_id;
+  delete nextMeta.discord_bypass;
 
   const { error: metaError } = await service.auth.admin.updateUserById(
     userId,
@@ -196,6 +197,48 @@ export async function revokeDiscordVerification(
   const supabase = await createClient();
   await supabase.rpc("admin_revoke_auth_sessions", { p_user_id: userId });
   await service.from("presence").delete().eq("user_id", userId);
+
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
+/**
+ * Special-case: mark Discord verified without OAuth (already in server / stuck).
+ */
+export async function grantDiscordAccess(
+  userId: string,
+): Promise<{ ok: true }> {
+  await requireAdmin();
+  assertUuid(userId, "user id");
+
+  const service = createServiceClient();
+  if (!service) {
+    throw new Error("Service role key missing");
+  }
+
+  const { data: authData, error: getError } =
+    await service.auth.admin.getUserById(userId);
+  if (getError) throw new Error(getError.message);
+  if (!authData.user) throw new Error("User not found");
+
+  const verifiedAt = new Date().toISOString();
+  const { error: profileError } = await service
+    .from("profiles")
+    .update({ discord_verified_at: verifiedAt })
+    .eq("id", userId);
+  if (profileError) throw new Error(profileError.message);
+
+  const { error: metaError } = await service.auth.admin.updateUserById(
+    userId,
+    {
+      app_metadata: {
+        ...(authData.user.app_metadata ?? {}),
+        discord_verified: true,
+        discord_bypass: true,
+      },
+    },
+  );
+  if (metaError) throw new Error(metaError.message);
 
   revalidatePath("/admin");
   return { ok: true };
