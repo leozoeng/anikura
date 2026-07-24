@@ -501,16 +501,14 @@ export function ProfileView({
       </div>
 
       {editing && isOwner ? (
-        <div className="mt-4 sm:mt-6">
-          <ProfileEditPanel
-            profile={live}
-            onSaved={(next) => {
-              setLive(next);
-              setEditing(false);
-            }}
-            onCancel={() => setEditing(false)}
-          />
-        </div>
+        <ProfileEditPanel
+          profile={live}
+          onSaved={(next) => {
+            setLive(next);
+            setEditing(false);
+          }}
+          onCancel={() => setEditing(false)}
+        />
       ) : null}
 
       {pickerWidget && isOwner ? (
