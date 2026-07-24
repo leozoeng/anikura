@@ -144,10 +144,10 @@ export function WatchExperience(props: Props) {
     }
   }, []);
 
+  // Arm only after the embed reports substantial progress (see AutoplayNext).
   useEffect(() => {
-    if (settings.autoplayNext) setAutoplayArmed(true);
-    else setAutoplayArmed(false);
-  }, [settings.autoplayNext, current.number]);
+    setAutoplayArmed(false);
+  }, [current.number, settings.autoplayNext]);
 
   useEffect(() => {
     document.body.dataset.theater = settings.theaterMode ? "true" : "false";
