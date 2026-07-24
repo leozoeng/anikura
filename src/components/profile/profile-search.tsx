@@ -18,10 +18,35 @@ type SearchHit = {
   username: string | null;
   nickname: string | null;
   avatar_url: string | null;
+  banner_url?: string | null;
   bio: string | null;
   badges: string[] | null;
   created_at: string;
 };
+
+function hasMedia(url: string | null | undefined): boolean {
+  return Boolean(url && url.trim());
+}
+
+/** Prefer people who set avatar + banner so Suggested looks finished. */
+function profileCompletenessRank(hit: SearchHit): number {
+  const avatar = hasMedia(hit.avatar_url);
+  const banner = hasMedia(hit.banner_url);
+  if (avatar && banner) return 0;
+  if (avatar) return 1;
+  if (banner) return 2;
+  return 3;
+}
+
+function sortByProfileCompleteness(hits: SearchHit[]): SearchHit[] {
+  return [...hits].sort((a, b) => {
+    const byLook = profileCompletenessRank(a) - profileCompletenessRank(b);
+    if (byLook !== 0) return byLook;
+    return (
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  });
+}
 
 export function ProfileSearch({
   className = "",
@@ -40,6 +65,8 @@ export function ProfileSearch({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const suggestVisible = compact ? 6 : 8;
+
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
     let cancelled = false;
@@ -47,13 +74,15 @@ export function ProfileSearch({
     void (async () => {
       try {
         const supabase = createClient();
+        // Pull the RPC max, then keep the fullest-looking profiles on top.
         const { data, error: err } = await supabase.rpc("suggest_profiles", {
-          p_limit: compact ? 6 : 8,
+          p_limit: 16,
           p_exclude: excludeUserId ?? null,
         });
         if (cancelled) return;
         if (err) throw err;
-        setSuggestions((data ?? []) as SearchHit[]);
+        const ranked = sortByProfileCompleteness((data ?? []) as SearchHit[]);
+        setSuggestions(ranked.slice(0, suggestVisible));
       } catch {
         if (!cancelled) setSuggestions([]);
       }
@@ -62,7 +91,7 @@ export function ProfileSearch({
     return () => {
       cancelled = true;
     };
-  }, [compact, excludeUserId]);
+  }, [excludeUserId, suggestVisible]);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
@@ -81,10 +110,23 @@ export function ProfileSearch({
           const supabase = createClient();
           const { data, error: err } = await supabase.rpc("search_profiles", {
             p_query: q,
-            p_limit: 12,
+            p_limit: 24,
           });
           if (err) throw err;
-          setHits((data ?? []) as SearchHit[]);
+          const rows = (data ?? []) as SearchHit[];
+          const needle = q.toLowerCase();
+          const ranked = [...rows].sort((a, b) => {
+            const matchRank = (hit: SearchHit) => {
+              const u = (hit.username ?? "").toLowerCase();
+              if (u === needle) return 0;
+              if (u.startsWith(needle)) return 1;
+              return 2;
+            };
+            const byMatch = matchRank(a) - matchRank(b);
+            if (byMatch !== 0) return byMatch;
+            return profileCompletenessRank(a) - profileCompletenessRank(b);
+          });
+          setHits(ranked.slice(0, 12));
           setError(null);
         } catch (err) {
           setHits([]);
