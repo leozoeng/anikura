@@ -23,7 +23,9 @@ export function JoinDiscordClient({
   gateConfigured: boolean;
 }) {
   const router = useRouter();
-  const [busy, setBusy] = useState<"link" | "verify" | null>(null);
+  const [busy, setBusy] = useState<
+    "link" | "verify" | "unlink" | "signout" | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
   const [linked, setLinked] = useState(discordLinked);
 
@@ -56,6 +58,50 @@ export function JoinDiscordClient({
     }
   }
 
+  async function unlinkDiscord() {
+    setBusy("unlink");
+    setError(null);
+    try {
+      const supabase = createClient();
+      const { data, error: idError } = await supabase.auth.getUserIdentities();
+      if (idError) throw idError;
+
+      const discord = data?.identities?.find((i) => i.provider === "discord");
+      if (!discord) {
+        setLinked(false);
+        return;
+      }
+
+      const { error: unlinkError } =
+        await supabase.auth.unlinkIdentity(discord);
+      if (unlinkError) throw unlinkError;
+
+      setLinked(false);
+      router.refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not unlink Discord. Try signing out.",
+      );
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function signOut() {
+    setBusy("signout");
+    setError(null);
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      window.location.assign("/login");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not sign out.");
+      setBusy(null);
+    }
+  }
+
   async function verifyMembership() {
     setBusy("verify");
     setError(null);
@@ -73,7 +119,7 @@ export function JoinDiscordClient({
         throw new Error(
           json.message ||
             (json.error === "not_in_server"
-              ? "Join the Discord server first, then verify again."
+              ? "Join the Discord server first, then try again."
               : json.error || "Verification failed."),
         );
       }
@@ -124,12 +170,14 @@ export function JoinDiscordClient({
             >
               Continue for now
             </Link>
-            <Link
-              href="/login"
-              className="rounded-full border border-white/20 px-4 py-2.5 text-sm font-medium text-snow"
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              disabled={busy !== null}
+              className="rounded-full border border-white/20 px-4 py-2.5 text-sm font-medium text-snow disabled:opacity-60"
             >
-              Back to login
-            </Link>
+              Sign out
+            </button>
           </div>
         </div>
       </div>
@@ -192,9 +240,21 @@ export function JoinDiscordClient({
                     Connect the Discord account you use on the server.
                   </p>
                   {linked ? (
-                    <p className="mt-3 text-sm text-emerald-300/90">
-                      Discord linked.
-                    </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <p className="text-sm text-emerald-300/90">
+                        Discord linked.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={busy !== null}
+                        onClick={() => void unlinkDiscord()}
+                        className="rounded-full border border-white/20 px-3 py-1.5 text-xs font-medium text-cloud transition hover:border-white/35 hover:text-snow disabled:opacity-60"
+                      >
+                        {busy === "unlink"
+                          ? "Unlinking…"
+                          : "Wrong Discord? Unlink"}
+                      </button>
+                    </div>
                   ) : (
                     <button
                       type="button"
@@ -257,12 +317,20 @@ export function JoinDiscordClient({
               </p>
             ) : null}
 
-            <p className="mt-8 text-center text-xs text-mute">
-              Wrong account?{" "}
-              <Link href="/login" className="text-cloud hover:text-snow">
-                Sign out from Account, then try again
-              </Link>
-            </p>
+            <div className="mt-8 flex flex-col items-center gap-2 text-center">
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => void signOut()}
+                className="rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-cloud transition hover:border-white/30 hover:text-snow disabled:opacity-60"
+              >
+                {busy === "signout" ? "Signing out…" : "Sign out"}
+              </button>
+              <p className="text-xs text-mute">
+                Wrong Discord or Anikura account? Unlink above, or sign out and
+                start over.
+              </p>
+            </div>
           </div>
         </div>
       </div>
