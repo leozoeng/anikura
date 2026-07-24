@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 import { getOrCreateSessionId } from "@/lib/session-id";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
-const HEARTBEAT_MS = 45_000;
+const HEARTBEAT_MS = 90_000;
 
 export function PresenceTracker() {
   const pathname = usePathname();

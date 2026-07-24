@@ -425,7 +425,7 @@ type DetailResponse = {
 
 export async function getNovelDetail(
   id: string,
-  options: FetchOptions = { cache: "no-store" },
+  options: FetchOptions = { revalidate: 180 },
 ): Promise<NovelDetail> {
   const json = await fetchJson<DetailResponse>(
     `/titles/${encodeURIComponent(id)}`,
@@ -510,7 +510,7 @@ type ChaptersResponse = {
 
 export async function getNovelChapters(
   id: string,
-  options: FetchOptions = { cache: "no-store" },
+  options: FetchOptions = { revalidate: 60 },
 ) {
   const json = await fetchJson<ChaptersResponse>(
     `/titles/${encodeURIComponent(id)}/chapters`,

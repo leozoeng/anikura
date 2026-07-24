@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  isAllowlistedAdminEmail,
+  isDiscordGateConfigured,
+} from "@/lib/discord-gate";
 import { createClient } from "@/lib/supabase/server";
 import { getPublicSiteUrl, toPublicOrigin } from "@/lib/site-url";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -27,6 +31,21 @@ export async function GET(request: Request) {
     return NextResponse.redirect(
       new URL(`/login?error=${encodeURIComponent(error.message)}`, site),
     );
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (
+    user &&
+    isDiscordGateConfigured() &&
+    !isAllowlistedAdminEmail(user.email) &&
+    user.app_metadata?.discord_verified !== true
+  ) {
+    const join = new URL("/join-discord", site);
+    join.searchParams.set("next", next === "/join-discord" ? "/" : next);
+    return NextResponse.redirect(join);
   }
 
   return NextResponse.redirect(new URL(next, site));

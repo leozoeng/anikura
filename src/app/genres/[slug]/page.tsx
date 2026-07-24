@@ -8,7 +8,7 @@ import type { CatalogAnime } from "@/lib/types";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 180;
 
 type Props = {
   params: Promise<{ slug: string }>;

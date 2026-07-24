@@ -6,7 +6,7 @@ import { getOrCreateSessionId } from "@/lib/session-id";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 /** Wall-clock seconds on /watch while the tab is visible (embed proxy). */
-const TICK_MS = 30_000;
+const TICK_MS = 60_000;
 
 export function WatchTimeTracker() {
   const pathname = usePathname();

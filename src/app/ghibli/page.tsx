@@ -15,7 +15,7 @@ export const metadata = {
     "Complete Studio Ghibli film collection on Anikura — Miyazaki and the Ghibli family.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type Props = {
   searchParams: Promise<{ view?: string }>;

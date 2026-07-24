@@ -17,7 +17,7 @@ import type { NovelListItem } from "@/lib/novel-types";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 type Props = {
   searchParams: Promise<{

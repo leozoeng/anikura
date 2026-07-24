@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { getSessionUser } from "@/lib/auth";
+import {
+  isAllowlistedAdminEmail,
+  isDiscordGateConfigured,
+} from "@/lib/discord-gate";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export const metadata = {
@@ -32,6 +36,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   const user = await getSessionUser();
   if (user) {
+    if (
+      isDiscordGateConfigured() &&
+      !isAllowlistedAdminEmail(user.email) &&
+      user.app_metadata?.discord_verified !== true
+    ) {
+      redirect(
+        `/join-discord?next=${encodeURIComponent(next === "/login" ? "/" : next)}`,
+      );
+    }
     redirect(next);
   }
 

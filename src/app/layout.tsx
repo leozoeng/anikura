@@ -4,7 +4,7 @@ import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { PresenceTracker } from "@/components/presence-tracker";
 import { SiteAtmosphere } from "@/components/site-atmosphere";
 import { SiteFooter } from "@/components/site-footer";
-import { SiteHeaderServer } from "@/components/site-header-server";
+import { SiteHeader } from "@/components/site-header";
 import { WatchTimeTracker } from "@/components/watch-time-tracker";
 import "./globals.css";
 
@@ -48,7 +48,7 @@ export default function RootLayout({
           <SiteAtmosphere />
         </div>
         <div className="noise" aria-hidden />
-        <SiteHeaderServer />
+        <SiteHeader />
         <PresenceTracker />
         <WatchTimeTracker />
         <main className="relative z-10 min-h-screen">{children}</main>

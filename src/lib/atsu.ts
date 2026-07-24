@@ -393,7 +393,7 @@ type MangaPageResponse = { mangaPage?: Record<string, unknown> };
 
 export async function getMangaDetail(
   id: string,
-  options: FetchOptions = { cache: "no-store" },
+  options: FetchOptions = { revalidate: 180 },
 ): Promise<MangaDetail> {
   const url = `${ORIGIN}/api/manga/page?id=${encodeURIComponent(id)}`;
   const json = await fetchJson<MangaPageResponse>(url, options);
@@ -468,7 +468,7 @@ export async function getMangaChaptersPage(
   id: string,
   page = 0,
   sort: "asc" | "desc" = "asc",
-  options: FetchOptions = { cache: "no-store" },
+  options: FetchOptions = { revalidate: 60 },
 ) {
   const url = `${ORIGIN}/api/manga/chapters?id=${encodeURIComponent(id)}&filter=all&sort=${sort}&page=${page}`;
   const json = await fetchJson<ChaptersResponse>(url, options);
@@ -481,7 +481,7 @@ export async function getMangaChaptersPage(
 
 export async function getAllMangaChapters(
   id: string,
-  options: FetchOptions = { cache: "no-store" },
+  options: FetchOptions = { revalidate: 60 },
 ) {
   const first = await getMangaChaptersPage(id, 0, "asc", options);
   if (first.pages <= 1) return dedupeChapters(first.chapters);

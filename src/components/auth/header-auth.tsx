@@ -7,39 +7,47 @@ import { AuthModal } from "@/components/auth/auth-modal";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
-type HeaderAuthProps = {
-  initialEmail?: string | null;
-  isAdmin?: boolean;
-  initialAvatarUrl?: string | null;
-  initialNickname?: string | null;
-};
-
 const accountChipClass =
   "group inline-flex h-9 items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] pl-1.5 pr-1.5 text-[0.8125rem] tracking-[-0.01em] text-cloud transition duration-300 hover:border-white/25 hover:bg-white/[0.08] hover:text-snow active:scale-[0.97] sm:pr-3";
 
-export function HeaderAuth({
-  initialEmail = null,
-  isAdmin = false,
-  initialAvatarUrl = null,
-  initialNickname = null,
-}: HeaderAuthProps) {
-  const [email, setEmail] = useState<string | null>(initialEmail);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl);
-  const [nickname, setNickname] = useState<string | null>(initialNickname);
+export function HeaderAuth() {
+  const [email, setEmail] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [nickname, setNickname] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    setEmail(initialEmail);
-    setAvatarUrl(initialAvatarUrl);
-    setNickname(initialNickname);
-  }, [initialEmail, initialAvatarUrl, initialNickname]);
-
-  useEffect(() => {
     if (!isSupabaseConfigured()) return;
 
     const supabase = createClient();
+
+    async function loadProfile(userId: string) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("avatar_url, nickname, role, email")
+        .eq("id", userId)
+        .maybeSingle();
+      setAvatarUrl(data?.avatar_url ?? null);
+      setNickname(data?.nickname ?? null);
+      setIsAdmin(data?.role === "admin");
+      if (data?.email) setEmail(data.email);
+    }
+
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      const nextEmail = session?.user?.email ?? null;
+      setEmail(nextEmail);
+      if (!session?.user) {
+        setAvatarUrl(null);
+        setNickname(null);
+        setIsAdmin(false);
+        return;
+      }
+      void loadProfile(session.user.id);
+    });
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -48,15 +56,10 @@ export function HeaderAuth({
       if (!session?.user) {
         setAvatarUrl(null);
         setNickname(null);
+        setIsAdmin(false);
         return;
       }
-      const { data } = await supabase
-        .from("profiles")
-        .select("avatar_url, nickname")
-        .eq("id", session.user.id)
-        .maybeSingle();
-      setAvatarUrl(data?.avatar_url ?? null);
-      setNickname(data?.nickname ?? null);
+      await loadProfile(session.user.id);
     });
 
     return () => subscription.unsubscribe();
@@ -69,6 +72,7 @@ export function HeaderAuth({
     setEmail(null);
     setAvatarUrl(null);
     setNickname(null);
+    setIsAdmin(false);
     setMenuOpen(false);
     window.location.assign("/");
   }

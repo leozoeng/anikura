@@ -130,7 +130,7 @@ export default async function AdminPage() {
 
   return (
     <>
-      <AdminRefresh intervalMs={45_000} />
+      <AdminRefresh intervalMs={90_000} />
       <AdminDashboard
         adminEmail={profile.email}
         activity={activity}

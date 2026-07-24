@@ -28,7 +28,7 @@ import {
 } from "@/lib/related";
 import type { CatalogAnime } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 180;
 
 type Props = {
   params: Promise<{ id: string; slug: string }>;

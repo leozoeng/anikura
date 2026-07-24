@@ -8,7 +8,7 @@ import { getShinkaiCollection } from "@/lib/shinkai";
 import type { CatalogAnime } from "@/lib/types";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 180;
 
 type Props = {
   searchParams: Promise<{ sort?: string; page?: string }>;

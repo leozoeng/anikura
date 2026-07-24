@@ -15,7 +15,7 @@ export const metadata = {
     "The Grand Line on Anikura — the main series and iconic One Piece films.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type Props = {
   searchParams: Promise<{ view?: string }>;

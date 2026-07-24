@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getAuthCallbackUrl } from "@/lib/site-url";
@@ -33,7 +32,9 @@ export function LoginForm({
           password,
         });
         if (err) throw err;
-        window.location.assign(nextPath);
+        window.location.assign(
+          `/join-discord?next=${encodeURIComponent(nextPath)}`,
+        );
         return;
       }
 
@@ -41,13 +42,17 @@ export function LoginForm({
         email: email.trim(),
         password,
         options: {
-          emailRedirectTo: getAuthCallbackUrl(nextPath),
+          emailRedirectTo: getAuthCallbackUrl(
+            `/join-discord?next=${encodeURIComponent(nextPath)}`,
+          ),
         },
       });
       if (err) throw err;
 
       if (data.session) {
-        window.location.assign(nextPath);
+        window.location.assign(
+          `/join-discord?next=${encodeURIComponent(nextPath)}`,
+        );
         return;
       }
 
@@ -69,7 +74,8 @@ export function LoginForm({
         {mode === "signin" ? "Sign in" : "Create account"}
       </h1>
       <p className="mt-2 text-sm text-cloud">
-        Email and password — simple, for saving your place later.
+        An account is required to use Anikura. After signing in, you&apos;ll
+        join the Discord to unlock watching.
       </p>
 
       <form onSubmit={onSubmit} className="mt-6 space-y-3.5">
@@ -146,9 +152,7 @@ export function LoginForm({
       </p>
 
       <p className="mt-4 text-center text-xs text-mute">
-        <Link href="/" className="hover:text-cloud">
-          ← Back home
-        </Link>
+        Members-only — account + Discord required.
       </p>
     </div>
   );

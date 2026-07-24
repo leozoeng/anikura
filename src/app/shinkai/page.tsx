@@ -13,7 +13,7 @@ export const metadata = {
     "Skies, rain, and quiet longing — Makoto Shinkai films on Anikura.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const TRAILER_PRIORITY = [
   /your name/i,

@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  /** Required for the production Docker / Coolify image. */
+  output: "standalone",
+
   images: {
     /**
      * Serve originals directly — never hit Vercel `/_next/image` (402 quota)

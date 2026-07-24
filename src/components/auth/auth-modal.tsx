@@ -96,7 +96,7 @@ export function AuthModal({
         });
         if (signError) throw signError;
         onClose();
-        window.location.reload();
+        window.location.assign("/join-discord");
         return;
       }
 
@@ -104,14 +104,14 @@ export function AuthModal({
         email: email.trim(),
         password,
         options: {
-          emailRedirectTo: getAuthCallbackUrl("/"),
+          emailRedirectTo: getAuthCallbackUrl("/join-discord"),
         },
       });
       if (signUpError) throw signUpError;
 
       if (data.session) {
         onClose();
-        window.location.reload();
+        window.location.assign("/join-discord");
         return;
       }
 

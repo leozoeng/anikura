@@ -9,7 +9,7 @@ import {
 } from "@/lib/genre-moods";
 import { fetchMoodArtOverrides } from "@/lib/mood-art";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 180;
 
 export const metadata = {
   title: "Genres & Moods",

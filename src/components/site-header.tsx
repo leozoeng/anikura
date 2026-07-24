@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { AnikuraLogo } from "@/components/anikura-logo";
 import { HeaderAuth } from "@/components/auth/header-auth";
 import { SearchCommand } from "@/components/search-command";
+import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 const links = [
   { href: "/", label: "Home" },
@@ -15,23 +17,12 @@ const links = [
   { href: "/novels", label: "Novels" },
 ];
 
-type SiteHeaderProps = {
-  email?: string | null;
-  isAdmin?: boolean;
-  avatarUrl?: string | null;
-  nickname?: string | null;
-};
-
-export function SiteHeader({
-  email = null,
-  isAdmin = false,
-  avatarUrl = null,
-  nickname = null,
-}: SiteHeaderProps) {
+export function SiteHeader() {
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const hideChrome = pathname.startsWith("/admin");
   const hideForReader =
     /\/manga\/[^/]+\/read\//.test(pathname) ||
@@ -62,6 +53,36 @@ export function SiteHeader({
     };
   }, [menuOpen]);
 
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    const supabase = createClient();
+
+    async function syncAdmin(userId: string | undefined) {
+      if (!userId) {
+        setIsAdmin(false);
+        return;
+      }
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .maybeSingle();
+      setIsAdmin(data?.role === "admin");
+    }
+
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      void syncAdmin(session?.user?.id);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      void syncAdmin(session?.user?.id);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   if (hideForReader) return null;
 
   const solid = scrolled || searchOpen || menuOpen;
@@ -75,12 +96,7 @@ export function SiteHeader({
           <AnikuraLogo size={34} />
           <span className="text-sm text-mute">Admin</span>
           <div className="ml-auto">
-            <HeaderAuth
-              initialEmail={email}
-              isAdmin={isAdmin}
-              initialAvatarUrl={avatarUrl}
-              initialNickname={nickname}
-            />
+            <HeaderAuth />
           </div>
         </div>
       </header>
@@ -145,12 +161,7 @@ export function SiteHeader({
 
           <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
 
-          <HeaderAuth
-            initialEmail={email}
-            isAdmin={isAdmin}
-            initialAvatarUrl={avatarUrl}
-            initialNickname={nickname}
-          />
+          <HeaderAuth />
 
           <button
             type="button"

@@ -1,0 +1,32 @@
+# deps / build output
+node_modules
+.next
+out
+dist
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# git / editors / local junk
+.git
+.github
+.vercel
+.vercel-cache
+.cache
+.fakehome
+.cursor
+.vscode
+.idea
+*.md
+!deploy/**
+
+# tooling & scratch
+promo
+exports
+coverage
+npm-debug.log*
+yarn-error.log*
+.DS_Store
+**/*.tsbuildinfo
