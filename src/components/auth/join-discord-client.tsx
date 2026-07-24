@@ -82,13 +82,47 @@ export function JoinDiscordClient({
 
   if (!gateConfigured) {
     return (
-      <div className="mx-auto flex min-h-[100dvh] max-w-lg flex-col justify-center px-4">
-        <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-6 text-sm text-amber-100">
-          Discord gate is not configured yet. Add{" "}
-          <code className="text-snow">DISCORD_GUILD_ID</code> and{" "}
-          <code className="text-snow">DISCORD_BOT_TOKEN</code> on the host,
-          enable Discord as an Auth provider in Supabase, and invite the bot to
-          your server.
+      <div className="login-gate relative flex min-h-[100dvh] items-center justify-center overflow-hidden bg-void px-5">
+        <div className="relative z-10 w-full max-w-lg rounded-[1.4rem] border border-amber-500/25 bg-black/70 p-6 shadow-[0_40px_100px_rgba(0,0,0,0.55)] backdrop-blur-xl sm:p-8">
+          <p className="text-[0.7rem] uppercase tracking-[0.18em] text-amber-200/80">
+            Setup needed
+          </p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-snow">
+            Discord gate isn&apos;t live yet
+          </h1>
+          <p className="mt-3 text-sm leading-relaxed text-cloud">
+            The site code is ready. Add these on Vercel → Settings → Environment
+            Variables for <span className="text-snow">Production</span>, then
+            Redeploy:
+          </p>
+          <ul className="mt-4 space-y-2 text-sm text-amber-100/95">
+            <li>
+              <code className="text-snow">DISCORD_GUILD_ID</code> — your server
+              ID
+            </li>
+            <li>
+              <code className="text-snow">DISCORD_BOT_TOKEN</code> — bot token
+              (Server Members Intent on)
+            </li>
+          </ul>
+          <p className="mt-4 text-sm text-mute">
+            Also enable Discord under Supabase → Authentication → Providers.
+            After redeploy, sign in again and you&apos;ll see Link Discord.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href={nextPath.startsWith("/") ? nextPath : "/"}
+              className="rounded-full bg-snow px-4 py-2.5 text-sm font-medium text-void"
+            >
+              Continue for now
+            </Link>
+            <Link
+              href="/login"
+              className="rounded-full border border-white/20 px-4 py-2.5 text-sm font-medium text-snow"
+            >
+              Back to login
+            </Link>
+          </div>
         </div>
       </div>
     );

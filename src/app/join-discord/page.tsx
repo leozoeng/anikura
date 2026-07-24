@@ -33,27 +33,27 @@ export default async function JoinDiscordPage({ searchParams }: Props) {
     redirect(`/login?next=${encodeURIComponent("/join-discord")}`);
   }
 
-  if (!isDiscordGateConfigured()) {
-    redirect(next);
-  }
+  const gateConfigured = isDiscordGateConfigured();
 
-  if (
-    isAllowlistedAdminEmail(user.email) ||
-    user.app_metadata?.discord_verified === true
-  ) {
-    redirect(next);
-  }
+  // Admins / already-verified members skip the gate when it is active.
+  if (gateConfigured) {
+    if (
+      isAllowlistedAdminEmail(user.email) ||
+      user.app_metadata?.discord_verified === true
+    ) {
+      redirect(next);
+    }
 
-  // Profile flag as fallback if JWT metadata is stale mid-session.
-  const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("discord_verified_at")
-    .eq("id", user.id)
-    .maybeSingle();
+    const supabase = await createClient();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("discord_verified_at")
+      .eq("id", user.id)
+      .maybeSingle();
 
-  if (profile?.discord_verified_at) {
-    redirect(next);
+    if (profile?.discord_verified_at) {
+      redirect(next);
+    }
   }
 
   const discordLinked = Boolean(discordIdFromIdentities(user.identities));
@@ -63,7 +63,7 @@ export default async function JoinDiscordPage({ searchParams }: Props) {
       nextPath={next}
       inviteUrl={getDiscordInviteUrl()}
       discordLinked={discordLinked}
-      gateConfigured={isDiscordGateConfigured()}
+      gateConfigured={gateConfigured}
     />
   );
 }
