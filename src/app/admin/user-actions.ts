@@ -135,3 +135,68 @@ export async function deleteUserAccount(
 
   return { ok: true };
 }
+
+/**
+ * Clear Discord verification so the member must link + join + verify again.
+ * Also revokes Auth sessions so the next visit hits the gate immediately.
+ */
+export async function revokeDiscordVerification(
+  userId: string,
+): Promise<{ ok: true }> {
+  await requireAdmin();
+  assertUuid(userId, "user id");
+
+  const me = await getSessionUser();
+  if (me?.id === userId) {
+    throw new Error("You can’t revoke your own Discord verification from here");
+  }
+
+  const service = createServiceClient();
+  if (!service) {
+    throw new Error("Service role key missing");
+  }
+
+  const { data: profile } = await service
+    .from("profiles")
+    .select("id, email")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (isAllowlistedAdminEmail(profile?.email)) {
+    throw new Error("Cannot revoke Discord on an allowlisted admin");
+  }
+
+  const { data: authData, error: getError } =
+    await service.auth.admin.getUserById(userId);
+  if (getError) throw new Error(getError.message);
+
+  const existingMeta = (authData.user?.app_metadata ?? {}) as Record<
+    string,
+    unknown
+  >;
+  const nextMeta = { ...existingMeta };
+  delete nextMeta.discord_verified;
+  delete nextMeta.discord_id;
+
+  const { error: metaError } = await service.auth.admin.updateUserById(
+    userId,
+    { app_metadata: nextMeta },
+  );
+  if (metaError) throw new Error(metaError.message);
+
+  const { error: profileError } = await service
+    .from("profiles")
+    .update({
+      discord_id: null,
+      discord_verified_at: null,
+    })
+    .eq("id", userId);
+  if (profileError) throw new Error(profileError.message);
+
+  const supabase = await createClient();
+  await supabase.rpc("admin_revoke_auth_sessions", { p_user_id: userId });
+  await service.from("presence").delete().eq("user_id", userId);
+
+  revalidatePath("/admin");
+  return { ok: true };
+}

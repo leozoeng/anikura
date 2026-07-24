@@ -126,6 +126,8 @@ function applyAccessGate(
   }
 
   // Discord membership required when bot + guild are configured.
+  // Existing accounts without app_metadata.discord_verified are blocked here
+  // on every request (no grandfathering) until they complete /join-discord.
   if (isDiscordGateConfigured() && !isDiscordVerified(session.claims)) {
     if (isDiscordOnboardingPath(pathname)) {
       return session.response;

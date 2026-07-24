@@ -18,7 +18,12 @@ export type AdminBadgeUser = {
   role: "user" | "admin";
   badges: ProfileBadgeId[];
   created_at: string;
+  discord_id: string | null;
+  discord_verified_at: string | null;
 };
+
+const PROFILE_SELECT =
+  "id, email, username, nickname, avatar_url, role, badges, created_at, discord_id, discord_verified_at";
 
 function isKnownBadge(value: string): value is ProfileBadgeId {
   return (
@@ -51,6 +56,8 @@ function mapRow(row: Record<string, unknown>): AdminBadgeUser {
     role: row.role === "admin" ? "admin" : "user",
     badges: normalizeBadges(row.badges),
     created_at: String(row.created_at ?? ""),
+    discord_id: (row.discord_id as string | null) ?? null,
+    discord_verified_at: (row.discord_verified_at as string | null) ?? null,
   };
 }
 
@@ -77,7 +84,7 @@ export async function searchProfilesForBadges(
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, email, username, nickname, avatar_url, role, badges, created_at")
+    .select(PROFILE_SELECT)
     .or(`email.ilike."${pattern}",nickname.ilike."${pattern}",username.ilike."${pattern}"`)
     .order("created_at", { ascending: false })
     .limit(24);
@@ -92,7 +99,7 @@ export async function listBadgedProfiles(): Promise<AdminBadgeUser[]> {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, email, username, nickname, avatar_url, role, badges, created_at")
+    .select(PROFILE_SELECT)
     .or("badges.cs.{dev},badges.cs.{vip},badges.cs.{og},badges.cs.{partner}")
     .order("created_at", { ascending: false })
     .limit(40);
@@ -111,7 +118,27 @@ export async function listRecentSignups(
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, email, username, nickname, avatar_url, role, badges, created_at")
+    .select(PROFILE_SELECT)
+    .order("created_at", { ascending: false })
+    .limit(take);
+
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((row) => mapRow(row as Record<string, unknown>));
+}
+
+/** Accounts that still need Discord link + guild verify. */
+export async function listDiscordPending(
+  limit = 50,
+): Promise<AdminBadgeUser[]> {
+  await requireAdmin();
+  const supabase = await createClient();
+  const take = Math.min(Math.max(limit, 1), 100);
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(PROFILE_SELECT)
+    .is("discord_verified_at", null)
     .order("created_at", { ascending: false })
     .limit(take);
 
@@ -137,7 +164,7 @@ export async function setProfileBadges(
     .from("profiles")
     .update({ badges: next })
     .eq("id", userId)
-    .select("id, email, username, nickname, avatar_url, role, badges, created_at")
+    .select(PROFILE_SELECT)
     .maybeSingle();
 
   if (error) throw new Error(error.message);

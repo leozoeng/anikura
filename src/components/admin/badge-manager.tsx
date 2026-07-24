@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import {
   listBadgedProfiles,
+  listDiscordPending,
   listRecentSignups,
   searchProfilesForBadges,
   setProfileBadges,
@@ -13,6 +14,7 @@ import {
 import {
   deleteUserAccount,
   endUserSessions,
+  revokeDiscordVerification,
 } from "@/app/admin/user-actions";
 import { useAdminFeedback } from "@/components/admin/admin-feedback";
 import {
@@ -28,7 +30,43 @@ import {
   type ProfileBadgeId,
 } from "@/lib/profile";
 
-type ListTab = "signups" | "badged";
+type ListTab = "signups" | "badged" | "discord";
+
+function DiscordStatus({ user }: { user: AdminBadgeUser }) {
+  if (user.discord_verified_at) {
+    return (
+      <span
+        className="inline-flex items-center gap-1 rounded-md border border-emerald-400/25 bg-emerald-400/10 px-1.5 py-0.5 text-[0.65rem] font-medium text-emerald-200"
+        title={
+          user.discord_id
+            ? `Discord verified · ${user.discord_id}`
+            : "Discord verified + in server"
+        }
+      >
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+        Discord ✓
+      </span>
+    );
+  }
+  if (user.discord_id) {
+    return (
+      <span
+        className="inline-flex items-center gap-1 rounded-md border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 text-[0.65rem] font-medium text-amber-100"
+        title="Linked Discord but not verified in the Anikura server"
+      >
+        Linked · not verified
+      </span>
+    );
+  }
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[0.65rem] font-medium text-mute"
+      title="No Discord linked yet"
+    >
+      No Discord
+    </span>
+  );
+}
 
 function UserRow({
   user,
@@ -37,6 +75,7 @@ function UserRow({
   onToggle,
   onEndSessions,
   onDelete,
+  onRevokeDiscord,
 }: {
   user: AdminBadgeUser;
   busy: boolean;
@@ -44,6 +83,7 @@ function UserRow({
   onToggle: (userId: string, badge: ProfileBadgeId, next: boolean) => void;
   onEndSessions: (userId: string) => void;
   onDelete: (user: AdminBadgeUser) => void;
+  onRevokeDiscord: (user: AdminBadgeUser) => void;
 }) {
   const name = adminDisplayName(user);
   const handle = handleFromProfile(user);
@@ -75,6 +115,7 @@ function UserRow({
               {name}
             </Link>
             <ProfileBadges badges={user.badges} size="sm" />
+            <DiscordStatus user={user} />
           </div>
           <p className="truncate text-[0.7rem] text-mute">
             {[
@@ -88,6 +129,9 @@ function UserRow({
           {showJoined && user.created_at ? (
             <p className="mt-0.5 text-[0.65rem] text-mute/80">
               Joined {formatMemberSince(user.created_at)}
+              {user.discord_verified_at
+                ? ` · Discord ${formatMemberSince(user.discord_verified_at)}`
+                : ""}
             </p>
           ) : null}
         </div>
@@ -108,6 +152,18 @@ function UserRow({
         >
           End sessions
         </button>
+        {(user.discord_verified_at || user.discord_id) &&
+        user.role !== "admin" ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onRevokeDiscord(user)}
+            title="Clear Discord verify — they must link and join again"
+            className="rounded-md px-2 py-1 text-[0.7rem] text-amber-200/80 transition hover:bg-amber-500/10 hover:text-amber-100 disabled:opacity-50"
+          >
+            Reset Discord
+          </button>
+        ) : null}
         <button
           type="button"
           disabled={busy || user.role === "admin"}
@@ -172,6 +228,7 @@ export function BadgeManager() {
   const [results, setResults] = useState<AdminBadgeUser[]>([]);
   const [signups, setSignups] = useState<AdminBadgeUser[]>([]);
   const [badged, setBadged] = useState<AdminBadgeUser[]>([]);
+  const [discordPending, setDiscordPending] = useState<AdminBadgeUser[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -181,12 +238,14 @@ export function BadgeManager() {
   const refreshLists = useCallback(() => {
     startTransition(async () => {
       try {
-        const [signupRows, badgedRows] = await Promise.all([
+        const [signupRows, badgedRows, pendingRows] = await Promise.all([
           listRecentSignups(50),
           listBadgedProfiles(),
+          listDiscordPending(50),
         ]);
         setSignups(signupRows);
         setBadged(badgedRows);
+        setDiscordPending(pendingRows);
         setLoaded(true);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Couldn’t load users");
@@ -236,6 +295,11 @@ export function BadgeManager() {
     setBadged((prev) => {
       const without = prev.filter((u) => u.id !== updated.id);
       if (updated.badges.length === 0) return without;
+      return [updated, ...without];
+    });
+    setDiscordPending((prev) => {
+      const without = prev.filter((u) => u.id !== updated.id);
+      if (updated.discord_verified_at) return without;
       return [updated, ...without];
     });
   }
@@ -306,6 +370,7 @@ export function BadgeManager() {
       setResults((prev) => prev.filter((u) => u.id !== user.id));
       setSignups((prev) => prev.filter((u) => u.id !== user.id));
       setBadged((prev) => prev.filter((u) => u.id !== user.id));
+      setDiscordPending((prev) => prev.filter((u) => u.id !== user.id));
       toast(`${label} deleted`, "ok");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Couldn’t delete account";
@@ -316,8 +381,41 @@ export function BadgeManager() {
     }
   }
 
+  async function onRevokeDiscord(user: AdminBadgeUser) {
+    const label = adminDisplayName(user);
+    const ok = window.confirm(
+      `Reset Discord for ${label}?\n\nThey must link Discord and join the server again on their next visit.`,
+    );
+    if (!ok) return;
+
+    setBusyId(user.id);
+    setError(null);
+    try {
+      await revokeDiscordVerification(user.id);
+      const cleared: AdminBadgeUser = {
+        ...user,
+        discord_id: null,
+        discord_verified_at: null,
+      };
+      patchUser(cleared);
+      toast(`${label} · Discord reset — must verify again`);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Couldn’t reset Discord";
+      setError(msg);
+      toast(msg, "err");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   const showResults = query.trim().length > 0;
-  const list = tab === "signups" ? signups : badged;
+  const list =
+    tab === "signups"
+      ? signups
+      : tab === "badged"
+        ? badged
+        : discordPending;
 
   return (
     <section className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 transition duration-300 hover:border-white/[0.12] sm:p-4">
@@ -325,7 +423,8 @@ export function BadgeManager() {
         <div>
           <h2 className="text-[0.95rem] tracking-[-0.02em] text-snow">Members</h2>
           <p className="text-xs text-mute">
-            Browse signups, open profiles, assign Admin / Mod / OG / Partner / Dev / VIP.
+            Browse signups, Discord status, badges — Admin / Mod / OG / Partner /
+            Dev / VIP.
           </p>
         </div>
         <p className="text-xs text-mute">
@@ -379,6 +478,7 @@ export function BadgeManager() {
                   onToggle={onToggle}
                   onEndSessions={onEndSessions}
                   onDelete={onDelete}
+                  onRevokeDiscord={onRevokeDiscord}
                 />
               ))}
             </ul>
@@ -387,10 +487,11 @@ export function BadgeManager() {
       ) : (
         <div className="mt-4">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex rounded-full border border-white/10 p-0.5">
+            <div className="flex flex-wrap rounded-full border border-white/10 p-0.5">
               {(
                 [
                   ["signups", "Recent signups"],
+                  ["discord", `Needs Discord${discordPending.length ? ` · ${discordPending.length}` : ""}`],
                   ["badged", "Badged"],
                 ] as const
               ).map(([key, label]) => (
@@ -424,7 +525,11 @@ export function BadgeManager() {
           </div>
 
           <p className="mb-2 text-[0.7rem] uppercase tracking-[0.14em] text-mute">
-            {tab === "signups" ? "Newest accounts" : "Currently badged"}
+            {tab === "signups"
+              ? "Newest accounts"
+              : tab === "discord"
+                ? "Not Discord-verified yet"
+                : "Currently badged"}
             {pending && !loaded ? " · loading…" : ` · ${list.length}`}
           </p>
 
@@ -433,12 +538,18 @@ export function BadgeManager() {
           ) : list.length === 0 ? (
             <div className="rounded-xl border border-dashed border-white/[0.08] bg-black/20 px-4 py-8 text-center">
               <p className="text-sm text-cloud">
-                {tab === "signups" ? "No signups yet" : "No badges assigned"}
+                {tab === "signups"
+                  ? "No signups yet"
+                  : tab === "discord"
+                    ? "Everyone here is Discord-verified"
+                    : "No badges assigned"}
               </p>
               <p className="mt-1 text-xs text-mute">
                 {tab === "signups"
                   ? "New accounts will land here as people join."
-                  : "Open Recent signups or search a user to assign badges."}
+                  : tab === "discord"
+                    ? "Anyone who hasn’t linked + joined will appear here."
+                    : "Open Recent signups or search a user to assign badges."}
               </p>
             </div>
           ) : (
@@ -448,10 +559,11 @@ export function BadgeManager() {
                   key={user.id}
                   user={user}
                   busy={busyId === user.id}
-                  showJoined={tab === "signups"}
+                  showJoined={tab === "signups" || tab === "discord"}
                   onToggle={onToggle}
                   onEndSessions={onEndSessions}
                   onDelete={onDelete}
+                  onRevokeDiscord={onRevokeDiscord}
                 />
               ))}
             </ul>

@@ -8,6 +8,7 @@ import {
   isDiscordGateConfigured,
 } from "@/lib/discord-gate";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export const metadata = {
@@ -35,28 +36,45 @@ export default async function JoinDiscordPage({ searchParams }: Props) {
 
   const gateConfigured = isDiscordGateConfigured();
 
-  // Admins / already-verified members skip the gate when it is active.
-  if (gateConfigured) {
-    if (
-      isAllowlistedAdminEmail(user.email) ||
-      user.app_metadata?.discord_verified === true
-    ) {
-      redirect(next);
-    }
-
-    const supabase = await createClient();
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("discord_verified_at")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (profile?.discord_verified_at) {
-      redirect(next);
-    }
+  // Admins skip the Discord gate.
+  if (gateConfigured && isAllowlistedAdminEmail(user.email)) {
+    redirect(next);
   }
 
-  const discordLinked = Boolean(discordIdFromIdentities(user.identities));
+  if (gateConfigured && user.app_metadata?.discord_verified === true) {
+    redirect(next);
+  }
+
+  const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("discord_id, discord_verified_at")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  // Profile says verified but JWT is stale — heal app_metadata so the proxy lets them through.
+  if (
+    gateConfigured &&
+    profile?.discord_verified_at &&
+    user.app_metadata?.discord_verified !== true
+  ) {
+    const service = createServiceClient();
+    if (service) {
+      await service.auth.admin.updateUserById(user.id, {
+        app_metadata: {
+          ...(user.app_metadata ?? {}),
+          discord_verified: true,
+          discord_id: profile.discord_id ?? user.app_metadata?.discord_id,
+        },
+      });
+      await supabase.auth.refreshSession();
+    }
+    redirect(next);
+  }
+
+  const discordLinked = Boolean(
+    discordIdFromIdentities(user.identities) || profile?.discord_id,
+  );
 
   return (
     <JoinDiscordClient
