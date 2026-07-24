@@ -1,5 +1,7 @@
 import { ANIKURA_DISCORD_INVITE } from "@/lib/discord-partners";
 
+import { isAllowlistedAdminEmail } from "@/lib/auth";
+
 export function getDiscordInviteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_DISCORD_INVITE_URL?.trim() || ANIKURA_DISCORD_INVITE
@@ -21,20 +23,7 @@ export function isDiscordGateConfigured(): boolean {
   return Boolean(getDiscordGuildId() && getDiscordBotToken());
 }
 
-export function adminEmailsFromEnv(): string[] {
-  const raw = process.env.ADMIN_EMAIL ?? "";
-  return raw
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-export function isAllowlistedAdminEmail(
-  email: string | null | undefined,
-): boolean {
-  if (!email) return false;
-  return adminEmailsFromEnv().includes(email.trim().toLowerCase());
-}
+export { isAllowlistedAdminEmail };
 
 /**
  * Check whether a Discord user is a member of the Anikura guild.

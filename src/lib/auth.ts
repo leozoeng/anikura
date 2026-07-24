@@ -13,7 +13,7 @@ export type Profile = {
 };
 
 /** Sole source of truth for who may be admin (env). Never trust DB role alone. */
-function adminEmailsFromEnv(): string[] {
+export function adminEmailsFromEnv(): string[] {
   const raw = process.env.ADMIN_EMAIL ?? "";
   return raw
     .split(",")
@@ -21,7 +21,9 @@ function adminEmailsFromEnv(): string[] {
     .filter(Boolean);
 }
 
-function isAllowlistedAdminEmail(email: string | null | undefined): boolean {
+export function isAllowlistedAdminEmail(
+  email: string | null | undefined,
+): boolean {
   if (!email) return false;
   return adminEmailsFromEnv().includes(email.trim().toLowerCase());
 }

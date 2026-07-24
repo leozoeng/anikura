@@ -10,6 +10,10 @@ import {
   setProfileBadges,
   type AdminBadgeUser,
 } from "@/app/admin/badge-actions";
+import {
+  deleteUserAccount,
+  endUserSessions,
+} from "@/app/admin/user-actions";
 import { useAdminFeedback } from "@/components/admin/admin-feedback";
 import {
   ProfileBadges,
@@ -31,11 +35,15 @@ function UserRow({
   busy,
   showJoined,
   onToggle,
+  onEndSessions,
+  onDelete,
 }: {
   user: AdminBadgeUser;
   busy: boolean;
   showJoined?: boolean;
   onToggle: (userId: string, badge: ProfileBadgeId, next: boolean) => void;
+  onEndSessions: (userId: string) => void;
+  onDelete: (user: AdminBadgeUser) => void;
 }) {
   const name = adminDisplayName(user);
   const handle = handleFromProfile(user);
@@ -85,13 +93,32 @@ function UserRow({
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5 sm:justify-end">
+      <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:justify-end">
         <Link
           href={profileHref(user)}
-          className="mr-0.5 rounded-md px-2 py-1 text-[0.7rem] text-mute transition hover:bg-white/[0.06] hover:text-snow"
+          className="rounded-md px-2 py-1 text-[0.7rem] text-mute transition hover:bg-white/[0.06] hover:text-snow"
         >
           Profile
         </Link>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onEndSessions(user.id)}
+          className="rounded-md px-2 py-1 text-[0.7rem] text-mute transition hover:bg-white/[0.06] hover:text-snow disabled:opacity-50"
+        >
+          End sessions
+        </button>
+        <button
+          type="button"
+          disabled={busy || user.role === "admin"}
+          onClick={() => onDelete(user)}
+          title={
+            user.role === "admin" ? "Admin accounts are protected" : "Delete account"
+          }
+          className="rounded-md px-2 py-1 text-[0.7rem] text-red-300/80 transition hover:bg-red-500/10 hover:text-red-200 disabled:opacity-40"
+        >
+          Delete
+        </button>
         <div
           className="flex items-center gap-1 rounded-lg border border-white/[0.06] bg-black/25 p-1"
           role="group"
@@ -250,6 +277,45 @@ export function BadgeManager() {
     }
   }
 
+  async function onEndSessions(userId: string) {
+    setBusyId(userId);
+    setError(null);
+    try {
+      await endUserSessions({ userId });
+      toast("Sessions ended — they must sign in again");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Couldn’t end sessions";
+      setError(msg);
+      toast(msg, "err");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function onDelete(user: AdminBadgeUser) {
+    const label = adminDisplayName(user);
+    const ok = window.confirm(
+      `Delete ${label}${user.email ? ` (${user.email})` : ""} permanently?\n\nThis removes their account and profile. It cannot be undone.`,
+    );
+    if (!ok) return;
+
+    setBusyId(user.id);
+    setError(null);
+    try {
+      await deleteUserAccount(user.id);
+      setResults((prev) => prev.filter((u) => u.id !== user.id));
+      setSignups((prev) => prev.filter((u) => u.id !== user.id));
+      setBadged((prev) => prev.filter((u) => u.id !== user.id));
+      toast(`${label} deleted`, "ok");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Couldn’t delete account";
+      setError(msg);
+      toast(msg, "err");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   const showResults = query.trim().length > 0;
   const list = tab === "signups" ? signups : badged;
 
@@ -311,6 +377,8 @@ export function BadgeManager() {
                   busy={busyId === user.id}
                   showJoined
                   onToggle={onToggle}
+                  onEndSessions={onEndSessions}
+                  onDelete={onDelete}
                 />
               ))}
             </ul>
@@ -382,6 +450,8 @@ export function BadgeManager() {
                   busy={busyId === user.id}
                   showJoined={tab === "signups"}
                   onToggle={onToggle}
+                  onEndSessions={onEndSessions}
+                  onDelete={onDelete}
                 />
               ))}
             </ul>
