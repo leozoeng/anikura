@@ -109,8 +109,8 @@ export function LoginForm({
             A quiet theater for loud stories.
           </p>
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-cloud/90">
-            Members only — create an account and join Discord to unlock
-            watching.
+            Account + Discord keep Anikura ad-free and self-hosted — and the
+            crowd intentional.
           </p>
 
           <p className="mt-8 hidden text-[0.68rem] uppercase tracking-[0.18em] text-mute lg:block">
@@ -159,8 +159,8 @@ export function LoginForm({
             </h2>
             <p className="mt-1.5 text-sm text-mute">
               {mode === "signup"
-                ? "Takes a minute. Discord unlocks the rest."
-                : "Continue to Discord verification."}
+                ? "Create an account, then connect Discord. That gate keeps the theater quiet and sustainable."
+                : "Sign in, then Discord verifies you’re in the server."}
             </p>
 
             <form onSubmit={onSubmit} className="mt-5 space-y-3.5">
@@ -233,6 +233,9 @@ export function LoginForm({
               >
                 {copy.switchLabel}
               </button>
+            </p>
+            <p className="mt-3 text-center text-[0.7rem] leading-relaxed text-mute/85">
+              No ads. Self-hosted. Discord keeps drive-by traffic out.
             </p>
           </div>
 

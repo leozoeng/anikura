@@ -258,6 +258,10 @@ export function JoinDiscordClient({
               ? "Join the Anikura Discord, then we’ll let you in."
               : "Connect Discord — if you’re already in the server, you’re in."}
           </p>
+          <p className="mt-3 max-w-sm text-sm leading-relaxed text-cloud/85">
+            Discord keeps Anikura ad-free and self-hosted, and filters out
+            drive-by users so the theater stays quiet.
+          </p>
         </div>
 
         <div className="login-gate-panel w-full max-w-md self-stretch lg:self-end lg:justify-self-end">
@@ -279,6 +283,9 @@ export function JoinDiscordClient({
             <h2 className="mt-1 text-[1.45rem] font-semibold tracking-[-0.04em] text-snow sm:text-[1.55rem]">
               {phase === "need_join" ? "Join the server" : "Connect Discord"}
             </h2>
+            <p className="mt-2 text-sm text-mute">
+              One check. Helps us stay ad-free, self-hosted, and intentional.
+            </p>
 
             {/* Step 1 — always: link (or checking after link) */}
             {phase === "link" || phase === "checking" || phase === "error" ? (
