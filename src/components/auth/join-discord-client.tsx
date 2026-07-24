@@ -126,6 +126,11 @@ export function JoinDiscordClient({
 
       const supabase = createClient();
       await supabase.auth.refreshSession();
+      try {
+        sessionStorage.setItem("anikura_discord_gate_ok", "1");
+      } catch {
+        /* private mode */
+      }
       router.replace(nextPath.startsWith("/") ? nextPath : "/");
       router.refresh();
     } catch (err) {

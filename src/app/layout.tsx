@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP, Outfit } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { DiscordGateGuard } from "@/components/auth/discord-gate-guard";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { PresenceTracker } from "@/components/presence-tracker";
 import { SiteAtmosphere } from "@/components/site-atmosphere";
@@ -49,11 +51,13 @@ export default function RootLayout({
         </div>
         <div className="noise" aria-hidden />
         <SiteHeader />
+        <DiscordGateGuard />
         <PresenceTracker />
         <WatchTimeTracker />
         <main className="relative z-10 min-h-screen">{children}</main>
         <SiteFooter />
         <MobileBottomNav />
+        <Analytics />
       </body>
     </html>
   );
